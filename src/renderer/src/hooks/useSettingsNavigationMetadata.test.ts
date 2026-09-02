@@ -43,7 +43,7 @@ describe('settings navigation metadata', () => {
       'setup-guide',
       'general',
       'integrations',
-      'mobile'
+      'automations'
     ])
   })
 
@@ -82,17 +82,6 @@ describe('settings navigation metadata', () => {
 
   it('keeps the Linear capability section available on web clients when connected', () => {
     expect(ids({ isWebClient: true, isLinearConnected: true })).toContain('linear')
-  })
-
-  it('places Mobile under Set Up instead of its own sidebar group', () => {
-    const sections = buildSettingsNavigationMetadata({
-      isMac: false,
-      isWindows: false,
-      isWebClient: false,
-      repos: [repo]
-    })
-
-    expect(sections.find((section) => section.id === 'mobile')?.group).toBe('setup')
   })
 
   it('places Automations, Artifacts, and Share Skills first under Workflows', () => {

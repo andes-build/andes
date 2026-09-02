@@ -62,7 +62,10 @@ raíz— y no se repite acá.
 ## Gotchas
 
 <!-- Lo que hace tropezar y no se deduce abriendo un archivo va acá, una línea cada cosa. Lo que
-     un `ls` ya contesta, no. Nace vacío a propósito. -->
+     un `ls` ya contesta, no. -->
+
+- `evals/run.sh` llama scripts de `pnpm`: sin `pnpm install` en el checkout, los criterios que los
+  usan fallan aunque el código esté bien (pasó en el Gate 2 de la spec 001, 2026-09-02).
 
 ## Convenciones de código heredadas de Orca
 

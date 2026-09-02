@@ -117,28 +117,21 @@ describe('electron-builder config', () => {
         expect.arrayContaining([bundledPluginResources])
       )
     }
-    expect(electronBuilderConfig.mac.extraResources).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          from: 'native/computer-use-macos/.build/release/Orca Computer Use.app',
-          to: 'Orca Computer Use.app'
-        })
-      ])
+    // Computer use does not ship in the packaged app (spec 001): its helper
+    // binaries, signing, and runtime scripts stay out of every platform's
+    // extraResources while native/computer-use-* and skills/computer-use
+    // remain in the repo.
+    expect(electronBuilderConfig.mac.extraResources).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ to: 'Orca Computer Use.app' })])
     )
-    expect(electronBuilderConfig.linux.extraResources).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          from: 'native/computer-use-linux/runtime.py',
-          to: 'computer-use-linux/runtime.py'
-        })
-      ])
+    expect(electronBuilderConfig.linux.extraResources).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ to: 'computer-use-linux/runtime.py' })])
+    )
+    expect(electronBuilderConfig.win.extraResources).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ to: 'computer-use-windows/runtime.ps1' })])
     )
     expect(electronBuilderConfig.win.extraResources).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          from: 'native/computer-use-windows/runtime.ps1',
-          to: 'computer-use-windows/runtime.ps1'
-        }),
         expect.objectContaining({
           from: 'native/windows-cli-launcher/.build/orca.exe',
           to: 'bin/orca.exe'

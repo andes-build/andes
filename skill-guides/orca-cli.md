@@ -386,7 +386,7 @@ Confirm `orca status --json` unless already checked this turn, then choose the n
 
 The mobile emulator surface is workspace-scoped like browser tabs (active per worktree for unqualified; explicit --worktree/--device/--emulator for targeting). Always prefer `orca emulator ...` over raw `npx serve-sim` or simctl when inside Orca (the bridge owns lifecycle, scoping, and registration with the live pane).
 
-See the dedicated `orca-emulator` skill for the full table (tap/type/gesture/button/rotate/camera/permissions/ax/list/attach/exec/kill + --json + gotchas like tap preferred, normalized 0-1, name->UDID early resolve in bridge, US ASCII type, camera one-time builds, stale state cleanup, no auto-focus on attach except --focus flag mirroring browser exactly, AX via HTTP endpoint from state).
+Full command table: tap/type/gesture/button/rotate/camera/permissions/ax/list/attach/exec/kill + --json. Gotchas: tap preferred, normalized 0-1, name->UDID early resolve in bridge, US ASCII type, camera one-time builds, stale state cleanup, no auto-focus on attach except --focus flag mirroring browser exactly, AX via HTTP endpoint from state.
 
 Common:
 
@@ -407,7 +407,7 @@ Rules (mirror browser):
 - Explicit: --device <udid|name> or --emulator <OrcaId from list> (bridge resolves names early to avoid serve-sim control bug).
 - --worktree all only for list.
 - Recoveries: 'emulator_no_active' → orca emulator attach or open pane; stale → list/kill/attach.
-- No raw serve-sim in agent prompts/skills (use orca wrappers; see orca-emulator skill).
+- No raw serve-sim in agent prompts/skills (use orca wrappers above).
 
 The live pane (when implemented) registers its stream with the bridge for default targeting (seamless, recommended option per design).
 

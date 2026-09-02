@@ -25,10 +25,14 @@
   en el repo; lo que se sacó es su empaquetado — las tres entradas de `extraResources` que copiaban
   el helper (`Orca Computer Use.app`, `runtime.ps1`, `runtime.py`) y la firma
   `signMacComputerUseHelper` en `config/electron-builder.config.cjs`.
-- **Emulador y Linear**: no se tocaron. `src/main/emulator/`, `src/main/linear/`,
-  `src/shared/linear/` y sus skills siguen en el repo — sacarlos rompe el motor
-  (`src/main/runtime/`, `src/main/startup/`) y SSH (`src/main/ssh/ssh-remote-linear-*.ts`). Ver
-  `specs/done/001-andes-nace-de-orca.md` § Evidencia para el detalle del bloqueo.
+- **Emulador y Linear**: `src/main/emulator/`, `src/main/linear/` y `src/shared/linear/`
+  se quedan tal cual — sacarlos rompe el motor (`src/main/runtime/`, `src/main/startup/`) y SSH
+  (`src/main/ssh/ssh-remote-linear-*.ts`). Lo que sí se borró son sus skills dedicadas
+  (`skills/orca-emulator`, `skills/orca-emulator-android`, `skills/orca-linear`,
+  `skills/linear-tickets`, con sus fuentes en `skill-guides/` y `skill-stubs/`), regenerando
+  `src/cli/bundled-skill-guides.ts` y `resources/skills/current-manifest.json`. Esconder estos
+  módulos de la interfaz queda para la spec 002 (ajuste al criterio 6 del 2026-09-02, ver
+  `specs/done/001-andes-nace-de-orca.md`).
 
 ## Documentación histórica ajustada
 

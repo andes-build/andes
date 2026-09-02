@@ -75,21 +75,20 @@ spec001_criterio5_no_queda_app_movil() {
   fi
 }
 
-spec001_criterio6_no_emulador_ni_linear() {
-  local dir1_ok=1 dir2_ok=1 dir3_ok=1 skills_ok=1
-  test -d src/main/emulator && dir1_ok=0
-  test -d src/main/linear && dir2_ok=0
-  test -d src/shared/linear && dir3_ok=0
+spec001_criterio6_no_quedan_skills_emulador_ni_linear() {
+  local skills_ok=1 manifest_ok=1 guides_ok=1
   ls skills/ 2>/dev/null | grep -qE '^(orca-emulator|orca-linear$|linear-tickets$)' && skills_ok=0
-  if [ "$dir1_ok" = "1" ] && [ "$dir2_ok" = "1" ] && [ "$dir3_ok" = "1" ] && [ "$skills_ok" = "1" ]; then
-    ok "spec001#6 no queda emulador ni Linear"
+  node config/scripts/generate-skill-bundle-manifest.mjs >/dev/null 2>&1 || manifest_ok=0
+  node config/scripts/generate-bundled-skill-guides.mjs >/dev/null 2>&1 || guides_ok=0
+  if [ "$skills_ok" = "1" ] && [ "$manifest_ok" = "1" ] && [ "$guides_ok" = "1" ]; then
+    ok "spec001#6 no quedan los skills de emulador ni de Linear"
   else
-    ko "spec001#6 no queda emulador ni Linear — PARADO por condición de la spec"
-    ev "src/main/emulator ausente=$dir1_ok · src/main/linear ausente=$dir2_ok · src/shared/linear ausente=$dir3_ok · skills=$skills_ok"
-    ev "Bloqueo: src/main/emulator y src/main/linear/src/shared/linear son importados por el motor"
-    ev "(src/main/runtime/, src/main/startup/) y por SSH (src/main/ssh/ssh-remote-linear-*.ts)."
-    ev "Sacarlos exige tocar el motor y src/relay/SSH, que Gate 1 dejó afuera. Ver reporte final."
+    ko "spec001#6 no quedan los skills de emulador ni de Linear"
+    ev "skills sin orca-emulator*/orca-linear/linear-tickets=$skills_ok · verify:skill-bundle-manifest=$manifest_ok · verify:bundled-skill-guides=$guides_ok"
   fi
+  ev "src/main/emulator, src/main/linear y src/shared/linear se quedan a propósito: los importa"
+  ev "el motor (src/main/runtime/, src/main/startup/) y SSH (src/main/ssh/ssh-remote-linear-*.ts)."
+  ev "Esconderlos de la interfaz es trabajo de la spec 002 (ajuste del 2026-09-02, ver spec archivada)."
 }
 
 spec001_criterio7_computer_use_fuera_del_paquete() {
@@ -128,7 +127,7 @@ spec001_criterio2_bajada_y_sitio
 spec001_criterio3_version_arranca_de_cero
 spec001_criterio4_credito_a_orca_visible
 spec001_criterio5_no_queda_app_movil
-spec001_criterio6_no_emulador_ni_linear
+spec001_criterio6_no_quedan_skills_emulador_ni_linear
 spec001_criterio7_computer_use_fuera_del_paquete
 spec001_criterio8_codigo_sano
 spec001_criterio9_sin_marca_claude_ni_anthropic

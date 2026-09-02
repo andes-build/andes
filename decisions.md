@@ -105,3 +105,47 @@ más amplio que "no agregues alcance" no autoriza acá.
 gate de Computer Use van a buscar el bundle id viejo contra un binario que ya no lo usa. Esto se
 reactiva en la spec que firme y publique el paquete (fuera de alcance según "Efectos que escapan
 del sistema" de esta spec).
+
+## 2026-09-02 · [spec 001] Resolución del criterio 6: se borran los skills de emulador/Linear, los módulos del motor se quedan
+
+**Qué se decide**: `src/main/emulator`, `src/main/linear` y `src/shared/linear` se quedan sin
+tocar — los importa el motor (`src/main/runtime/`, `src/main/startup/`) y SSH
+(`src/main/ssh/ssh-remote-linear-*.ts`). Lo que se borra son las cuatro carpetas de skill
+(`skills/orca-emulator`, `skills/orca-emulator-android`, `skills/orca-linear`,
+`skills/linear-tickets`) y todo lo que solo ellas referenciaban: sus fuentes en `skill-guides/` y
+`skill-stubs/`, las entradas correspondientes en `CANONICAL_GUIDE_NAMES`/`GUIDE_ALIASES`/
+`STUB_TOPICS` de `config/scripts/generate-bundled-skill-guides.mjs`, el módulo regenerado
+`src/cli/bundled-skill-guides.ts`, el manifiesto regenerado
+`resources/skills/current-manifest.json`, las dos referencias cruzadas al skill `orca-emulator`
+en `skill-guides/orca-cli.md`, y los tests que probaban el contenido exacto de esos skills
+(`config/scripts/orca-linear-skill-guidance.test.mjs` borrado entero; fixtures ajustadas en
+`generate-bundled-skill-guides.test.mjs` y `orca-cli-skill-guidance.test.mjs`). El criterio 6 de
+la spec se reescribió para reflejar esto — ver la spec archivada.
+
+**Por qué**: esconderlos de la interfaz es trabajo de la spec 002; borrar los módulos del motor
+para satisfacer el eval literal original rompía el motor y SSH, que la propia spec dejó afuera en
+Gate 1.
+
+**Reemplaza a**: la decisión "Cerradas antes de delegar" de la spec 001 sobre el mismo tema, en la
+parte que exigía la ausencia de esos tres directorios.
+
+**La invalidaría**: que la spec 002 decida que el emulador o Linear se sacan del todo (no solo se
+esconden), lo que reabriría el borrado de esos módulos.
+
+Ajuste al criterio 6 el 2026-09-02 tras condición de parada: 🔍 aplicado por la sesión
+supervisora con la regla cerrada en Gate 1; Peter lo confirma en el Gate 2.
+
+## 2026-09-02 · [spec 001] Gap conocido: la UI de Settings sigue ofreciendo instalar el skill de Linear borrado
+
+**Qué se decide**: no se toca ahora. `src/shared/agent-feature-install-commands.ts`
+(`ORCA_LINEAR_SKILL_NAME`, `LINEAR_TICKETS_SKILL_NAME`) y la UI que los consume
+(`LinearAgentSkillPane.tsx`, `linear-agent-skill-install-cta.tsx`,
+`LinearAgentSkillSetupPrompt.tsx`) siguen ofreciendo instalar `orca-linear`/`linear-tickets`, que
+ya no existen en `resources/skills/`. Ningún test lo detecta porque todos verifican el nombre o
+formato del comando, no el contenido real del skill instalado.
+
+**Por qué**: sacar esa oferta de la UI es un cambio de interfaz (fuera de esta spec) y no un
+efecto mecánico del borrado de los skills; decidir si se saca la oferta o se recrea el skill con
+otro nombre es un Gate 1 de la spec 002.
+
+**La invalidaría**: que la spec 002 resuelva este gap (sacando la oferta o recreando el skill).

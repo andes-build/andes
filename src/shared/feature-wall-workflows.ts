@@ -35,8 +35,8 @@ export const FEATURE_WALL_WORKFLOWS: readonly FeatureWallWorkflow[] = [
   {
     id: 'tasks',
     title: 'Tasks',
-    meta: 'GitHub · Linear',
-    lede: 'Start work directly from GitHub or Linear.',
+    meta: 'GitHub · Jira',
+    lede: 'Start work directly from GitHub or Jira.',
     primaryTileId: 'tile-03',
     relatedTileIds: [],
     docsUrl: 'https://www.onorca.dev/docs/review/linear'

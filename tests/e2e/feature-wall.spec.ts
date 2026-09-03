@@ -116,8 +116,9 @@ test.describe('Feature tour modal', () => {
       .getByRole('navigation', { name: 'Workflows' })
       .getByRole('tab', { name: /Tasks/i })
       .click()
-    await expect(orcaPage.getByText('Start work directly from GitHub or Linear.')).toBeVisible()
+    await expect(orcaPage.getByText('Start work directly from GitHub or Jira.')).toBeVisible()
     await expect(orcaPage.getByText('Connect GitHub or Linear once')).toHaveCount(0)
+    await expect(orcaPage.getByText(/linear/i)).toHaveCount(0)
     await expect(orcaPage.getByRole('dialog', { name: 'Get to know Orca' })).toBeVisible()
     await expect
       .poll(async () => getStoreState<string>(orcaPage, 'activeView'))

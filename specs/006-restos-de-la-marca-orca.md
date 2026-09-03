@@ -62,11 +62,12 @@ desarrollo ya abiertas no se cierran (solo se bloquea abrir nuevas).
 
 - DECIDIDO por Peter (Gate 1, 2026-09-03): la app se llama Andes en todo lo que una persona ve.
 - DECIDIDO por Peter (2026-09-02): el repo público es `andes-build/andes`.
-- 🔍 Resolución de la sesión, a confirmar en el Gate 2: **el marketplace de plugins sigue siendo el
+- DECIDIDO por Peter (Gate 1, 2026-09-03): **el marketplace de plugins sigue siendo el
   de Orca** (`stablyai` como editor oficial). No es marca de Andes: es la fuente de unos plugins de
   terceros, los plugins están escondidos en modo simple, y apropiarse de ese identificador
   rompería la verificación de confianza de los plugins ya instalados. Se documenta, no se cambia.
-- 🔍 Resolución de la sesión: **la documentación de `docs/` y los README traducidos quedan fuera**;
+- DECIDIDO por Peter (Gate 1, 2026-09-03): **la documentación de `docs/` y los README traducidos
+  quedan fuera**;
   son documentación de Orca que Andes va a reescribir, no traducir. Spec propia.
 
 **Delegadas al agente, con criterio**

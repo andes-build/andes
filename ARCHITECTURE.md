@@ -345,3 +345,52 @@ Orca y nadie los pidió.
   de valor específicos) se borraron. `src/renderer/src/i18n/locale-english-regression.test.ts`
   quedó reducido a lo que puede seguir verificando con un solo catálogo: que un incidente histórico
   de reversión no vuelva a pisar `en.json`.
+
+## Selector de workspace y archivos por alcance (spec 010)
+
+En modo simple, la barra lateral (`src/renderer/src/components/sidebar/index.tsx`) reemplaza por
+completo su contenido (nav de proyectos, `WorktreeList`, toolbar) por
+`SimpleModeSidebar` (`src/renderer/src/components/sidebar/workspace-scope/`) cuando
+`useInterfaceMode() === 'simple'`; en modo developer sigue exactamente como estaba. Nada de esto
+toca `src/main/runtime/` ni la capa que lanza el binario del agente.
+
+- **Descubrimiento de workspaces** (`src/main/workspaces/workspace-scope-discovery.ts`, IPC
+  `workspaceScope:list`): lee las subcarpetas de `workspaces/` de la carpeta activa (la carpeta
+  abierta es el brain del sistema, palabra que nunca aparece en la interfaz), nombrando cada una
+  por la primera línea `#` de su `README.md` o `context.md` (el brain puede tener cualquiera de las
+  dos formas de cabeza), con fallback al slug humanizado. Devuelve `[]` sin `workspaces/`.
+- **Árbol de archivos por alcance** (`src/main/workspaces/workspace-file-tree.ts`, IPC
+  `workspaceScope:fileTree`): árbol anidado de una carpeta (el workspace elegido, o la raíz para
+  "My work"), excluyendo `.git`, `node_modules`, `.os`, `.claude` y ocultos — mismo patrón de
+  `readdir` que `listMarkdownDocuments` (`src/main/ipc/markdown-documents.ts`), nunca la carpeta
+  entera.
+- **Lectura de archivo** (`src/main/workspaces/workspace-file-read.ts`, IPC
+  `workspaceScope:readFile`): de solo lectura, rechaza cualquier ruta fuera del alcance pedido.
+- **Estado de alcance** (`src/renderer/src/store/slices/workspace-scope.ts`): `WorkspaceScopeSlice`
+  con `activeWorkspaceScopeSlug` (`null` = raíz, "My work") y `workspaceScopeOptions`;
+  `resolveActiveWorkspaceScope` cae a raíz si el slug elegido ya no existe. Todo lo que necesite
+  saber el alcance activo (hoy: Files; a futuro: Command Center, Recent threads) lee este único
+  campo.
+- **Barra lateral simple** (`sidebar/workspace-scope/`): `WorkspaceScopeSelector` (el selector
+  arriba, con "My work" y "New workspace" fijos — crear un workspace de verdad queda fuera de
+  alcance, ver la spec archivada), `SimpleModeNav` (exactamente New thread, Command Center, Files,
+  Agents & skills, More), `RecentThreadsSection` (componente real, sin fuente de datos por
+  workspace todavía) y `SimpleModeScopeEmptyState` (los tres estados incómodos).
+- **Files** (`src/renderer/src/components/files/FilesPage.tsx`, `activeView: 'files'`, nuevo
+  miembro de `TopLevelView`): árbol del alcance elegido con nombres de nodo traducidos
+  (`workspace-node-name.ts`: README.md/context.md → "What this is", decisions.md → "Decisions",
+  learnings.md → "Learnings", backlog.md → "Backlog", initiatives → "Initiatives", research →
+  "Research"; un nombre no reconocido se muestra tal cual) y un visor de markdown con formato
+  (reusa `MarkdownPreviewBody` del editor) con el botón "Open a thread about this file".
+- **New thread**: crea y activa una pestaña nueva (`createTab`, `viewMode: 'chat'`) sobre la carpeta
+  activa, lanzando el agente detectado si hay uno — nunca toca `native-chat/`. El modo chat efectivo
+  depende de la propia elegibilidad de native-chat (necesita un CLI real corriendo); sin eso, la
+  pestaña queda en modo terminal pero es una sesión real, nunca una pantalla vacía.
+- **Command Center**: no tiene pantalla propia en esta spec. El botón del nav navega a
+  `activeView: 'terminal'` — la spec 009 (pausada) resuelve su contenido enganchando su propio gate
+  sobre esa misma vista, no sobre una vista separada.
+
+Bug encontrado durante el cierre, ajeno a esta spec: `interfaceMode: 'simple'` persistido no
+sobrevive un reinicio de Electron (se relanza como `'developer'` literal, sin ninguna carpeta ni
+workspace involucrado) — ver "Diferido a la spec de restos" en `specs/done/010-workspaces-y-archivos.md`
+y `decisions.md`.

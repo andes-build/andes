@@ -825,3 +825,68 @@ puntual.
 
 **Corregido el 2026-09-03**: esto es solo de desarrollo, no afecta a la app publicada; el renombre
 cosmético de desarrollo se trata en la spec 007, con la advertencia del llavero.
+
+## 2026-09-03 · [spec 008] El selector de idioma se esconde con una función, no con un booleano fijo
+
+**Qué se decide**: `SHOW_UI_LANGUAGE_SETTING` (booleano estático) se reemplaza por
+`shouldShowUiLanguageSetting(pluginLanguagePackCount)` en `src/renderer/src/i18n/supported-languages.ts`.
+Sin ningún paquete de idioma de plugin instalado devuelve `false` — que es el caso por defecto, así
+que Ajustes → Apariencia no ofrece el selector de fábrica. Con un plugin de idioma habilitado
+(mecanismo ajeno a esta spec, ver `ARCHITECTURE.md`), el selector vuelve a aparecer con inglés más
+ese idioma.
+
+**Por qué**: la spec 008 pide que la app ofrezca un solo idioma; no pide apagar la capacidad de los
+plugins de traer su propio idioma, que es una función previa y separada de los cinco catálogos que
+esta spec da de baja. Esconder el selector con un booleano fijo en `false` rompía
+`tests/e2e/plugin-marketplace-content.spec.ts` (instala un plugin de idioma portugués y lo aplica
+desde ese mismo selector) y tests unitarios que ejercitan ese camino
+(`SidebarToolbar.test.tsx`, `contextual-tour-overlay-measurement.test.ts`, etc., ya adaptados para
+usar un paquete de idioma sintético de plugin en vez de un catálogo `ja/ko/zh/es` real). El criterio
+delegado de la spec ("se esconde si borrarlo obliga a tocar más de un componente") se cumple igual:
+lo que cambió es una función en un solo archivo, no cuatro archivos reescritos.
+
+**La invalidaría**: que una spec futura decida apagar también el idioma de plugin, o que el
+selector deba mostrarse siempre aunque no haya plugin de idioma instalado.
+
+## 2026-09-03 · [spec 008] La maquinaria de traducción por idioma se borra; la genérica se conserva parametrizada
+
+**Qué se decide**: de `config/scripts/locale-*`, se borran los diccionarios y funciones que eran
+datos de un idioma dado de baja — overrides palabra por palabra de ja/ko/zh/es
+(`locale-{ja,ko,zh}-*.mjs`, `locale-key-overrides.mjs` y su merge, `locale-cross-locale-key-overrides.mjs`,
+`locale-macos-tcc-key-overrides.mjs`, `locale-phrase-fixes.mjs`, `locale-value-overrides.mjs`), el
+espaciado CJK (`locale-cjk-latin-spaced-terms.mjs`) y `repair-locale-catalog.mjs`. Se conserva
+`locale-translation-policy.mjs` reducido a sus piezas genéricas (`shouldPreserveEnglishValue`,
+`NEVER_TRANSLATE_VALUES`, `applyBrandMistranslationFixes`/`BRAND_MISTRANSLATIONS`,
+`SEARCH_KEYWORD_OVERRIDES`, `repairCatalog`/`repairTranslatedValue`) y `bootstrap-locale-catalog.mjs`
+(bootstrap de un catálogo nuevo vía Google Translate), con su `LOCALE_CONFIG` reducido a `es` — la
+única reactivación que la spec declara.
+
+**Por qué**: el criterio delegado de la spec ("se conserva todo lo que sirva para reabrir la
+traducción de una vez; se borra solo lo que sea específico de un idioma dado de baja"). Los
+diccionarios de reemplazo son traducciones ya hechas de una interfaz que la propia spec dice que se
+va a reescribir ("cuando el español vuelva, se traduce sobre la interfaz nueva, no sobre la
+vieja") — no sirven para reabrir nada. El espaciado CJK es una regla de los tres scripts (chino,
+japonés, coreano) exactamente dados de baja para siempre, sin condición de reactivación. El motor
+genérico (`repairTranslatedValue`, `bootstrap-locale-catalog.mjs`) no está indexado a una lista fija
+de idiomas — recibe el código de locale como parámetro — así que sirve igual el día que se traduzca
+a cualquier idioma nuevo, español incluido.
+
+**La invalidaría**: que se decida no reabrir nunca la traducción, momento en el que esta maquinaria
+genérica también se podría borrar.
+
+## 2026-09-03 · [spec 008] `normalizeUiLanguage` cae a inglés, no a "system", ante cualquier valor no reconocido
+
+**Qué se decide**: `normalizeUiLanguage` (`src/shared/ui-language.ts`) devuelve `UI_LANGUAGE_ENGLISH`
+para cualquier valor que no sea `system`, `en` o un id de plugin válido — antes caía a `system`.
+Aplica igual a un idioma que existió y se dio de baja (`'es'`, `'zh'`, `'ja'`, `'ko'`) y a un valor
+que nunca existió (`'fr'`, un string inventado).
+
+**Por qué**: el criterio 4 de la spec pide, literalmente, que un ajuste guardado con un idioma que
+ya no existe "cargue como inglés". Con solo `en` soportado, `system` igual termina resolviendo a
+`en` vía `resolveUiLocale`/`normalizeSupportedUiLocale`, así que el resultado visible no cambiaba —
+pero el valor que queda *persistido* en el ajuste si caía a `system` no es el que el criterio pide
+verificar. Unificar el fallback a inglés, sin distinguir "idioma que existió" de "idioma que nunca
+existió", es la regla más simple que cumple el criterio sin un caso especial.
+
+**La invalidaría**: que una spec futura necesite distinguir, en el valor persistido, un ajuste que
+nunca fue válido de uno que dejó de serlo.

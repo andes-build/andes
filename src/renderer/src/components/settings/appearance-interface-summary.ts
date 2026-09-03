@@ -1,7 +1,7 @@
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import {
   getUiLanguageChoiceLabel,
-  SHOW_UI_LANGUAGE_SETTING,
+  shouldShowUiLanguageSetting,
   UI_LANGUAGE_CHOICES
 } from '@/i18n/supported-languages'
 import { translate } from '@/i18n/i18n'
@@ -24,11 +24,14 @@ function resolveLanguageSummary(uiLanguage: GlobalSettings['uiLanguage']): strin
   return getUiLanguageChoiceLabel(choice, translate)
 }
 
-export function resolveInterfaceSectionSummary(settings: GlobalSettings): string {
+export function resolveInterfaceSectionSummary(
+  settings: GlobalSettings,
+  pluginLanguagePackCount = 0
+): string {
   const fontSummary =
     settings.appFontFamily ||
     translate('auto.components.settings.AppearancePane.interfaceDefaultFont', 'Default font')
-  if (!SHOW_UI_LANGUAGE_SETTING) {
+  if (!shouldShowUiLanguageSetting(pluginLanguagePackCount)) {
     return `${resolveThemeSummary(settings.theme)} · ${fontSummary}`
   }
   return `${resolveThemeSummary(settings.theme)} · ${resolveLanguageSummary(settings.uiLanguage)} · ${fontSummary}`

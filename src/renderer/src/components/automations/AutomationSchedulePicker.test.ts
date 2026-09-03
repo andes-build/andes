@@ -18,6 +18,45 @@ import { isValidAutomationCronSchedule } from '../../../../shared/automation-sch
 import { SelectItem } from '@/components/ui/select'
 import { i18n } from '@/i18n/i18n'
 
+// Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md), so
+// a synthetic resource bundle stands in for a real second-locale catalog here.
+// Why 'ru' and not an arbitrary code: getUiWeekdayNames() resolves the day name
+// through Intl, which needs a real BCP-47 tag to produce a non-English name.
+const SYNTHETIC_LOCALE = 'ru'
+
+function registerSyntheticBundle(): void {
+  i18n.addResourceBundle(
+    SYNTHETIC_LOCALE,
+    'translation',
+    {
+      auto: {
+        components: {
+          automations: {
+            AutomationSchedulePicker: {
+              '55b2ef82a4': 'Cada hora',
+              f0202f3a89: 'Diario',
+              '57e83307d0': 'Días laborables',
+              '837d902bba': 'Semanal',
+              ddba78647e: 'Cron personalizado'
+            },
+            automation: {
+              schedule: {
+                label: {
+                  cc71e252ba: 'Cada {{day}} a las {{time}}',
+                  '280ccd2701': 'Diario a las {{time}}'
+                }
+              }
+            },
+            AutomationCustomCronPanel: { f6ca30da23: 'Cron personalizado válido' }
+          }
+        }
+      }
+    },
+    true,
+    true
+  )
+}
+
 const BASE_DRAFT: AutomationDraft = {
   name: '',
   prompt: '',
@@ -77,14 +116,16 @@ describe('AutomationSchedulePicker', () => {
     }
   })
 
-  it.each([
-    ['zh', ['每小时', '每天', '工作日', '每周', '自定义 cron']],
-    ['ja', ['毎時', '毎日', '平日', '毎週', 'カスタム cron']],
-    ['ko', ['매시간', '매일', '평일', '매주', '사용자 지정 cron']],
-    ['es', ['Cada hora', 'Diario', 'Días laborables', 'Semanal', 'Cron personalizado']]
-  ])('translates every cadence option in %s', async (locale, labels) => {
-    await i18n.changeLanguage(locale)
-    expect(AUTOMATION_SCHEDULE_PRESET_OPTIONS.map(getAutomationSchedulePresetLabel)).toEqual(labels)
+  it('translates every cadence option in a non-English locale', async () => {
+    registerSyntheticBundle()
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
+    expect(AUTOMATION_SCHEDULE_PRESET_OPTIONS.map(getAutomationSchedulePresetLabel)).toEqual([
+      'Cada hora',
+      'Diario',
+      'Días laborables',
+      'Semanal',
+      'Cron personalizado'
+    ])
   })
 
   it.each([
@@ -110,32 +151,31 @@ describe('AutomationSchedulePicker', () => {
     expect(dayOptions.map(([, label]) => label)).not.toContain('Monday')
   })
 
-  it.each([
-    ['zh', '每星期五'],
-    ['ja', '毎週金曜日'],
-    ['ko', '매주 금요일'],
-    ['es', 'Cada viernes']
-  ])(
-    'localizes the weekly schedule label without an English plural in %s (#14404)',
-    async (locale, expected) => {
-      await i18n.changeLanguage(locale)
-      const label = formatUiAutomationSchedule('0 9 * * 5')
+  it('localizes the weekly schedule label without an English plural in a non-English locale (#14404)', async () => {
+    registerSyntheticBundle()
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
+    const label = formatUiAutomationSchedule('0 9 * * 5')
 
-      expect(label).toContain(expected)
-      expect(label).not.toMatch(/Friday/)
-      expect(label).not.toMatch(/s at /)
-    }
-  )
+    // Why: the sentence template comes from the catalog ("Cada {{day}} a las
+    // {{time}}"); the day name comes from Intl in the target locale, so it must
+    // not be the English "Friday" and must not carry the old English plural
+    // suffix ("Fridays at").
+    expect(label).toContain('Cada ')
+    expect(label).toContain(' a las ')
+    expect(label).not.toMatch(/Friday/)
+    expect(label).not.toMatch(/s at /)
+  })
 
   it('localizes the valid-custom-cron status without matching English copy (#14404)', async () => {
-    await i18n.changeLanguage('zh')
+    registerSyntheticBundle()
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
 
     expect(getCronScheduleStatusLabel('*/30 9-17 * * 1-5', isValidAutomationCronSchedule)).toEqual({
       kind: 'valid',
-      label: '有效的自定义 cron'
+      label: 'Cron personalizado válido'
     })
     expect(getCronScheduleStatusLabel('0 9 * * *', isValidAutomationCronSchedule).label).toContain(
-      '每天'
+      'Diario'
     )
   })
 

@@ -14,22 +14,11 @@ import {
 const PLACEHOLDER_RE = /\{\{[^}]+\}\}/g
 const LOCALES_DIR = path.join('src', 'renderer', 'src', 'i18n', 'locales')
 
+// Why: only Spanish is a declared reactivation (specs/done/008-un-solo-idioma.md)
+// — japonés/coreano/chino were retired for good. Add an entry back here (and a
+// matching NON_DEFAULT_LOCALE_LOADERS/LAZY_LOCALE_LOADERS import) when a
+// translation pass actually targets a new locale.
 const LOCALE_CONFIG = {
-  zh: {
-    targetLanguage: 'zh-CN',
-    displayName: 'Simplified Chinese',
-    cacheFile: '.zh-catalog-cache.json'
-  },
-  ko: {
-    targetLanguage: 'ko',
-    displayName: 'Korean',
-    cacheFile: '.ko-catalog-cache.json'
-  },
-  ja: {
-    targetLanguage: 'ja',
-    displayName: 'Japanese',
-    cacheFile: '.ja-catalog-cache.json'
-  },
   es: {
     targetLanguage: 'es',
     displayName: 'Spanish',

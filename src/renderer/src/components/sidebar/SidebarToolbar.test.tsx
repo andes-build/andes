@@ -4,8 +4,8 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AppState } from '@/store'
-import { i18n } from '@/i18n/i18n'
-import ko from '@/i18n/locales/ko.json'
+import { i18n, setRendererPluginLanguagePacks } from '@/i18n/i18n'
+import { pluginLanguageResourceId } from '../../../../shared/plugins/plugin-language-pack-artifact'
 import SidebarToolbar from './SidebarToolbar'
 
 const mocks = vi.hoisted(() => ({
@@ -133,19 +133,34 @@ describe('SidebarToolbar moved workspace board hint', () => {
   // the English copy it rendered at boot (the persisted locale is applied
   // asynchronously, after the lazy catalog loads).
   it('relabels itself when the UI language changes after mount', async () => {
+    // Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md),
+    // so a plugin language pack stands in for a real second-locale catalog here.
+    const pluginId = 'plugin:orca-samples.portuguese/pt-BR' as const
+    const resourceLanguage = pluginLanguageResourceId(pluginId)
+    const localized = 'Painel de trabalho'
+    setRendererPluginLanguagePacks([
+      {
+        id: pluginId,
+        resourceLanguage,
+        pluginKey: 'orca-samples.portuguese',
+        locale: 'pt-BR',
+        catalog: {
+          auto: { components: { sidebar: { SidebarToolbar: { '49f62c5665': localized } } } }
+        }
+      }
+    ])
+
     const { container } = await renderToolbar()
     expect(container.querySelector('button[aria-label="Workspace board"]')).not.toBeNull()
 
     await act(async () => {
-      await i18n.changeLanguage('ko')
+      await i18n.changeLanguage(resourceLanguage)
     })
 
-    // Why: read the expected copy from the catalog instead of hardcoding it, so
-    // editing the Korean wording cannot fail this test as a bogus stale-render
-    // report.
-    const localized = ko.auto.components.sidebar.SidebarToolbar['49f62c5665']
     expect(localized).not.toBe('Workspace board')
     expect(container.querySelector(`button[aria-label="${localized}"]`)).not.toBeNull()
+
+    setRendererPluginLanguagePacks([])
   })
 
   it('keeps account controls out of the sidebar footer', async () => {

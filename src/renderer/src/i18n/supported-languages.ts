@@ -1,10 +1,6 @@
 import { DEFAULT_UI_LOCALE, resolveRendererUiLocale } from '../../../shared/ui-locale'
 import {
-  UI_LANGUAGE_CHINESE,
   UI_LANGUAGE_ENGLISH,
-  UI_LANGUAGE_JAPANESE,
-  UI_LANGUAGE_KOREAN,
-  UI_LANGUAGE_SPANISH,
   UI_LANGUAGE_SYSTEM,
   type BuiltInUiLanguage,
   type UiLanguage
@@ -12,7 +8,14 @@ import {
 
 export const DEFAULT_LOCALE = DEFAULT_UI_LOCALE
 
-export const SHOW_UI_LANGUAGE_SETTING = true
+// Why: only English ships while the interface keeps changing — see
+// specs/done/008-un-solo-idioma.md. With no plugin language pack installed
+// there is only one choice, so the row stays out of Settings; a plugin can
+// still contribute a real second language, and then the row (English plus
+// whatever packs are enabled) has something to choose between.
+export function shouldShowUiLanguageSetting(pluginLanguagePackCount: number): boolean {
+  return pluginLanguagePackCount > 0
+}
 
 export type UiLanguageChoice = {
   value: BuiltInUiLanguage
@@ -21,20 +24,12 @@ export type UiLanguageChoice = {
 
 export const UI_LANGUAGE_CHOICES: UiLanguageChoice[] = [
   { value: UI_LANGUAGE_SYSTEM, labelKey: 'settings.appearance.language.system' },
-  { value: UI_LANGUAGE_ENGLISH, labelKey: 'settings.appearance.language.english' },
-  { value: UI_LANGUAGE_CHINESE, labelKey: 'settings.appearance.language.chinese' },
-  { value: UI_LANGUAGE_KOREAN, labelKey: 'settings.appearance.language.korean' },
-  { value: UI_LANGUAGE_JAPANESE, labelKey: 'settings.appearance.language.japanese' },
-  { value: UI_LANGUAGE_SPANISH, labelKey: 'settings.appearance.language.spanish' }
+  { value: UI_LANGUAGE_ENGLISH, labelKey: 'settings.appearance.language.english' }
 ]
 
 const UI_LANGUAGE_CHOICE_FALLBACKS: Record<BuiltInUiLanguage, string> = {
   [UI_LANGUAGE_SYSTEM]: 'System',
-  [UI_LANGUAGE_ENGLISH]: 'English',
-  [UI_LANGUAGE_CHINESE]: '中文（简体）',
-  [UI_LANGUAGE_KOREAN]: '한국어',
-  [UI_LANGUAGE_JAPANESE]: '日本語',
-  [UI_LANGUAGE_SPANISH]: 'Español'
+  [UI_LANGUAGE_ENGLISH]: 'English'
 }
 
 export function getUiLanguageChoiceLabel(

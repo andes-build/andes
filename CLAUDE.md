@@ -59,6 +59,11 @@ Nombres de archivo, comandos y código en inglés. La regla del idioma del produ
 sola vez, en la constitución del repo del producto que publica `.os/core` —`CLAUDE.md` en su
 raíz— y no se repite acá.
 
+## Idioma de la interfaz
+
+Todo texto nuevo de la interfaz va solo al catálogo inglés (`src/renderer/src/i18n/locales/en.json`)
+hasta que se reabra la traducción — ver `specs/done/008-un-solo-idioma.md`.
+
 ## Gotchas
 
 <!-- Lo que hace tropezar y no se deduce abriendo un archivo va acá, una línea cada cosa. Lo que

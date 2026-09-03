@@ -213,13 +213,29 @@ describe('AgentKanbanBoard', () => {
     expect(screen.getByText('1 of 2 shown')).toBeInTheDocument()
   })
 
+  // Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md),
+  // so a synthetic resource bundle stands in for a real second-locale catalog.
   it('localizes the new board status and filter controls', async () => {
-    await i18n.changeLanguage('ja')
+    const SYNTHETIC_LOCALE = 'zz'
+    i18n.addResourceBundle(
+      SYNTHETIC_LOCALE,
+      'translation',
+      {
+        dashboardPopout: {
+          bucket: { done: 'Hecho' },
+          search: { label: 'Buscar agentes' },
+          filters: { label: 'Filtro' }
+        }
+      },
+      true,
+      true
+    )
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
     renderBoard([card({ bucket: 'done' })])
 
-    expect(screen.getByText('完了')).toBeInTheDocument()
-    expect(screen.getByLabelText('Agent を検索')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^フィルター/ })).toBeInTheDocument()
+    expect(screen.getByText('Hecho')).toBeInTheDocument()
+    expect(screen.getByLabelText('Buscar agentes')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Filtro/ })).toBeInTheDocument()
   })
 
   it('offers store-derived project and status filters without cards', async () => {

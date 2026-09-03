@@ -5,10 +5,10 @@ import { createRoot, type Root } from 'react-dom/client'
 import { I18nextProvider } from 'react-i18next'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { getDefaultSettings } from '../../../shared/constants'
-import { UI_LANGUAGE_SPANISH } from '../../../shared/ui-language'
+import { pluginLanguageResourceId } from '../../../shared/plugins/plugin-language-pack-artifact'
 import { useAppStore } from '@/store'
 import { usePluginLanguagePackStore } from '@/store/plugin-language-packs'
-import { i18n } from '@/i18n/i18n'
+import { i18n, setRendererPluginLanguagePacks } from '@/i18n/i18n'
 import { FULL_DISK_ACCESS_SETTINGS_TARGET_ID } from '@/lib/settings-navigation-types'
 import { MacosTccPromptNoticeHost } from './MacosTccPromptNoticeHost'
 import { useMacosTccPromptNotice } from './useMacosTccPromptNotice'
@@ -50,9 +50,26 @@ afterEach(async () => {
   }
   useAppStore.setState(initialAppState, true)
   usePluginLanguagePackStore.setState(initialPluginLanguagePackState, true)
+  setRendererPluginLanguagePacks([])
 })
 
+// Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md),
+// so a plugin language pack stands in for a real second-locale catalog here.
 it('waits for the persisted locale catalog before consuming the one-time notice', async () => {
+  const pluginId = 'plugin:orca-samples.portuguese/pt-BR' as const
+  const resourceLanguage = pluginLanguageResourceId(pluginId)
+  const packs = [
+    {
+      id: pluginId,
+      resourceLanguage,
+      pluginKey: 'orca-samples.portuguese',
+      locale: 'pt-BR',
+      catalog: { menu: { file: 'Arquivo' } }
+    }
+  ]
+  usePluginLanguagePackStore.setState({ packs, loaded: true })
+  setRendererPluginLanguagePacks(packs)
+
   const container = document.createElement('div')
   root = createRoot(container)
   await act(async () => {
@@ -62,13 +79,13 @@ it('waits for the persisted locale catalog before consuming the one-time notice'
 
   await act(async () => {
     useAppStore.setState({
-      settings: { ...getDefaultSettings('/tmp'), uiLanguage: UI_LANGUAGE_SPANISH }
+      settings: { ...getDefaultSettings('/tmp'), uiLanguage: pluginId }
     })
   })
   expect(subscribeToMacosTccPromptNotice).not.toHaveBeenCalled()
 
   await act(async () => {
-    await i18n.changeLanguage('es')
+    await i18n.changeLanguage(resourceLanguage)
   })
   expect(subscribeToMacosTccPromptNotice).toHaveBeenCalledOnce()
 })

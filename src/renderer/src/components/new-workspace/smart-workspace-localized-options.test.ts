@@ -3,8 +3,41 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { i18n } from '@/i18n/i18n'
 import { getMrStateFilters, getSmartWorkspaceNameModes } from './smart-workspace-localized-options'
 
+// Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md), so
+// a synthetic resource bundle stands in for a real second-locale catalog here.
+const SYNTHETIC_LOCALE = 'zz'
+
+function registerSyntheticBundle(): void {
+  i18n.addResourceBundle(
+    SYNTHETIC_LOCALE,
+    'translation',
+    {
+      auto: {
+        components: {
+          new: {
+            workspace: {
+              SmartWorkspaceNameField: {
+                b3c60c2b7c: 'Inteligente',
+                '2e4c7c95fe': 'Rama',
+                '6f07a18604': 'Nombre',
+                '622864b52a': 'Abierta',
+                '2319d87718': 'Fusionada',
+                '6fad211c66': 'Cerrada',
+                '26824f60dd': 'Todas'
+              }
+            }
+          }
+        }
+      }
+    },
+    true,
+    true
+  )
+}
+
 describe('smart-workspace-localized-options', () => {
   beforeEach(async () => {
+    registerSyntheticBundle()
     await i18n.changeLanguage('en')
   })
 
@@ -19,16 +52,16 @@ describe('smart-workspace-localized-options', () => {
       'Name'
     ])
 
-    await i18n.changeLanguage('zh')
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
 
     expect(getSmartWorkspaceNameModes().map((mode) => mode.label)).toEqual([
-      '智能',
+      'Inteligente',
       'GitHub',
       'Linear',
       'Jira',
       'GitLab',
-      '分支',
-      '名称'
+      'Rama',
+      'Nombre'
     ])
 
     await i18n.changeLanguage('en')
@@ -52,13 +85,13 @@ describe('smart-workspace-localized-options', () => {
       'All'
     ])
 
-    await i18n.changeLanguage('zh')
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
 
     expect(getMrStateFilters().map((filter) => filter.label)).toEqual([
-      '开放',
-      '合并',
-      '已关闭',
-      '全部'
+      'Abierta',
+      'Fusionada',
+      'Cerrada',
+      'Todas'
     ])
   })
 })

@@ -10,12 +10,6 @@
  */
 import { describe, expect, it } from 'vitest'
 import en from './locales/en.json'
-import es from './locales/es.json'
-import ja from './locales/ja.json'
-import ko from './locales/ko.json'
-import zh from './locales/zh.json'
-
-const LOCALE_CATALOGS = { es, ja, ko, zh }
 
 function lookupIn(catalog: unknown, key: string): string | undefined {
   const value = key
@@ -30,10 +24,6 @@ function lookupIn(catalog: unknown, key: string): string | undefined {
 
 function lookup(key: string): string | undefined {
   return lookupIn(en, key)
-}
-
-function placeholdersOf(value: string): string[] {
-  return [...new Set(value.match(/\{\{[^}]+\}\}/g) ?? [])].sort()
 }
 
 const REQUIRED_KEYS: Record<string, string> = {
@@ -78,25 +68,6 @@ const INTERPOLATED_KEYS: Record<string, string[]> = {
   ]
 }
 
-// Base keys i18next resolves through CLDR plural categories (`<key>_<suffix>`).
-const PLURAL_KEYS = [
-  'auto.components.settings.computerUseSummary.permissionsRequired',
-  'auto.components.settings.OrchestrationSkillAgentCoverage.fullCoverage'
-]
-
-function pluralCategories(locale: string): string[] {
-  return [...new Intl.PluralRules(locale).resolvedOptions().pluralCategories]
-}
-
-// A locale owes `_other` plus whichever of its categories English also spells
-// out. Categories English never defines (es `many`, only reached past 1e6) fall
-// back to the English source instead of rendering wrong, so they aren't gated.
-function requiredPluralSuffixes(locale: string, base: string): string[] {
-  return pluralCategories(locale).filter(
-    (category) => category === 'other' || lookup(`${base}_${category}`) !== undefined
-  )
-}
-
 describe('settings and stats status labels', () => {
   it.each(Object.entries(REQUIRED_KEYS))('keeps %s in the English catalog', (key, expected) => {
     expect(lookup(key)).toBe(expected)
@@ -124,42 +95,4 @@ describe('settings and stats status labels', () => {
       expect(lookup(`auto.lib.orchestration.usage.examples.${id}`)).toBeTruthy()
     }
   })
-})
-
-// Translation lands incrementally and a missing key renders the English
-// `translate()` fallback, so absence is fine — a *present* value that drops a
-// placeholder or invents one interpolates to nothing at runtime, and a plural
-// family translated only halfway silently reverts to English for some counts.
-describe('shipped locale catalogs', () => {
-  it.each(Object.entries(LOCALE_CATALOGS))(
-    '%s keeps the English placeholders of every message it translates',
-    (_locale, catalog) => {
-      for (const key of Object.keys(INTERPOLATED_KEYS)) {
-        const localized = lookupIn(catalog, key)
-        if (localized === undefined) {
-          continue
-        }
-        const english = lookup(key)
-        expect(english, `${key} missing from en.json`).toBeDefined()
-        expect(placeholdersOf(localized), `${key} placeholders drifted`).toEqual(
-          placeholdersOf(english ?? '')
-        )
-      }
-    }
-  )
-
-  it.each(Object.entries(LOCALE_CATALOGS))(
-    '%s completes every plural family it translates',
-    (locale, catalog) => {
-      for (const base of PLURAL_KEYS) {
-        const suffixes = [...new Set([...pluralCategories(locale), ...pluralCategories('en')])]
-        if (!suffixes.some((suffix) => lookupIn(catalog, `${base}_${suffix}`))) {
-          continue
-        }
-        for (const suffix of requiredPluralSuffixes(locale, base)) {
-          expect(lookupIn(catalog, `${base}_${suffix}`), `${base}_${suffix} missing`).toBeTruthy()
-        }
-      }
-    }
-  )
 })

@@ -50,6 +50,18 @@ afterEach(async () => {
 })
 
 it('retranslates the settings nav labels when the UI language changes live', async () => {
+  // Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md),
+  // so a synthetic resource bundle stands in for a real second-locale catalog —
+  // this test exercises the memo's active-locale dependency, not a translation.
+  const SYNTHETIC_LOCALE = 'zz'
+  i18n.addResourceBundle(
+    SYNTHETIC_LOCALE,
+    'translation',
+    { auto: { hooks: { useSettingsNavigationMetadata: { b49abbd2f7: 'Agentes' } } } },
+    true,
+    true
+  )
+
   await act(async () => {
     await i18n.changeLanguage('en')
   })
@@ -58,7 +70,7 @@ it('retranslates the settings nav labels when the UI language changes live', asy
 
   // Same path as the Settings → Appearance language switch.
   await act(async () => {
-    await i18n.changeLanguage('es')
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
   })
 
   // Without the active-locale memo dep this stays 'Agents' (stale cache).

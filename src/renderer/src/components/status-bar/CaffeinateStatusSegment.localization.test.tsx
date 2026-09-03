@@ -49,73 +49,64 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenuSeparator: () => <hr />
 }))
 
-const localeCopy = [
-  [
-    'es',
+// Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md), so
+// a synthetic resource bundle stands in for a real second-locale catalog here —
+// this file's whole point is proving these strings come from translate() calls,
+// not a hardcoded English literal.
+const SYNTHETIC_LOCALE = 'zz'
+const SYNTHETIC_COPY = {
+  title: 'Mantener la computadora activa',
+  on: 'Activado',
+  auto: 'Agente',
+  off: 'Desactivado',
+  active: 'Activo',
+  inactive: 'Inactivo',
+  ariaLabel: 'Mantener la computadora activa, Desactivado · Inactivo',
+  onDescription: 'Mantener esta computadora activa en todo momento',
+  autoDescription: 'Mantener la computadora activa mientras un agente está trabajando',
+  offDescription: 'Permitir que el sistema entre en suspensión normalmente'
+} as const
+
+function registerSyntheticBundle(): void {
+  i18n.addResourceBundle(
+    SYNTHETIC_LOCALE,
+    'translation',
     {
-      title: 'Mantener la computadora activa',
-      on: 'Activado',
-      auto: 'Agente',
-      off: 'Desactivado',
-      active: 'Activo',
-      inactive: 'Inactivo',
-      ariaLabel: 'Mantener la computadora activa, Desactivado · Inactivo',
-      onDescription: 'Mantener esta computadora activa en todo momento',
-      autoDescription: 'Mantener la computadora activa mientras un agente está trabajando',
-      offDescription: 'Permitir que el sistema entre en suspensión normalmente'
-    }
-  ],
-  [
-    'ja',
-    {
-      title: 'コンピュータをスリープさせない',
-      on: 'オン',
-      auto: 'Agent',
-      off: 'オフ',
-      active: 'アクティブ',
-      inactive: '非アクティブ',
-      ariaLabel: 'コンピュータをスリープさせない、オフ · 非アクティブ',
-      onDescription: 'このコンピュータを常にスリープさせない',
-      autoDescription: 'Agent の作業中はスリープさせない',
-      offDescription: '通常のシステムスリープを許可する'
-    }
-  ],
-  [
-    'ko',
-    {
-      title: '컴퓨터 절전 방지',
-      on: '켜짐',
-      auto: '에이전트',
-      off: '꺼짐',
-      active: '활성',
-      inactive: '비활성',
-      ariaLabel: '컴퓨터 절전 방지, 꺼짐 · 비활성',
-      onDescription: '이 컴퓨터가 절전 모드로 전환되지 않도록 항상 유지',
-      autoDescription: '에이전트가 작업하는 동안 절전 모드로 전환되지 않도록 유지',
-      offDescription: '시스템의 기본 절전 동작 허용'
-    }
-  ],
-  [
-    'zh',
-    {
-      title: '防止电脑休眠',
-      on: '开启',
-      auto: '智能体',
-      off: '关闭',
-      active: '生效中',
-      inactive: '未生效',
-      ariaLabel: '防止电脑休眠，关闭 · 未生效',
-      onDescription: '始终防止此电脑进入睡眠状态',
-      autoDescription: '智能体工作时防止电脑进入睡眠状态',
-      offDescription: '允许系统正常进入睡眠状态'
-    }
-  ]
-] as const
+      auto: {
+        components: {
+          settings: {
+            'agent-awake-copy': { modeTitle: SYNTHETIC_COPY.title },
+            AgentAwakeSetting: {
+              on: SYNTHETIC_COPY.on,
+              auto: SYNTHETIC_COPY.auto,
+              off: SYNTHETIC_COPY.off
+            }
+          },
+          status: {
+            bar: {
+              CaffeinateStatusSegment: {
+                active: SYNTHETIC_COPY.active,
+                inactive: SYNTHETIC_COPY.inactive,
+                ariaLabel: '{{title}}, {{status}}',
+                onDescription: SYNTHETIC_COPY.onDescription,
+                autoDescription: SYNTHETIC_COPY.autoDescription,
+                offDescription: SYNTHETIC_COPY.offDescription
+              }
+            }
+          }
+        }
+      }
+    },
+    true,
+    true
+  )
+}
 
 let previousLanguage: string
 
 beforeAll(() => {
   previousLanguage = i18n.language
+  registerSyntheticBundle()
 })
 
 beforeEach(() => {
@@ -143,9 +134,9 @@ afterAll(async () => {
   await i18n.changeLanguage(previousLanguage)
 })
 
-describe('keep-awake copy under non-English UI languages', () => {
-  it.each(localeCopy)('%s resolves the shared title, modes, and activity', async (locale, copy) => {
-    await i18n.changeLanguage(locale)
+describe('keep-awake copy under a non-English UI language', () => {
+  it('resolves the shared title, modes, and activity', async () => {
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
 
     expect({
       title: getAgentAwakeTitle(),
@@ -180,11 +171,11 @@ describe('keep-awake copy under non-English UI languages', () => {
         'auto.components.status.bar.CaffeinateStatusSegment.offDescription',
         'Allow normal system sleep behavior'
       )
-    }).toEqual(copy)
+    }).toEqual(SYNTHETIC_COPY)
   })
 
-  it('renders the localized Chinese trigger and complete menu', async () => {
-    await i18n.changeLanguage('zh')
+  it('renders the localized trigger and complete menu', async () => {
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
     storeMocks.settings = {
       computerAwakeMode: 'auto',
       keepComputerAwakeWhileAgentsRun: true
@@ -194,23 +185,23 @@ describe('keep-awake copy under non-English UI languages', () => {
     render(<CaffeinateStatusSegment iconOnly={false} />)
 
     const trigger = await screen.findByRole('button', {
-      name: '防止电脑休眠，智能体 · 生效中'
+      name: 'Mantener la computadora activa, Agente · Activo'
     })
-    expect(trigger.textContent).toContain('智能体')
+    expect(trigger.textContent).toContain('Agente')
 
     const menu = screen.getByRole('menu')
-    await waitFor(() => expect(menu.textContent).toContain('防止电脑休眠'))
-    expect(menu.textContent).toContain('智能体 · 生效中')
+    await waitFor(() => expect(menu.textContent).toContain('Mantener la computadora activa'))
+    expect(menu.textContent).toContain('Agente · Activo')
     const [onItem, agentItem, offItem] = screen.getAllByRole('menuitemradio') as [
       HTMLElement,
       HTMLElement,
       HTMLElement
     ]
-    expect(within(onItem).getByText('开启')).toBeTruthy()
-    expect(within(onItem).getByText('始终防止此电脑进入睡眠状态')).toBeTruthy()
-    expect(within(agentItem).getByText('智能体')).toBeTruthy()
-    expect(within(agentItem).getByText('智能体工作时防止电脑进入睡眠状态')).toBeTruthy()
-    expect(within(offItem).getByText('关闭')).toBeTruthy()
-    expect(within(offItem).getByText('允许系统正常进入睡眠状态')).toBeTruthy()
+    expect(within(onItem).getByText(SYNTHETIC_COPY.on)).toBeTruthy()
+    expect(within(onItem).getByText(SYNTHETIC_COPY.onDescription)).toBeTruthy()
+    expect(within(agentItem).getByText(SYNTHETIC_COPY.auto)).toBeTruthy()
+    expect(within(agentItem).getByText(SYNTHETIC_COPY.autoDescription)).toBeTruthy()
+    expect(within(offItem).getByText(SYNTHETIC_COPY.off)).toBeTruthy()
+    expect(within(offItem).getByText(SYNTHETIC_COPY.offDescription)).toBeTruthy()
   })
 })

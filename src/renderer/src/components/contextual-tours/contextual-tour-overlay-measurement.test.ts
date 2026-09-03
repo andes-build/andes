@@ -2,7 +2,8 @@
 
 import { afterEach, describe, expect, it } from 'vitest'
 import { getContextualTour } from '../../../../shared/contextual-tours'
-import { setRendererUiLanguage } from '@/i18n/i18n'
+import { setRendererPluginLanguagePacks, setRendererUiLanguage } from '@/i18n/i18n'
+import { pluginLanguageResourceId } from '../../../../shared/plugins/plugin-language-pack-artifact'
 import {
   getContextualTourDisplayProgress,
   getContextualTourMeasurementAction,
@@ -10,14 +11,62 @@ import {
   isContextualTourLastDisplayStep
 } from './contextual-tour-overlay-measurement'
 
+// Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md), so
+// these tests exercise the same translate()-keyed lookup through a plugin
+// language pack instead of a built-in Korean catalog that no longer ships.
+const KOREAN_PACK_ID = 'plugin:orca-samples.korean/ko' as const
+const KOREAN_RESOURCE_LANGUAGE = pluginLanguageResourceId(KOREAN_PACK_ID)
+const KOREAN_CATALOG = {
+  auto: {
+    components: {
+      contextual: {
+        tours: {
+          contextual: {
+            tour: {
+              overlay: {
+                measurement: {
+                  automations: {
+                    intro: {
+                      title: '자동화란 무엇인가요?',
+                      body: '자동화는 일정에 따라 agent 작업을 실행합니다. 이 버튼을 눌러 자동화를 추가하세요.'
+                    },
+                    results: {
+                      title: '결과 확인',
+                      body: '실행 내역에서 자동화가 언제 실행되었는지, 어떤 일이 발생했는지, 출력을 어디서 확인할 수 있는지 볼 수 있습니다.'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+async function activateKorean(): Promise<void> {
+  setRendererPluginLanguagePacks([
+    {
+      id: KOREAN_PACK_ID,
+      resourceLanguage: KOREAN_RESOURCE_LANGUAGE,
+      pluginKey: 'orca-samples.korean',
+      locale: 'ko',
+      catalog: KOREAN_CATALOG
+    }
+  ])
+  await setRendererUiLanguage(KOREAN_PACK_ID)
+}
+
 afterEach(async () => {
   document.body.replaceChildren()
+  setRendererPluginLanguagePacks([])
   await setRendererUiLanguage('en')
 })
 
 describe('contextual tour overlay measurement', () => {
   it('renders the automation tour copy in Korean when the UI locale is Korean', async () => {
-    await setRendererUiLanguage('ko')
+    await activateKorean()
     const target = document.createElement('button')
     target.setAttribute('data-contextual-tour-target', 'automations-create')
     target.getBoundingClientRect = () => new DOMRect(0, 0, 20, 20)
@@ -42,7 +91,7 @@ describe('contextual tour overlay measurement', () => {
   })
 
   it('renders the automation results step in Korean when the UI locale is Korean', async () => {
-    await setRendererUiLanguage('ko')
+    await activateKorean()
     const target = document.createElement('div')
     target.setAttribute('data-contextual-tour-target', 'automations-runs')
     target.getBoundingClientRect = () => new DOMRect(0, 0, 20, 20)
@@ -67,7 +116,7 @@ describe('contextual tour overlay measurement', () => {
   })
 
   it('keeps localized copy on its own step when a step is inserted before it', async () => {
-    await setRendererUiLanguage('ko')
+    await activateKorean()
     const target = document.createElement('button')
     target.setAttribute('data-contextual-tour-target', 'automations-create')
     target.getBoundingClientRect = () => new DOMRect(0, 0, 20, 20)

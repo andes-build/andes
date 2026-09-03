@@ -283,15 +283,25 @@ describe('SidebarNav', () => {
   })
 
   it('updates localized labels when the language changes after mount', async () => {
+    // Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md),
+    // so a synthetic resource bundle stands in for a real second-locale catalog.
+    const SYNTHETIC_LOCALE = 'zz'
+    i18n.addResourceBundle(
+      SYNTHETIC_LOCALE,
+      'translation',
+      { auto: { components: { sidebar: { SidebarNav: { f323383e9a: 'Automatizaciones' } } } } },
+      true,
+      true
+    )
     const container = await renderSidebarNav()
 
     expect(queryButtonByText(container, 'Automations')).not.toBeNull()
 
     await act(async () => {
-      await i18n.changeLanguage('zh')
+      await i18n.changeLanguage(SYNTHETIC_LOCALE)
     })
 
-    expect(queryButtonByText(container, '自动化')).not.toBeNull()
+    expect(queryButtonByText(container, 'Automatizaciones')).not.toBeNull()
   })
 
   it('updates labels when pseudo-localization is enabled after mount', async () => {

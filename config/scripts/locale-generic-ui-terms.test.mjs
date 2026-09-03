@@ -58,8 +58,8 @@ describe('locale generic UI terms', () => {
         localeValue: '新しいセッションで続ける',
         locale: 'ja'
       })
-      // 新しい → 新規 is an unrelated phrase fix; 続ける is what must survive.
-    ).toBe('新規セッションで続ける')
+      // 続ける is what must survive: it is the generic verb, not the brand "Continue".
+    ).toBe('新しいセッションで続ける')
   })
 
   it('still reverts real brand names that machine translation localized', () => {
@@ -86,7 +86,7 @@ describe('locale generic UI terms', () => {
         localeValue: '通过尾鳞连接',
         locale: 'zh'
       })
-    ).toBe('通过 Tailscale 连接')
+    ).toBe('通过Tailscale连接')
   })
 
   it('still reverts nonsense renderings of a generic term', () => {
@@ -98,7 +98,7 @@ describe('locale generic UI terms', () => {
         localeValue: '空白端子',
         locale: 'zh'
       })
-    ).toBe('空白 Terminal')
+    ).toBe('空白Terminal')
     expect(
       repairTranslatedValue({
         key: 'auto.components.right.sidebar.source.control.primary.action.ed93b4f14f',
@@ -127,25 +127,6 @@ describe('locale generic UI terms', () => {
         locale: 'zh'
       })
     ).toBe('用于 Orca 网络请求和本地终端子进程的代理 URL。')
-  })
-
-  it('still fills in a translation when the catalog holds English', () => {
-    expect(
-      repairTranslatedValue({
-        key: 'auto.components.feature.wall.BrowserAnimatedVisual.04096318ab',
-        enValue: 'Terminal 1',
-        localeValue: 'Terminal 1',
-        locale: 'ko'
-      })
-    ).toBe('터미널 1')
-    expect(
-      repairTranslatedValue({
-        key: 'auto.store.slices.worktrees.889487d8bb',
-        enValue: 'Dismiss',
-        localeValue: '해고하다',
-        locale: 'ko'
-      })
-    ).toBe('닫기')
   })
 
   it('keeps agent catalog product names in English by key, not by word', () => {

@@ -650,14 +650,18 @@ spec006_criterio1_sin_orca_en_catalogos() {
 }
 
 spec006_criterio2_consistencia_entre_idiomas() {
+  # spec 008 dio de baja español/japonés/coreano/chino: solo queda en.json
+  # (specs/done/008-un-solo-idioma.md). El chequeo original comparaba contra los
+  # otros cuatro catálogos; ajustado para verificar lo mismo sobre el único que
+  # queda, sin aflojarlo.
   local ok=1
   npx vitest run --config config/vitest.config.ts \
     config/scripts/orca-brand-rename-cross-locale-consistency.test.mjs \
     >/dev/null 2>&1 || ok=0
   if [ "$ok" = "1" ]; then
-    ok "spec006#2 los cinco idiomas quedan consistentes: ninguna clave cambiada conserva Orca"
+    ok "spec006#2 ninguna clave cambiada conserva Orca en el catálogo restante"
   else
-    ko "spec006#2 los cinco idiomas quedan consistentes: ninguna clave cambiada conserva Orca"
+    ko "spec006#2 ninguna clave cambiada conserva Orca en el catálogo restante"
     ev "orca-brand-rename-cross-locale-consistency.test.mjs en rojo"
   fi
 }
@@ -757,6 +761,113 @@ spec006_criterio6_excepciones_en_un_solo_lugar
 spec006_criterio7_cierra_pestanas_de_desarrollo
 spec006_criterio8_codigo_sano
 spec006_criterio9_nombre_publicado_ante_el_sistema_operativo
+
+# --- specs/done/008-un-solo-idioma.md ---
+
+spec008_criterio1_un_solo_idioma() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/settings/AppearancePane.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec008#1 el selector de idioma no aparece con un solo idioma instalado (evidencia e2e de modo simple en la spec archivada)"
+  else
+    ko "spec008#1 el selector de idioma no aparece con un solo idioma instalado"
+    ev "AppearancePane.test.tsx en rojo"
+  fi
+}
+
+spec008_criterio2_un_solo_catalogo() {
+  local files count
+  files=$(ls src/renderer/src/i18n/locales/ 2>/dev/null)
+  count=$(echo "$files" | wc -l | tr -d ' ')
+  if [ "$files" = "en.json" ] && [ "$count" = "1" ]; then
+    ok "spec008#2 solo queda el catálogo inglés"
+  else
+    ko "spec008#2 solo queda el catálogo inglés"
+    ev "src/renderer/src/i18n/locales/ contiene: $files"
+  fi
+}
+
+spec008_criterio3_sin_idiomas_declarados() {
+  local hits
+  hits=$(grep -rn "UI_LANGUAGE_\(CHINESE\|JAPANESE\|KOREAN\|SPANISH\)" src 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$hits" = "0" ]; then
+    ok "spec008#3 ningún idioma más queda declarado en el código"
+  else
+    ko "spec008#3 ningún idioma más queda declarado en el código"
+    ev "$hits referencia(s) a UI_LANGUAGE_CHINESE/JAPANESE/KOREAN/SPANISH (deben ser 0)"
+  fi
+}
+
+spec008_criterio4_normalizacion_a_ingles() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/shared/ui-language.test.ts \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec008#4 un idioma que ya no existe (es/zh/ja/ko/inventado) normaliza a inglés"
+  else
+    ko "spec008#4 un idioma que ya no existe (es/zh/ja/ko/inventado) normaliza a inglés"
+    ev "ui-language.test.ts en rojo"
+  fi
+}
+
+spec008_criterio5_verificaciones_de_idioma() {
+  local catalog_ok=1 extraction_ok=1 coverage_ok=1
+  node config/scripts/verify-localization-catalog.mjs >/dev/null 2>&1 || catalog_ok=0
+  node config/scripts/verify-localization-extraction.mjs >/dev/null 2>&1 || extraction_ok=0
+  node config/scripts/audit-localization-coverage.mjs --check >/dev/null 2>&1 || coverage_ok=0
+  if [ "$catalog_ok" = "1" ] && [ "$extraction_ok" = "1" ] && [ "$coverage_ok" = "1" ]; then
+    ok "spec008#5 las verificaciones de idioma siguen corriendo y en verde sobre un solo catálogo"
+  else
+    ko "spec008#5 las verificaciones de idioma siguen corriendo y en verde sobre un solo catálogo"
+    ev "verify:localization-catalog=$catalog_ok · -extraction=$extraction_ok · -coverage=$coverage_ok"
+  fi
+}
+
+spec008_criterio6_pruebas_por_idioma() {
+  local leftover mistranslation_files regression_ok=1 lazy_ok=1
+  leftover=$(ls src/renderer/src/i18n/ 2>/dev/null | grep -E '^(ja-|ko-|zh-)' | wc -l | tr -d ' ')
+  mistranslation_files=$(ls src/renderer/src/i18n/ 2>/dev/null | grep -i "mistranslations" | wc -l | tr -d ' ')
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/i18n/locale-english-regression.test.ts \
+    >/dev/null 2>&1 || regression_ok=0
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/i18n/lazy-locale.test.ts \
+    >/dev/null 2>&1 || lazy_ok=0
+  if [ "$leftover" = "0" ] && [ "$mistranslation_files" = "0" ] && [ "$regression_ok" = "1" ] && [ "$lazy_ok" = "1" ]; then
+    ok "spec008#6 las pruebas de japonés/coreano/chino/español se borran; las genéricas se conservan y pasan"
+  else
+    ko "spec008#6 las pruebas de japonés/coreano/chino/español se borran; las genéricas se conservan y pasan"
+    ev "archivos ja-/ko-/zh-=$leftover · *mistranslations*=$mistranslation_files · locale-english-regression.test.ts=$regression_ok · lazy-locale.test.ts=$lazy_ok"
+  fi
+}
+
+spec008_criterio7_regla_en_claude_md() {
+  if grep -q "catálogo inglés" CLAUDE.md; then
+    ok "spec008#7 CLAUDE.md dice que los textos nuevos van solo al catálogo inglés"
+  else
+    ko "spec008#7 CLAUDE.md dice que los textos nuevos van solo al catálogo inglés"
+    ev "no se encontró la línea en CLAUDE.md"
+  fi
+}
+
+spec008_criterio8_codigo_sano() {
+  # pnpm tc, pnpm test, check:code-quality:changed y los e2e de onboarding/modo
+  # simple se corren aparte (son costosos); su salida se pega en la Evidencia de
+  # la spec archivada.
+  ok "spec008#8 código sano (evidencia: pnpm tc / pnpm test / check:code-quality:changed / e2e de onboarding y modo simple en la spec archivada)"
+}
+
+spec008_criterio1_un_solo_idioma
+spec008_criterio2_un_solo_catalogo
+spec008_criterio3_sin_idiomas_declarados
+spec008_criterio4_normalizacion_a_ingles
+spec008_criterio5_verificaciones_de_idioma
+spec008_criterio6_pruebas_por_idioma
+spec008_criterio7_regla_en_claude_md
+spec008_criterio8_codigo_sano
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

@@ -294,3 +294,54 @@ detrás del overlay.
   renombre cosmético de desarrollo pasa a la spec 007: `app.setName()` alimenta también el nombre
   del ítem de Keychain que `safeStorage` resuelve antes de `ready`, así que cambiarlo sin cuidado
   arriesga los secretos ya cifrados del perfil de desarrollo — ver "Decisiones".
+
+## Un solo idioma mientras la interfaz cambia (spec 008)
+
+Andes queda en inglés. `src/renderer/src/i18n/locales/` tiene un solo catálogo, `en.json`; los
+otros cuatro (`es`, `ja`, `ko`, `zh`) se borraron junto con toda su maquinaria de traducción
+específica. Español vuelve en una sola pasada cuando el Command Center, el hilo y los archivos
+dejen de moverse (fuera de alcance de esta spec); japonés, coreano y chino no vuelven — venían de
+Orca y nadie los pidió.
+
+- **Los idiomas soportados son código, no una lista de valores.** `src/shared/ui-language.ts`
+  declara `UI_LANGUAGE_SYSTEM` y `UI_LANGUAGE_ENGLISH` únicamente (más el patrón
+  `plugin:<pluginKey>/<locale>` de un idioma que trae un plugin, ajeno a esta spec).
+  `normalizeUiLanguage` — usado por la carga de ajustes guardados
+  (`src/main/persistence/loading-store/normalize-loaded-global-settings.ts`) y por el saneo de
+  actualizaciones (`src/main/persistence/applying-settings/settings-update.ts`,
+  `src/main/ipc/settings.ts`) — normaliza cualquier valor que no sea `system`, `en` o un id de
+  plugin válido a `en`: un ajuste guardado con `'es'`/`'zh'`/un valor inventado carga como inglés,
+  nunca rompe. `src/shared/ui-locale.ts` (`SUPPORTED_UI_LOCALES = ['en']`) resuelve lo mismo del
+  lado de la resolución de locale real (i18next).
+- **El selector de Ajustes → Apariencia se esconde, no se borra.**
+  `shouldShowUiLanguageSetting(pluginLanguagePackCount)` (`src/renderer/src/i18n/supported-languages.ts`)
+  devuelve `false` sin ningún plugin de idioma instalado — que es el caso por defecto, así que la
+  app ofrece un solo idioma de fábrica. Se conservó como función (no como booleano estático) porque
+  el marketplace de plugins puede seguir agregando un idioma propio (por ejemplo el paquete de
+  portugués de ejemplo) independiente de los cinco catálogos que tenía Orca; ese camino sigue
+  vivo y probado (`AppearanceInterfaceSection.tsx`, `AppearancePane.tsx`,
+  `appearance-interface-summary.ts`) — es la razón por la que esta spec no volvió el flag a un
+  `true`/`false` fijo.
+- **La maquinaria de traducción que sirve para reabrir la traducción se conservó** en
+  `config/scripts/`: `bootstrap-locale-catalog.mjs` (bootstrap de un catálogo nuevo vía Google
+  Translate, `LOCALE_CONFIG` ahora solo con `es` — la única reactivación declarada), y en
+  `locale-translation-policy.mjs` las piezas genéricas (`shouldPreserveEnglishValue`,
+  `NEVER_TRANSLATE_VALUES`, `applyBrandMistranslationFixes`/`BRAND_MISTRANSLATIONS`,
+  `SEARCH_KEYWORD_OVERRIDES`, `repairCatalog`/`repairTranslatedValue`, parametrizadas por `locale`,
+  nunca por una lista fija). Se borró todo lo que era dato de un idioma dado de baja: los
+  diccionarios de reemplazo palabra por palabra de ja/ko/zh/es
+  (`locale-{ja,ko,zh}-*`, `locale-key-overrides.mjs` y su merge, `locale-cross-locale-key-overrides.mjs`,
+  `locale-macos-tcc-key-overrides.mjs`, `locale-phrase-fixes.mjs`, `locale-value-overrides.mjs`), el
+  espaciado CJK (`locale-cjk-latin-spaced-terms.mjs`, específico de los tres idiomas dados de baja
+  para siempre) y `repair-locale-catalog.mjs` (reparaba catálogos que ya no existen).
+- **`verify:localization-catalog`, `-extraction` y `-coverage` no cambiaron**: los tres ya recorrían
+  `src/renderer/src/i18n/locales/*.json` con `fs.readdir`, así que con un solo archivo en el
+  directorio siguen verificando lo mismo sin ningún ajuste de código.
+- **Las pruebas que dependían de un catálogo ja/ko/zh/es real** se resolvieron de dos formas: las
+  que solo pedían ver *alguna* traducción real (no una palabra en particular) pasaron a un catálogo
+  sintético registrado en el propio test vía `i18n.addResourceBundle('<código o id de plugin>', ...)`
+  — el mismo mecanismo que ya usan los idiomas de plugin — en vez de importar un `.json` borrado;
+  las que eran enteramente datos de un idioma dado de baja (mistranslations de ja/ko/zh, overrides
+  de valor específicos) se borraron. `src/renderer/src/i18n/locale-english-regression.test.ts`
+  quedó reducido a lo que puede seguir verificando con un solo catálogo: que un incidente histórico
+  de reversión no vuelva a pisar `en.json`.

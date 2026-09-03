@@ -67,9 +67,77 @@ function triggerText(): string {
   return screen.getByRole('button').textContent ?? ''
 }
 
+// Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md), so
+// a synthetic resource bundle stands in for a real second-locale catalog here —
+// this file's whole point is proving these strings come from translate() calls,
+// not a hardcoded English literal, so any distinct translated text works.
+const SYNTHETIC_LOCALE = 'zz'
+const COPY = {
+  terminalSessionCountOne: '{{count}} sesión de terminal',
+  terminalSessionCountOther: '{{count}} sesiones de terminal',
+  spaceScanReady: 'Escaneo de espacio listo',
+  memoryUnavailable: 'memoria no disponible',
+  tooltipSummary: 'Administrador de recursos - {{memory}} - {{sessions}}',
+  sessionsGroupedByWorkspace: 'Las sesiones de terminal se agrupan por workspace.',
+  noTerminalSessions: 'Todavía no hay sesiones de terminal.',
+  ariaLabelWithSpaceScan: 'Administrador de recursos, {{sessions}}, {{spaceScan}}',
+  ariaLabel: 'Administrador de recursos, {{sessions}}',
+  sshAriaLabel: 'Estado de conexión de hosts remotos',
+  connectedHostCountOne: '{{count}} host conectado',
+  connectedHostCountOther: '{{count}} hosts conectados',
+  connecting: 'Conectando…',
+  workspaceConflict: 'Conflicto de workspace',
+  workspaceSyncError: 'Error de sincronización de workspace'
+}
+
+function registerSyntheticBundle(): void {
+  i18n.addResourceBundle(
+    SYNTHETIC_LOCALE,
+    'translation',
+    {
+      auto: {
+        components: {
+          status: {
+            bar: {
+              resource: {
+                manager: {
+                  terminal: {
+                    copy: {
+                      terminalSessionCount_one: COPY.terminalSessionCountOne,
+                      terminalSessionCount_other: COPY.terminalSessionCountOther,
+                      spaceScanReady: COPY.spaceScanReady,
+                      memoryUnavailable: COPY.memoryUnavailable,
+                      tooltipSummary: COPY.tooltipSummary,
+                      sessionsGroupedByWorkspace: COPY.sessionsGroupedByWorkspace,
+                      noTerminalSessions: COPY.noTerminalSessions,
+                      ariaLabelWithSpaceScan: COPY.ariaLabelWithSpaceScan,
+                      ariaLabel: COPY.ariaLabel
+                    }
+                  }
+                }
+              },
+              SshStatusSegment: {
+                fdc57e9970: COPY.sshAriaLabel,
+                connectedHostCount_one: COPY.connectedHostCountOne,
+                connectedHostCount_other: COPY.connectedHostCountOther,
+                connecting: COPY.connecting,
+                workspaceConflict: COPY.workspaceConflict,
+                workspaceSyncError: COPY.workspaceSyncError
+              }
+            }
+          }
+        }
+      }
+    },
+    true,
+    true
+  )
+}
+
 describe('status-bar copy under a non-English UI language', () => {
   beforeAll(async () => {
-    await i18n.changeLanguage('ja')
+    registerSyntheticBundle()
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
   })
 
   afterEach(() => {
@@ -81,8 +149,12 @@ describe('status-bar copy under a non-English UI language', () => {
   })
 
   it('translates both plural forms of the terminal session count', () => {
-    expect(formatTerminalSessionCount(1)).toBe('1 件のターミナルセッション')
-    expect(formatTerminalSessionCount(5)).toBe('5 件のターミナルセッション')
+    expect(formatTerminalSessionCount(1)).toBe(
+      COPY.terminalSessionCountOne.replace('{{count}}', '1')
+    )
+    expect(formatTerminalSessionCount(5)).toBe(
+      COPY.terminalSessionCountOther.replace('{{count}}', '5')
+    )
   })
 
   it('translates every Resource Manager tooltip line', () => {
@@ -95,13 +167,13 @@ describe('status-bar copy under a non-English UI language', () => {
     ).toEqual([
       {
         id: 'summary',
-        text: 'リソースマネージャー - 512 MB - 2 件のターミナルセッション',
+        text: 'Administrador de recursos - 512 MB - 2 sesiones de terminal',
         emphasized: false
       },
-      { id: 'space-scan', text: '容量スキャンの準備完了', emphasized: true },
+      { id: 'space-scan', text: COPY.spaceScanReady, emphasized: true },
       {
         id: 'sessions-hint',
-        text: 'ターミナルセッションはワークスペースごとにグループ化されます。',
+        text: COPY.sessionsGroupedByWorkspace,
         emphasized: false
       }
     ])
@@ -118,7 +190,7 @@ describe('status-bar copy under a non-English UI language', () => {
 
     const emphasized = lines.filter((line) => line.emphasized)
     expect(emphasized).toHaveLength(1)
-    expect(emphasized[0]?.text).toBe('容量スキャンの準備完了')
+    expect(emphasized[0]?.text).toBe(COPY.spaceScanReady)
     expect(emphasized[0]?.text).not.toBe('Space scan ready')
   })
 
@@ -128,19 +200,19 @@ describe('status-bar copy under a non-English UI language', () => {
     ).toEqual([
       {
         id: 'summary',
-        text: 'リソースマネージャー - メモリ情報を取得できません - 0 件のターミナルセッション',
+        text: 'Administrador de recursos - memoria no disponible - 0 sesiones de terminal',
         emphasized: false
       },
-      { id: 'sessions-hint', text: 'ターミナルセッションはまだありません。', emphasized: false }
+      { id: 'sessions-hint', text: COPY.noTerminalSessions, emphasized: false }
     ])
   })
 
   it('translates the Resource Manager trigger label read by screen readers', () => {
     expect(getResourceManagerAriaLabel({ sessionCount: 1, spaceScanReady: true })).toBe(
-      'リソースマネージャー、1 件のターミナルセッション、容量スキャンの準備完了'
+      'Administrador de recursos, 1 sesión de terminal, Escaneo de espacio listo'
     )
     expect(getResourceManagerAriaLabel({ sessionCount: 3, spaceScanReady: false })).toBe(
-      'リソースマネージャー、3 件のターミナルセッション'
+      'Administrador de recursos, 3 sesiones de terminal'
     )
   })
 
@@ -151,21 +223,21 @@ describe('status-bar copy under a non-English UI language', () => {
     ])
     render(<SshStatusSegment compact={false} iconOnly={false} />)
 
-    expect(screen.getByRole('button').getAttribute('aria-label')).toBe('リモートホスト接続状態')
-    expect(triggerText()).toContain('2 台のホスト')
+    expect(screen.getByRole('button').getAttribute('aria-label')).toBe(COPY.sshAriaLabel)
+    expect(triggerText()).toContain('2 hosts conectados')
   })
 
   it('translates the singular host count', () => {
     setSshTargets([{ id: 'ssh-1', label: 'builder', status: 'connected' }])
     render(<SshStatusSegment compact={false} iconOnly={false} />)
 
-    expect(triggerText()).toContain('1 台のホスト')
+    expect(triggerText()).toContain('1 host conectado')
   })
 
   it('translates the connecting and workspace-sync states', () => {
     setSshTargets([{ id: 'ssh-1', label: 'builder', status: 'connecting' }])
     render(<SshStatusSegment compact={false} iconOnly={false} />)
-    expect(triggerText()).toContain('接続中…')
+    expect(triggerText()).toContain(COPY.connecting)
     cleanup()
 
     setSshTargets([
@@ -173,11 +245,11 @@ describe('status-bar copy under a non-English UI language', () => {
       { id: 'ssh-2', label: 'openclaw', status: 'connected', syncPhase: 'error' }
     ])
     render(<SshStatusSegment compact={false} iconOnly={false} />)
-    expect(triggerText()).toContain('ワークスペースの競合')
+    expect(triggerText()).toContain(COPY.workspaceConflict)
     cleanup()
 
     setSshTargets([{ id: 'ssh-1', label: 'builder', status: 'connected', syncPhase: 'error' }])
     render(<SshStatusSegment compact={false} iconOnly={false} />)
-    expect(triggerText()).toContain('ワークスペースの同期エラー')
+    expect(triggerText()).toContain(COPY.workspaceSyncError)
   })
 })

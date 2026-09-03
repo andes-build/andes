@@ -16487,6 +16487,60 @@
       "HostedReviewUnlinkMenuItem": {
         "label": "Unlink {{value0}} from workspace",
         "description": "Andes will hide {{value0}} {{value1}} details for this workspace. The {{value0}} and branch on {{value2}} won’t be changed."
+      },
+      "files": {
+        "WorkspaceNodeName": {
+          "whatThisIs": "What this is",
+          "decisions": "Decisions",
+          "learnings": "Learnings",
+          "backlog": "Backlog",
+          "initiatives": "Initiatives",
+          "research": "Research"
+        },
+        "FilesPage": {
+          "title": "Files",
+          "subtitleForWorkspace": "What lives in {{workspace}}",
+          "subtitleForRoot": "What lives in My work",
+          "emptyTree": "This workspace has no files yet.",
+          "selectFilePrompt": "Select a file to read it.",
+          "openThreadButton": "Open a thread about this file",
+          "loadError": "Could not read this file."
+        }
+      },
+      "workspaceScope": {
+        "WorkspaceScopeSelector": {
+          "rootLabel": "My work",
+          "changeLabel": "Workspace · change",
+          "newWorkspaceLabel": "New workspace",
+          "menuTitle": "Switch workspace"
+        },
+        "SimpleModeNav": {
+          "newThread": "New thread",
+          "commandCenter": "Command Center",
+          "files": "Files",
+          "agentsAndSkills": "Agents & skills",
+          "more": "More"
+        },
+        "SimpleModeMoreMenu": {
+          "settings": "Settings"
+        },
+        "RecentThreadsSection": {
+          "title": "Recent threads",
+          "viewHistory": "View history",
+          "empty": "No recent threads yet"
+        },
+        "CommandCenterComingSoon": {
+          "title": "Command Center",
+          "description": "Coming soon."
+        },
+        "SimpleModeSidebarEmptyStates": {
+          "noWorkspacesTitle": "No workspaces yet",
+          "noWorkspacesDescription": "This folder doesn't have a workspaces folder yet. Create one to start organizing your work.",
+          "emptyWorkspaceTitle": "This workspace is empty",
+          "emptyWorkspaceDescription": "Nothing has been written here yet.",
+          "folderNotReadyTitle": "This folder isn't set up yet",
+          "folderNotReadyDescription": "Finish onboarding to prepare this folder before opening a workspace."
+        }
       }
     },
     "i18n": {

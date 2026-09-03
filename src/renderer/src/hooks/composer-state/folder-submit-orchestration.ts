@@ -130,6 +130,7 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
                 {
                   experimentalNativeChat: settings?.experimentalNativeChat,
                   openAgentTabsInChatByDefault: settings?.openAgentTabsInChatByDefault,
+                  interfaceMode: settings?.interfaceMode,
                   nativeChatSessionOptions: settings?.nativeChatSessionOptions
                 },
                 {
@@ -205,6 +206,7 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
       settings?.agentDefaultEnv,
       settings?.autoRenameBranchFromWork,
       settings?.experimentalNativeChat,
+      settings?.interfaceMode,
       settings?.nativeChatSessionOptions,
       settings?.openAgentTabsInChatByDefault,
       settings?.terminalWindowsShell,

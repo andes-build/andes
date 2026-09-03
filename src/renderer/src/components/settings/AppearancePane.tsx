@@ -295,10 +295,7 @@ export function AppearancePane({
           ])}
           className="max-w-none px-1 pt-2"
         >
-          <AppIconSelector
-            value={normalizeAppIconId(settings.appIcon)}
-            onChange={(appIcon) => updateSettings({ appIcon })}
-          />
+          <AppIconSelector value={normalizeAppIconId(settings.appIcon)} />
         </SearchableSetting>
       ) : null}
     </div>

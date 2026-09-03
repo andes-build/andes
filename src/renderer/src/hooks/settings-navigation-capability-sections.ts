@@ -4,7 +4,7 @@ import { getComputerUsePaneSearchEntries } from '@/components/settings/computer-
 import { getGeneralPaneSearchEntries } from '@/components/settings/general-search'
 import { getIntegrationsPaneSearchEntries } from '@/components/settings/integrations-search'
 import { getOrcaAccountSettingsSearchEntries } from '@/components/settings/orca-account-settings-search'
-import { OrcaLogoSettingsIcon } from '@/components/settings/orca-logo-settings-icon'
+import { AndesLogoSettingsIcon } from '@/components/settings/andes-logo-settings-icon'
 import { getOrchestrationPaneSearchEntries } from '@/components/settings/orchestration-search'
 import { getVoicePaneSearchEntries } from '@/components/settings/voice-pane-search'
 import { translate } from '@/i18n/i18n'
@@ -129,7 +129,7 @@ export function buildSetupSettingsSections({
         'auto.hooks.useSettingsNavigationMetadata.5f32ac08f3',
         'Finish the onboarding checklist for core Andes workflows.'
       ),
-      icon: OrcaLogoSettingsIcon,
+      icon: AndesLogoSettingsIcon,
       searchEntries: [
         {
           title: translate(

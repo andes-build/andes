@@ -912,3 +912,76 @@ confirmó que eran suyos y que no había que investigar nada.
 **La invalidaría**: nada — es historia de cómo se armó esta rama. La regla de un worktree por agente
 sigue valiendo para el resto de la iniciativa; esto fue una excepción puntual y reconocida, no un
 cambio de regla.
+## 2026-09-03 · [spec 011] El hilo se entrega en dos etapas; esta etapa usa el puente existente, no el canal de datos
+
+**Qué se decide**: la spec 011 pedía que el permiso del agente llegara **como dato**, no leyendo la
+pantalla de una terminal. El criterio 0 encontró que hoy, para Claude, llega leyendo la terminal y
+mandando teclas (el único adaptador de sesión estructurada existente es para Codex —
+`src/main/codex/codex-structured-session-adapter.ts` — y
+`structured-agent-session-provider-support.ts:14` sólo habilita `agent === 'codex'`). Peter, vía la
+sesión supervisora, decidió no bloquear la entrega: esta etapa saca la conversación de detrás del
+ajuste experimental y hace funcionar la tarjeta de permiso **sobre el puente existente** (teclas),
+y deja "el permiso llega como dato" (criterio 2b) como una spec aparte, con el hallazgo del
+criterio 0 como su estado previo.
+
+**Por qué**: la prioridad explícita de Peter era poder crear hilos y conversar cuanto antes; para
+el operador, hoy, la tarjeta se ve y funciona igual en los dos casos (por dato o por teclas). Parar
+la entrega completa hasta construir el adaptador de datos para Claude —que no existe hoy y es
+trabajo no trivial— hubiera dejado a Peter sin nada que probar. El criterio original (permiso por
+datos) no se abandona: queda declarado, con su motivo original intacto (es lo único que permite
+dibujar el permiso como tarjeta *de verdad*, sin depender de leer una pantalla), como el criterio
+de apertura de la próxima spec.
+
+**La invalidaría**: que la próxima spec (el canal de datos para Claude) resuelva que el puente
+actual no alcanza ni como paso intermedio — por ejemplo, si aparece un caso donde la tarjeta por
+teclas se desincroniza de lo que la terminal real está mostrando y eso rompe la confianza del
+operador antes de que el canal de datos esté listo.
+## 2026-09-03 · [spec 014] El ícono de 200×200 de Peter se escala a 1024 con `sips`, sin pasar por Icon Composer
+
+**Qué se decide**: `resources/build/icon.icns`, `icon.png` y `resources/icon.png`/`icon-dev.png` se
+generan escalando `/tmp/andes-icon-dock.png` (200×200) a 1024×1024 con `sips`, y el `.icns` se arma
+con `iconutil` desde un iconset de tamaños estándar (16 a 1024) generado también con `sips` — no se
+usó `resources/icon-source/generate.sh` (que compila un proyecto `.icon` de Icon Composer con
+`xcrun actool`), porque ese proyecto sigue teniendo la fuente vectorial de la ballena y reemplazarla
+exige un logo vectorial real, que no existe todavía.
+
+**Por qué**: el criterio de la spec pedía reemplazar los íconos ya, con lo que Peter entregó. Un
+archivo de 200 píxeles escalado 5× para el instalador (1024) pierde nitidez en los tamaños grandes
+comparado con un origen ya vectorial o de mayor resolución — se avisa acá en vez de forzar una
+fidelidad que el archivo de origen no tiene.
+
+**La invalidaría**: que Peter entregue un logo vectorial (SVG) o un raster de al menos 1024×1024,
+momento en el que conviene además volver a armar `resources/icon-source/icon.icon` con ese vector y
+retomar `generate.sh` como fuente de verdad del ícono.
+
+## 2026-09-03 · [spec 014] El logo de la interfaz (`resources/logo.svg`) es el isologo embebido como raster, no un vector propio
+
+**Qué se decide**: `resources/logo.svg` y `resources/icon-source/icon.icon/Assets/logo.svg` envuelven
+el PNG que entregó Peter (`/tmp/andes-logo-real.png`) dentro de una etiqueta `<image>` con los datos
+en base64, en vez de redibujar el isologo como trazos vectoriales.
+
+**Por qué**: no había un archivo `.svg` vectorial entre lo que Peter entregó, y redibujar a mano un
+logo ajeno como vector introduce el riesgo de una copia imprecisa. Envolver el raster mantiene la
+extensión `.svg` (que es lo que importan los componentes existentes) y el `viewBox` cuadrado
+(201×201) sin escalar mal la imagen. El costo es que el logo no escala con nitidez infinita como un
+vector real.
+
+**La invalidaría**: que Peter entregue el logo como `.svg` vectorial, momento en el que se reemplaza
+el contenido de estos dos archivos por el vector real.
+
+## 2026-09-03 · [spec 014] `AppIconSelector` deja de tener flechas de ciclado con una sola opción
+
+**Qué se decide**: con `APP_ICON_OPTIONS` reducido a una sola entrada (Andes), `AppIconSelector.tsx`
+ya no ofrece botones de "ícono anterior/siguiente": solo muestra el ícono actual. `src/main/app-icon.ts`
+pierde la rama de "persistir un ícono personalizado" en el Dock (`runMacCustomIconCommand` y las
+rutas de AppleScript que la acompañaban): con una sola opción esa rama nunca se ejecutaba, así que
+quedaba como código muerto.
+
+**Por qué**: el pedido explícito de la spec ("Borrá los íconos alternativos del selector en vez de
+dejarlos elegibles"). Dejar las flechas de ciclado con un solo destino (ciclar sobre sí mismo) no
+tiene ninguna utilidad y solo agrega una interacción sin efecto; la regla del repo sobre no dejar
+código de intentos abandonados en el diff (`CLAUDE.md` del brain, Definition of Done) pesó igual
+para borrar la rama muerta de persistencia del ícono personalizado en vez de dejarla sin usar.
+
+**La invalidaría**: que Andes vuelva a ofrecer más de un ícono de aplicación, momento en el que
+`AppIconSelector` recupera las flechas y `app-icon.ts` recupera la rama de ícono personalizado.

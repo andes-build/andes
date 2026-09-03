@@ -10,7 +10,9 @@ import { resolveNativeChatLaunchSessionOptions } from './native-chat-session-opt
 type NativeChatLaunchSettings = Pick<
   GlobalSettings,
   'experimentalNativeChat' | 'openAgentTabsInChatByDefault' | 'nativeChatSessionOptions'
->
+> & {
+  interfaceMode?: GlobalSettings['interfaceMode']
+}
 
 export type InitialNativeChatSessionOptionsArgs = {
   agent: TuiAgent
@@ -26,6 +28,7 @@ export function resolveInitialNativeChatSessionOptions(
   const viewMode = decideInitialAgentTabViewMode({
     experimentalNativeChat: settings?.experimentalNativeChat,
     openAgentTabsInChatByDefault: settings?.openAgentTabsInChatByDefault,
+    interfaceMode: settings?.interfaceMode,
     ...args
   })
   return viewMode === 'chat'

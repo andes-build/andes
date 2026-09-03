@@ -369,3 +369,95 @@ Es una corrección de una línea, sin relación con el árbol de Linear.
 
 **La invalidaría**: nada — es un hecho verificado (reproducido en el commit base sin cambios),
 no una apuesta.
+
+## 2026-09-03 · [spec 002] La lectura del modo vive en `useInterfaceMode()`, un solo hook sobre `settings`
+
+**Qué se decide**: `src/renderer/src/hooks/useInterfaceMode.ts` lee
+`state.settings?.interfaceMode ?? 'simple'` del store y es el único punto que el resto del
+renderer consulta (`useSettingsNavigationMetadata`, `useRightSidebarActivityItems`,
+`SidebarHeaderActions`, `useTabBarQuickCommandsShortcut`). No hay una copia del modo en estado de
+UI persistido: `interfaceMode` vive solo en `GlobalSettings`.
+
+**Por qué**: la spec delega "un hook `useInterfaceMode()` sobre el store de ajustes, o pasar
+`interfaceMode` por `SettingsNavigationBuildOptions`" con el criterio de "un solo punto de verdad,
+sin duplicar la preferencia en el estado de UI persistido". El hook cubre ambos: los consumidores
+que ya reciben opciones armadas (`buildSettingsNavigationMetadata`) reciben `interfaceMode` como
+parámetro explícito calculado una sola vez por `useInterfaceMode()` en el hook que envuelve esa
+función pura; los demás lo llaman directamente.
+
+**La invalidaría**: que aparezca un segundo lugar que necesite el modo antes de que
+`useAppStore` esté listo (por ejemplo, un componente montado fuera del `Provider`), lo que pediría
+un mecanismo adicional.
+
+## 2026-09-03 · [spec 002] El criterio 5 no tiene un registro único de comandos: cada superficie se cierra en su propio punto de entrada
+
+**Qué se decide**: no existe en el repo un despachador central de comandos/atajos que cubra las 15
+superficies del criterio 5 (confirmado revisando `app-command-handlers.ts`,
+`workspace-shortcut-ipc-bridge.ts`, `content-creation-ipc-bridge.ts`,
+`settings-sidebar-ipc-bridge.ts`, `terminal-workspace-keydown.ts` y `quick-actions.ts`: ninguno
+enumera las 15, cada uno resuelve un subconjunto distinto). Siguiendo el criterio delegado
+("si están dispersos, condición por comando y una lista única exportada desde `src/shared/` que
+los tests recorran"), `src/shared/simple-mode-blocked-surfaces.ts` exporta la lista cerrada de 15
+ids y cada superficie se bloquea en su función de más alto nivel real, reusando infraestructura
+existente en vez de duplicarla:
+
+- cmd-j, workspace-cleanup, new-workspace → `openModal` (`ui-slice-modal-actions.ts`), un guard
+  único porque las tres son modales del mismo `activeModal`.
+- task-page, automations, artifacts → `openTaskPage`, `openAutomationsPage`, `openArtifactsPage`
+  (`ui-slice-task-actions.ts`, `ui-slice-view-actions.ts`).
+- browser-pane, emulator-pane → `resolveClientCreationActionPolicy`
+  (`client-creation-action-policy.ts`), la política que ya gateaba estas dos acciones para SSH/web
+  y que además filtra los atajos correspondientes en el panel de Shortcuts.
+- dashboard, dashboard-popout → `toggleAgentDashboardFromShortcut`
+  (`agent-dashboard-command.ts`).
+- floating-terminal → el `enabled` de `useFloatingWorkspacePanel`
+  (`use-floating-workspace-panel.ts`), que ya gatea el botón, el atajo y el montaje del panel.
+- terminal-quick-commands → el listener de `useTabBarQuickCommandsShortcut`
+  (`tab-bar-quick-commands-shortcut.ts`).
+
+**Por qué**: un despachador nuevo hubiera sido una segunda implementación paralela a la que ya
+gatea cada acción por SSH/web/plataforma, violando "Reuse Before Reimplementing" de `AGENTS.md`.
+Gatear en la función de más alto nivel real (no en cada sitio de disparo — shortcut, menú, cmd-j,
+botón) cubre los tres canales que pide el criterio ("ni por menú ni por atajo ni por comando") con
+un solo `if` por superficie.
+
+**La invalidaría**: que aparezca un registro central de comandos en una refactorización futura,
+momento en el que estos guards dispersos se consolidan en él.
+
+## 2026-09-03 · [spec 002] `pull-request-page`, `stats` y `pet` no tienen un comando o atajo propio hoy — se quedan cubiertos solo por la UI ya escondida
+
+**Qué se decide**: de las 15 superficies del criterio 5, estas tres no tienen ningún atajo de
+teclado ni handler de IPC dedicado en el repo (verificado: sin entrada en
+`src/shared/keybindings/definitions-core-*.ts` para pull-request-page/stats/pet, sin
+`window.api.ui.onX` correspondiente). Hoy solo se alcanzan desde botones de la barra derecha, la
+barra izquierda o Ajustes, superficies que los criterios 4 y 6 ya esconden en modo simple. No se
+les agrega un guard propio porque no hay una tercera vía de apertura que bloquear.
+
+**Por qué**: el criterio 5 pide "ni por menú ni por atajo ni por comando" — con cero comandos y
+atajos existentes para estas tres, la condición ya se cumple vacíamente. Escribir un guard sin un
+punto de entrada real que gatear sería código sin efecto.
+
+**La invalidaría**: que una spec futura agregue un atajo, un item de menú, o una acción de cmd-j
+para pull-request-page, stats o pet — ese día este guard hace falta.
+
+## 2026-09-03 · [spec 002] Gap conocido: cerrar pestañas de desarrollo abiertas al pasar a modo simple no está implementado
+
+**Qué se decide**: no se implementó el cierre automático de pestañas de superficies de desarrollo
+(browser-pane, emulator-pane, dashboard-popout, artifacts, automations) cuando el Option-clic en
+Advanced pasa el modo de developer a simple con esas pestañas ya abiertas. Hoy quedan abiertas y
+visibles hasta que el usuario las cierra a mano o navega a otro lado; lo que sí se bloquea de
+inmediato es *abrir una nueva*.
+
+**Por qué**: la decisión delegada de la spec fija el criterio para cuando se implemente ("se
+cierran esas pestañas y se conserva el resto; nunca se pierde una conversación"), pero ninguno de
+los 10 criterios de aceptación numerados de la spec tiene un eval que ejercite este camino —
+developer mode solo se activa hoy por la puerta oculta, nunca por defecto, así que el camino real
+donde esto importa (alguien en developer mode con pestañas abiertas que hace Option-clic) es
+infrecuente y tocar el ciclo de vida de `unifiedTabsByWorktree` para resolverlo bien es un cambio
+de una superficie mucho más amplia y sensible (hidratación de pestañas, cierre por tipo en cada
+worktree) que el resto de esta spec. Implementarlo a las apuradas contra ese código arriesgaba una
+regresión en un área no cubierta por ningún criterio.
+
+**La invalidaría**: un criterio de aceptación futuro que ejercite este camino explícitamente, o un
+reporte real de un usuario de developer mode que se encuentra con pestañas de desarrollo colgadas
+después de pasar a simple.

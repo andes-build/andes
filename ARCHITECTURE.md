@@ -121,6 +121,55 @@ paquete aparte.
   resto de `use-task-page-linear-*`. Un usuario que ya tenía Linear conectado y visible en Tasks
   sigue viéndolo ahí; lo que desaparece es la manera de conectarlo o habilitarlo de nuevo.
 
+## Modo simple y modo desarrollo (spec 002)
+
+Andes tiene una sola preferencia de modo, `interfaceMode: 'simple' | 'developer'`
+(`src/shared/interface-mode.ts`), default `simple`. Nada se borra: todo lo que el modo simple
+esconde sigue compilado, probado y disponible en modo developer — el modo es un filtro de
+visibilidad, nunca una segunda implementación.
+
+- **Sin control visible.** El único selector de `Ajustes → General` no existe. La puerta oculta es
+  doble: la variable de entorno `ANDES_INTERFACE_MODE=developer` al arrancar (leída una vez en
+  `normalizeLoadedGlobalSettings`, gana siempre sobre el valor persistido), o Option-clic en el
+  título de `Ajustes → Advanced` (`nextInterfaceModeOnAltClick`, en
+  `settings-advanced-section-renderers.tsx`), que escribe la preferencia y aplica en caliente.
+- **Navegación de Ajustes**: los cuatro constructores (`settings-navigation-*-sections.ts`) generan
+  la misma lista completa en los dos modos; `buildSettingsNavigationMetadata` filtra el resultado a
+  `SIMPLE_MODE_SETTINGS_NAV_IDS` (`src/shared/simple-mode-settings-nav.ts`, los diez ids del
+  criterio 3) solo cuando el modo es simple.
+- **Barra derecha**: `ActivityBarItem.hiddenInSimpleMode` marca Checks, PR checks (Attached
+  worktrees, Parent PR checks) y Ports; el sistema de plugins (`Plugin`) se apaga en la misma
+  condición dentro de `useRightSidebarActivityItems`. El filtro vive en
+  `getVisibleRightSidebarActivityItems` (`right-sidebar-activity-visibility.ts`).
+- **Barra izquierda**: `computeWorktreeCardGitDetailVisibility`
+  (`worktree-card-git-detail-visibility.ts`) apaga issue/linear-issue/jira-issue/review/automation
+  sin tocar la preferencia `cardProps` del usuario; `SidebarHeaderActions` esconde el botón de
+  nuevo worktree y el filtro por repositorio (`SidebarWorkspaceOptionsMenu` /
+  `CompactWorkspaceOverflow`) en la misma condición.
+- **Comandos y atajos**: no hay un registro único de comandos en el repo, así que cada una de las
+  15 superficies del criterio 5 se bloquea en su propio punto de entrada real —
+  `src/shared/simple-mode-blocked-surfaces.ts` documenta la lista completa y cada gate:
+  `openModal` (cmd-j, workspace-cleanup, new-workspace), `openTaskPage` / `openAutomationsPage` /
+  `openArtifactsPage`, `resolveClientCreationActionPolicy` (browser-pane, emulator-pane, y de paso
+  el atajo de Shortcuts que los anuncia), `toggleAgentDashboardFromShortcut` (dashboard,
+  dashboard-popout), el `enabled` de `useFloatingWorkspacePanel` (floating-terminal) y el listener
+  de `useTabBarQuickCommandsShortcut` (terminal-quick-commands). `pull-request-page`, `stats` y
+  `pet` no tienen un comando o atajo propio hoy — solo se abren desde botones ya escondidos por los
+  dos puntos anteriores; no hay un tercer gate que agregarles.
+- **Fixture e2e**: la suite existente asume modo developer por default —
+  `tests/e2e/helpers/orca-app.ts` y `orca-restart.ts` fijan `ANDES_INTERFACE_MODE=developer` en el
+  `env` de `electron.launch`, y un spec que necesite modo simple lo pisa con
+  `test.use({ launchEnv: { ANDES_INTERFACE_MODE: 'simple' } })`
+  (`tests/e2e/simple-mode-onboarding.spec.ts`, `tests/e2e/simple-mode-surfaces.spec.ts`).
+- **Onboarding**: el paso de Integraciones (`IntegrationsStep.tsx`) ya no menciona "pull request" ni
+  "worktree" en su copy — son superficies que no existen en modo simple, el modo del primer
+  arranque.
+
+Fuera de alcance, con condición de reactivación documentada en la spec archivada
+(`specs/done/002-modo-simple-y-modo-desarrollo.md`): la pantalla del modo simple en sí, ocultar el
+explorador de archivos o el editor, un control visible para cambiar de modo, y la activación
+automática del modo developer al montar un repositorio.
+
 ## Documentación histórica ajustada
 
 - `config/reliability-gates.jsonc`: los gates cuyo test surface era 100% de la app móvil borrada

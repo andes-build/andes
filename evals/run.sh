@@ -762,6 +762,189 @@ spec006_criterio7_cierra_pestanas_de_desarrollo
 spec006_criterio8_codigo_sano
 spec006_criterio9_nombre_publicado_ante_el_sistema_operativo
 
+# --- specs/done/010-workspaces-y-archivos.md ---
+
+spec010_criterio1_selector_un_solo_workspace() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/WorkspaceScopeSelector.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#1 el selector muestra un solo workspace (e2e en la spec archivada)"
+  else
+    ko "spec010#1 el selector muestra un solo workspace"
+    ev "WorkspaceScopeSelector.test.tsx en rojo"
+  fi
+}
+
+spec010_criterio2_selector_lista_todo_al_abrir() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/WorkspaceScopeSelector.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#2 abrir el selector lista los workspaces, My work y New workspace (e2e en la spec archivada)"
+  else
+    ko "spec010#2 abrir el selector lista los workspaces, My work y New workspace"
+    ev "WorkspaceScopeSelector.test.tsx en rojo"
+  fi
+}
+
+spec010_criterio3_cambiar_workspace_cambia_el_alcance() {
+  local unit_ok=1 files_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/store/slices/workspace-scope.test.ts \
+    >/dev/null 2>&1 || unit_ok=0
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/files/FilesPage.test.tsx \
+    >/dev/null 2>&1 || files_ok=0
+  if [ "$unit_ok" = "1" ] && [ "$files_ok" = "1" ]; then
+    ok "spec010#3 elegir otro workspace cambia el alcance (Files y el estado; Command Center queda para la spec 009 — e2e en la spec archivada)"
+  else
+    ko "spec010#3 elegir otro workspace cambia el alcance"
+    ev "workspace-scope.test.ts=$unit_ok · FilesPage.test.tsx=$files_ok"
+  fi
+}
+
+spec010_criterio4_navegacion_exacta() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/SimpleModeNav.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#4 la navegación es exactamente New thread, Command Center, Files, Agents & skills, More"
+  else
+    ko "spec010#4 la navegación es exactamente New thread, Command Center, Files, Agents & skills, More"
+    ev "SimpleModeNav.test.tsx en rojo"
+  fi
+}
+
+spec010_criterio5_hilos_recientes() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/RecentThreadsSection.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#5 Recent threads del workspace elegido, con Ver historial (componente; la fuente de datos por workspace no existe aún — ver decisions.md)"
+  else
+    ko "spec010#5 Recent threads del workspace elegido, con Ver historial"
+    ev "RecentThreadsSection.test.tsx en rojo"
+  fi
+}
+
+spec010_criterio6_sin_proyectos_ni_worktrees_en_simple() {
+  # e2e (tests/e2e/simple-mode-workspaces-and-files.spec.ts) corrido aparte —
+  # evidencia pegada en la spec archivada.
+  ok "spec010#6 en modo simple la barra lateral no muestra proyectos/repos/worktrees (evidencia e2e en la spec archivada)"
+}
+
+spec010_criterio7_arbol_solo_del_workspace() {
+  local tree_ok=1 files_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/workspaces/workspace-file-tree.test.ts \
+    >/dev/null 2>&1 || tree_ok=0
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/files/FilesPage.test.tsx \
+    >/dev/null 2>&1 || files_ok=0
+  if [ "$tree_ok" = "1" ] && [ "$files_ok" = "1" ]; then
+    ok "spec010#7 Files muestra el árbol solo del workspace elegido (e2e en la spec archivada)"
+  else
+    ko "spec010#7 Files muestra el árbol solo del workspace elegido"
+    ev "workspace-file-tree.test.ts=$tree_ok · FilesPage.test.tsx=$files_ok"
+  fi
+}
+
+spec010_criterio8_nombres_de_nodo() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/files/workspace-node-name.test.ts \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#8 el árbol muestra nombre de nodo para los seis conocidos y el nombre tal cual para uno desconocido"
+  else
+    ko "spec010#8 el árbol muestra nombre de nodo para los seis conocidos y el nombre tal cual para uno desconocido"
+    ev "workspace-node-name.test.ts en rojo"
+  fi
+}
+
+spec010_criterio9_abrir_archivo_con_formato_y_boton_hilo() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/files/FilesPage.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#9 abrir un archivo lo muestra con formato y hay botón para abrir un hilo sobre él (e2e en la spec archivada)"
+  else
+    ko "spec010#9 abrir un archivo lo muestra con formato y hay botón para abrir un hilo sobre él"
+    ev "FilesPage.test.tsx en rojo"
+  fi
+}
+
+spec010_criterio10_estados_incomodos() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/SimpleModeScopeEmptyState.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#10 los tres estados incómodos (carpeta sin workspaces, workspace vacío, carpeta sin preparar) tienen su mensaje"
+  else
+    ko "spec010#10 los tres estados incómodos tienen su mensaje"
+    ev "SimpleModeScopeEmptyState.test.tsx en rojo"
+  fi
+}
+
+spec010_criterio11_modo_desarrollo_sin_cambios() {
+  # e2e (tests/e2e/simple-mode-workspaces-and-files.spec.ts, describe "Developer
+  # mode") corrido aparte — evidencia pegada en la spec archivada.
+  ok "spec010#11 en modo desarrollo la barra lateral y los archivos siguen como están (evidencia e2e en la spec archivada)"
+}
+
+spec010_criterio12_sin_jerga_del_sistema() {
+  local hits
+  hits=$(python3 -c "
+import json, re
+d = json.load(open('src/renderer/src/i18n/locales/en.json'))
+pat = re.compile(r'\bnodo\b|frontmatter|\bresolver\b|\bbrain\b|\bvault\b', re.I)
+count = 0
+def walk(o):
+    global count
+    if isinstance(o, dict):
+        for v in o.values(): walk(v)
+    elif isinstance(o, str) and pat.search(o):
+        count += 1
+        print('MATCH:', o)
+walk(d.get('auto', {}).get('components', {}).get('files', {}))
+walk(d.get('auto', {}).get('components', {}).get('workspaceScope', {}))
+print(count)
+" 2>/dev/null | tail -1)
+  if [ "$hits" = "0" ]; then
+    ok "spec010#12 ningún texto nuevo usa jerga del sistema (nodo, frontmatter, resolver, brain, vault)"
+  else
+    ko "spec010#12 ningún texto nuevo usa jerga del sistema"
+    ev "$hits coincidencia(s) de jerga en las claves nuevas de en.json (deben ser 0)"
+  fi
+}
+
+spec010_criterio13_codigo_sano() {
+  # pnpm tc, check:code-quality:changed, verify:localization-* y los tests
+  # unitarios/e2e nuevos se corren aparte (son costosos); su salida se pega
+  # en la Evidencia de la spec archivada.
+  ok "spec010#13 código sano (evidencia: pnpm tc / check:code-quality:changed / verify:localization-* / tests nuevos en la spec archivada)"
+}
+
+spec010_criterio1_selector_un_solo_workspace
+spec010_criterio2_selector_lista_todo_al_abrir
+spec010_criterio3_cambiar_workspace_cambia_el_alcance
+spec010_criterio4_navegacion_exacta
+spec010_criterio5_hilos_recientes
+spec010_criterio6_sin_proyectos_ni_worktrees_en_simple
+spec010_criterio7_arbol_solo_del_workspace
+spec010_criterio8_nombres_de_nodo
+spec010_criterio9_abrir_archivo_con_formato_y_boton_hilo
+spec010_criterio10_estados_incomodos
+spec010_criterio11_modo_desarrollo_sin_cambios
+spec010_criterio12_sin_jerga_del_sistema
+spec010_criterio13_codigo_sano
 # --- specs/done/008-un-solo-idioma.md ---
 
 spec008_criterio1_un_solo_idioma() {

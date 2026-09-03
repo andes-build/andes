@@ -891,6 +891,27 @@ existió", es la regla más simple que cumple el criterio sin un caso especial.
 **La invalidaría**: que una spec futura necesite distinguir, en el valor persistido, un ajuste que
 nunca fue válido de uno que dejó de serlo.
 
+## 2026-09-03 · [spec 010] Seis commits de marca visual entraron por la sesión supervisora, en la misma rama
+
+**Qué se decide**: los commits `5cc02281c9` (barra lateral oscura en tema claro), `e3064224a8`
+(tipografía de títulos: Instrument Serif), `9daaad8343` (isologo de Andes y título del estado vacío
+en `Landing.tsx`), `8ac34708ee` (tokens de la barra izquierda y texto "Andes" en `en.json`),
+`cb26d11a67` (intercambio de los dos archivos de logo en `resources/`) y `af727470b4` (tipografía de
+títulos: Newsreader en lugar de Instrument Serif) no los escribió el agente que implementó la spec
+010 — los escribió, con la identidad de Peter, la sesión que lo supervisaba, directamente sobre la
+rama `spec-010-workspaces-archivos` mientras el agente trabajaba en el resto de la spec. Peter ya
+vio y aprobó estos cambios en pantalla.
+
+**Por qué**: la regla de la iniciativa es un worktree por agente para evitar que dos escritores
+choquen en el mismo árbol; la sesión supervisora la rompió en este caso puntual para iterar la
+marca visual en vivo sobre la rama que ya estaba abierta, en vez de esperar a una spec propia o abrir
+su propio worktree. El agente que trabajaba ahí lo detectó (`git status` antes de cada commit, como
+exige la regla), frenó y reportó en vez de pisar o revertir esos commits — la sesión supervisora
+confirmó que eran suyos y que no había que investigar nada.
+
+**La invalidaría**: nada — es historia de cómo se armó esta rama. La regla de un worktree por agente
+sigue valiendo para el resto de la iniciativa; esto fue una excepción puntual y reconocida, no un
+cambio de regla.
 ## 2026-09-03 · [spec 011] El hilo se entrega en dos etapas; esta etapa usa el puente existente, no el canal de datos
 
 **Qué se decide**: la spec 011 pedía que el permiso del agente llegara **como dato**, no leyendo la

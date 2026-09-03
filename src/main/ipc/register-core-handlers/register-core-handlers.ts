@@ -30,6 +30,7 @@ import { registerNotificationHandlers } from '../notifications'
 import { registerNotebookHandlers } from '../notebook'
 import { registerOnboardingHandlers } from '../onboarding'
 import { registerOnboardingBrainHandlers } from '../onboarding-brain'
+import { registerWorkspaceScopeHandlers } from '../workspace-scope'
 import { registerDashboardPopoutHandlers } from '../dashboard-popout'
 import { registerTerminalPreviewHandlers } from '../terminal-preview'
 import { registerDeveloperPermissionHandlers } from '../developer-permissions'
@@ -167,6 +168,7 @@ export function registerCoreHandlers(
   registerNotebookHandlers(store)
   registerOnboardingHandlers(store)
   registerOnboardingBrainHandlers()
+  registerWorkspaceScopeHandlers()
   registerDashboardPopoutHandlers(store, keybindings)
   registerTerminalPreviewHandlers(runtime)
   registerDeveloperPermissionHandlers()

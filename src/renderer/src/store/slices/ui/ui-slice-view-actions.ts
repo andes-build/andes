@@ -101,6 +101,17 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
         activeView: state.previousViewBeforeArtifacts,
         worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'artifacts')
       })),
+    openFilesPage: () => {
+      set((state) => ({
+        activeView: 'files',
+        previousViewBeforeFiles:
+          state.activeView === 'files' ? state.previousViewBeforeFiles : state.activeView
+      }))
+    },
+    closeFilesPage: () =>
+      set((state) => ({
+        activeView: state.previousViewBeforeFiles
+      })),
     openMobilePage: () =>
       set((state) => ({
         activeView: 'mobile',

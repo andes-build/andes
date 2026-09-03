@@ -143,6 +143,14 @@ const BROWSER_WORKSPACE_CLOSE_SITES: {
     planReasonForwardings: 0,
     routesThroughPlan: false,
     why: 'The extracted slice contract declares the close action consumed by browser controllers.'
+  },
+  {
+    path: 'src/renderer/src/store/slices/interface-mode-simple-switch.ts',
+    closeBrowserTabMentions: 2,
+    reasonCarryingCloseCalls: 0,
+    planReasonForwardings: 0,
+    routesThroughPlan: false,
+    why: 'Spec 006: bulk-closes every open browser tab across every worktree when interfaceMode flips to simple — a local teardown, same as a locally-closing tab in useTabGroupTabCloseCommands, with no remote-host reconciliation for paired browser panes.'
   }
 ]
 

@@ -11,8 +11,10 @@ export function toggleAgentDashboardFromShortcut(
   >,
   openPopout: () => void
 ): void {
+  // Spec 002, criterion 5: dashboard / dashboard-popout are developer-only surfaces.
   if (
     state.activeView === 'settings' ||
+    state.settings?.interfaceMode === 'simple' ||
     state.settings?.experimentalAgentDashboardPopout !== true
   ) {
     return

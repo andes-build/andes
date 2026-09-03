@@ -29,7 +29,11 @@ export function useFloatingWorkspacePanel() {
     recordFeatureInteractionForTour: boolean
   } | null>(null)
 
-  const enabled = useAppStore((s) => s.settings?.floatingTerminalEnabled === true)
+  // Spec 002, criterion 5: floating-terminal is a developer-only surface, regardless
+  // of the user's own floatingTerminalEnabled preference.
+  const enabled = useAppStore(
+    (s) => s.settings?.floatingTerminalEnabled === true && s.settings?.interfaceMode !== 'simple'
+  )
   // Why tracked separately: the flag reads false while settings are still loading, and a
   // false read at boot must not be treated as the user disabling the feature. The store
   // initializes `settings` to null (not undefined) - fetchSettings replaces it atomically.

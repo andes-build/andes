@@ -10,6 +10,7 @@ import { DEFAULT_OPEN_IN_APPLICATIONS } from './open-in-applications'
 import { DEFAULT_DISABLED_TUI_AGENTS } from './tui-agent-selection'
 import { DEFAULT_TUI_AGENT_ARGS, DEFAULT_TUI_AGENT_ENV } from './tui-agent-launch-defaults'
 import { UI_LANGUAGE_SYSTEM } from './ui-language'
+import { INTERFACE_MODE_SIMPLE } from './interface-mode'
 import {
   DEFAULT_LEFT_SIDEBAR_TINT_COLOR,
   DEFAULT_LEFT_SIDEBAR_TINT_OPACITY
@@ -45,6 +46,7 @@ export function buildDefaultSettings(args: {
     leftSidebarTintColor: DEFAULT_LEFT_SIDEBAR_TINT_COLOR,
     leftSidebarTintOpacity: DEFAULT_LEFT_SIDEBAR_TINT_OPACITY,
     uiLanguage: UI_LANGUAGE_SYSTEM,
+    interfaceMode: INTERFACE_MODE_SIMPLE,
     appIcon: DEFAULT_APP_ICON_ID,
     appFontFamily: args.appFontFamily,
     editorAutoSave: false,

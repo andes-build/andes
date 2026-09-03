@@ -42,7 +42,8 @@ describe('getVisibleRightSidebarActivityItems', () => {
       getVisibleRightSidebarActivityItems(items, {
         isFolder: false,
         isFolderWorkspace: false,
-        isSshRepo: false
+        isSshRepo: false,
+        isSimpleMode: false
       }).map((item) => item.id)
     ).toEqual(['explorer', 'source-control', 'plugin:orca-samples.my-plugin/dashboard'])
 
@@ -50,7 +51,8 @@ describe('getVisibleRightSidebarActivityItems', () => {
       getVisibleRightSidebarActivityItems(items, {
         isFolder: false,
         isFolderWorkspace: false,
-        isSshRepo: true
+        isSshRepo: true,
+        isSimpleMode: false
       }).map((item) => item.id)
     ).toEqual(['explorer', 'source-control', 'ports', 'plugin:orca-samples.my-plugin/dashboard'])
   })
@@ -60,7 +62,8 @@ describe('getVisibleRightSidebarActivityItems', () => {
       getVisibleRightSidebarActivityItems(items, {
         isFolder: true,
         isFolderWorkspace: true,
-        isSshRepo: true
+        isSshRepo: true,
+        isSimpleMode: false
       }).map((item) => item.id)
     ).toEqual([
       'explorer',
@@ -74,8 +77,30 @@ describe('getVisibleRightSidebarActivityItems', () => {
       getVisibleRightSidebarActivityItems(items, {
         isFolder: true,
         isFolderWorkspace: false,
-        isSshRepo: true
+        isSshRepo: true,
+        isSimpleMode: false
       }).map((item) => item.id)
     ).toEqual(['explorer', 'ports', 'plugin:orca-samples.my-plugin/dashboard'])
+  })
+
+  it('hides items flagged hiddenInSimpleMode regardless of their other visibility flags', () => {
+    const withSimpleModeFlags: ActivityBarItem[] = [
+      ...items,
+      { id: 'checks', icon: Files, title: 'Checks', shortcut: '', hiddenInSimpleMode: true }
+    ]
+    expect(
+      getVisibleRightSidebarActivityItems(withSimpleModeFlags, {
+        isFolder: true,
+        isFolderWorkspace: true,
+        isSshRepo: true,
+        isSimpleMode: true
+      }).map((item) => item.id)
+    ).toEqual([
+      'explorer',
+      'workspaces',
+      'pr-checks',
+      'ports',
+      'plugin:orca-samples.my-plugin/dashboard'
+    ])
   })
 })

@@ -3,6 +3,8 @@ import { basename, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildSettingsNavigationMetadata } from './useSettingsNavigationMetadata'
 import type { Repo } from '../../../shared/repo-types'
+import { SIMPLE_MODE_SETTINGS_NAV_IDS } from '../../../shared/simple-mode-settings-nav'
+import type { InterfaceMode } from '../../../shared/interface-mode'
 
 const repo = {
   id: 'repo-1',
@@ -19,6 +21,7 @@ function ids(
     isWebClient?: boolean
     isDev?: boolean
     isLinearConnected?: boolean
+    interfaceMode?: InterfaceMode
   } = {}
 ): string[] {
   return buildSettingsNavigationMetadata({
@@ -27,6 +30,7 @@ function ids(
     isWebClient: args.isWebClient ?? false,
     isDev: args.isDev ?? false,
     isLinearConnected: args.isLinearConnected ?? false,
+    interfaceMode: args.interfaceMode,
     repos: [repo]
   }).map((section) => section.id)
 }
@@ -416,5 +420,61 @@ describe('settings navigation metadata', () => {
     expect(importLines).not.toMatch(/components\/settings\/Settings(?:'|")/)
     expect(importLines).not.toMatch(/components\/settings\/[A-Z][A-Za-z]+Pane(?:'|")/)
     expect(importLines).not.toMatch(/components\/stats\/StatsPane(?:'|")/)
+  })
+
+  // Spec 002, criterion 3.
+  describe('interface mode filtering', () => {
+    // Frozen the day spec 002 landed: developer mode must keep exactly what
+    // main had before this spec touched anything. A future addition to any of
+    // the four section builders updates this snapshot deliberately, in the
+    // same PR that adds it.
+    const DEVELOPER_MODE_SNAPSHOT = [
+      'agents',
+      'accounts',
+      'orchestration',
+      'computer-use',
+      'voice',
+      'orca-account',
+      'setup-guide',
+      'general',
+      'integrations',
+      'automations',
+      'artifacts',
+      'share-skills',
+      'git',
+      'tasks',
+      'terminal',
+      'quick-commands',
+      'browser',
+      'mobile-emulator',
+      'floating-workspace',
+      'appearance',
+      'input',
+      'notifications',
+      'shortcuts',
+      'stats',
+      'ssh',
+      'servers',
+      'developer-permissions',
+      'privacy',
+      'advanced',
+      'experimental',
+      'plugins',
+      'repo-repo-1'
+    ]
+
+    it('keeps every id developer mode had on main, unchanged', () => {
+      expect(ids({ isMac: true, interfaceMode: 'developer' })).toEqual(DEVELOPER_MODE_SNAPSHOT)
+    })
+
+    it('matches the implicit default (no interfaceMode passed) used by every other test in this file', () => {
+      expect(ids({ isMac: true })).toEqual(DEVELOPER_MODE_SNAPSHOT)
+    })
+
+    it('trims simple mode down to exactly the ten allowed ids, no more and no fewer', () => {
+      expect(ids({ isMac: true, interfaceMode: 'simple' }).sort()).toEqual(
+        [...SIMPLE_MODE_SETTINGS_NAV_IDS].sort()
+      )
+    })
   })
 })

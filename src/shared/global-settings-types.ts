@@ -9,6 +9,7 @@ import type { SourceControlAiSettings } from './source-control-ai-types'
 import type { ClaudeAgentTeamsMode } from './claude-agent-teams-tmux-compat'
 import type { TerminalCustomTheme } from './terminal-custom-themes'
 import type { UiLanguage } from './ui-language'
+import type { InterfaceMode } from './interface-mode'
 import type { GlobalWindowsRuntimeDefault } from './project-execution-runtime'
 import type { PersistedNativeChatSessionOptions } from './native-chat-session-options'
 import type { ComputerAwakeMode } from './computer-awake-mode'
@@ -79,6 +80,9 @@ export type GlobalSettings = {
   leftSidebarTintColor?: string
   leftSidebarTintOpacity?: number
   uiLanguage: UiLanguage
+  /** Simple (default, knowledge work) vs developer (git, worktrees, PRs, orchestration). Hidden
+   *  door only: `ANDES_INTERFACE_MODE=developer` env var, or Option-click on Advanced's title. */
+  interfaceMode: InterfaceMode
   appIcon: AppIconId
   appFontFamily: string
   editorAutoSave: boolean

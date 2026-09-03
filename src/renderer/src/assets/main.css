@@ -202,12 +202,14 @@
   --chart-3: var(--color-blue-600);
   --chart-4: var(--color-blue-700);
   --chart-5: var(--color-blue-800);
-  --worktree-sidebar: #f5f5f5;
-  --worktree-sidebar-foreground: #0a0a0a;
-  --worktree-sidebar-accent: #eaeaea;
-  --worktree-sidebar-accent-foreground: #171717;
-  --worktree-sidebar-border: #e5e5e5;
-  --worktree-sidebar-ring: #a1a1a1;
+  /* Why: the left sidebar is the app's chrome and Andes ships it dark against
+     the light canvas in both themes (Peter, 2026-09-03). */
+  --worktree-sidebar: #141413;
+  --worktree-sidebar-foreground: #e8e6e1;
+  --worktree-sidebar-accent: #2a2927;
+  --worktree-sidebar-accent-foreground: #ffffff;
+  --worktree-sidebar-border: #2e2d2a;
+  --worktree-sidebar-ring: #6f6d68;
   /* Why: Andes ships a dark sidebar against the light canvas in both themes —
      the chrome recedes and the workspace content leads (Peter, 2026-09-03). */
   --sidebar: #141413;

@@ -15,10 +15,12 @@ quien construye Andes. Nada se borra: se esconde por una preferencia.
 
 ## Estado previo
 
-`main` en `e76ce38ee6` (spec 001 mergeada). Depende de la spec 004 (sin oferta de Linear), que toca los mismos constructores de navegación:
-se implementa sobre `main` con la 004 ya mergeada. El agente corre `git log e76ce38ee6..main --stat` antes de empezar.
+`main` en `fdb2ec94` (specs 001, 003 y 004 mergeadas). La spec 004 ya está en `main`: la sección
+`linear` y sus superficies no existen más. El agente corre `git log fdb2ec94..main --stat` antes
+de empezar.
 
-- Las secciones de Ajustes se arman en cuatro constructores —`src/renderer/src/hooks/settings-navigation-{capability,interface,remote,workflow}-sections.ts`— a partir de `SettingsNavigationBuildOptions` (`settings-navigation-build-options.ts`: `isMac`, `isWebClient`, `isDev`, `isLinearConnected`, `repos`…). Ya hay secciones condicionales: `linear` solo si `isLinearConnected` (`settings-navigation-capability-sections.ts:77-80`). Los ids válidos están en `SETTINGS_NAV_TARGETS` (`src/renderer/src/lib/settings-navigation-types.ts:15-45`).
+- La spec 004 sacó Linear de la navegación, Integraciones, Fuentes de tareas, onboarding y barra lateral: no cuenta en las listas de abajo.
+- Las secciones de Ajustes se arman en cuatro constructores —`src/renderer/src/hooks/settings-navigation-{capability,interface,remote,workflow}-sections.ts`— a partir de `SettingsNavigationBuildOptions` (`settings-navigation-build-options.ts`: `isMac`, `isWebClient`, `isDev`, `isLinearConnected`, `repos`…). Ya hay secciones condicionales: `linear` solo si `isLinearConnected` (`settings-navigation-capability-sections.ts`, ya sin Linear). Los ids válidos están en `SETTINGS_NAV_TARGETS` (`src/renderer/src/lib/settings-navigation-types.ts:15-45`).
 - Una preferencia booleana de punta a punta, para copiar el patrón: `experimentalPet` — tipo en `src/shared/global-settings-types.ts:423`, default en `src/shared/default-global-settings.ts:226`, normalización al cargar en `src/main/persistence/loading-store/normalize-loaded-global-settings.ts:64`, telemetría en `src/shared/telemetry-property-schemas.ts:191`, y consumo en el renderer vía el store (`src/renderer/src/store/slices/ui/`).
 - Precedente de "grupo escondido": `ExperimentalPane.tsx` con `hiddenExperimentalUnlocked` (líneas 27-29), que solo aparece con Option-clic.
 - Barra derecha: `src/renderer/src/components/right-sidebar/` (AiVaultPanel, ChecksPanel, FolderWorkspacePrChecksPanel, FolderWorkspaceWorktreesPanel, PluginPanel, PortsPanel).

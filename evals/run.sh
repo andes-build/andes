@@ -869,5 +869,79 @@ spec008_criterio6_pruebas_por_idioma
 spec008_criterio7_regla_en_claude_md
 spec008_criterio8_codigo_sano
 
+# --- specs/done/014-sin-marca-visual-orca.md ---
+
+spec014_criterio1_sin_archivos_de_marca_visual() {
+  local name_hits svg_content_hits
+  name_hits=$(find resources -type f \( -iname '*.png' -o -iname '*.icns' -o -iname '*.ico' -o -iname '*.svg' \) -iname '*orca*' | wc -l | tr -d ' ')
+  svg_content_hits=$(grep -ril 'orca' resources --include='*.svg' 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$name_hits" = "0" ] && [ "$svg_content_hits" = "0" ]; then
+    ok "spec014#1 ningún ícono/imagen bajo resources/ tiene \"orca\" en el nombre o en el contenido de un .svg"
+  else
+    ko "spec014#1 ningún ícono/imagen bajo resources/ tiene \"orca\" en el nombre o en el contenido de un .svg"
+    ev "archivos con orca en el nombre=$name_hits · .svg con \"orca\" en el contenido=$svg_content_hits (deben ser 0)"
+  fi
+}
+
+spec014_criterio2_selector_de_icono_sin_alternativas() {
+  local option_count legacy_refs
+  option_count=$(grep -c "id: '" src/shared/app-icon.ts)
+  legacy_refs=$(grep -rl "orca-blue\|orca-watercolor" src --include='*.ts' --include='*.tsx' 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$option_count" = "1" ] && [ "$legacy_refs" = "0" ]; then
+    ok "spec014#2 el selector de ícono de Ajustes tiene una sola opción y no referencia los íconos alternativos borrados"
+  else
+    ko "spec014#2 el selector de ícono de Ajustes tiene una sola opción y no referencia los íconos alternativos borrados"
+    ev "opciones en APP_ICON_OPTIONS=$option_count (debe ser 1) · referencias a orca-blue/orca-watercolor en src=$legacy_refs (debe ser 0)"
+  fi
+}
+
+spec014_criterio3_bandeja_sin_orca() {
+  local tray_files code_refs
+  tray_files=$(find resources/tray -iname '*orca*' 2>/dev/null | wc -l | tr -d ' ')
+  code_refs=$(grep -rl "orca-menu-barTemplate" src --include='*.ts' 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$tray_files" = "0" ] && [ "$code_refs" = "0" ]; then
+    ok "spec014#3 los íconos de bandeja no tienen \"orca\" en el nombre ni el código los referencia"
+  else
+    ko "spec014#3 los íconos de bandeja no tienen \"orca\" en el nombre ni el código los referencia"
+    ev "archivos de bandeja con orca en el nombre=$tray_files · referencias en código=$code_refs (deben ser 0)"
+  fi
+}
+
+spec014_criterio4_codigo_sano() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/app-icon.test.ts \
+    src/main/tray/system-tray.test.ts \
+    src/main/ipc/settings.test.ts \
+    src/main/persistence-settings-update.test.ts \
+    src/main/window/createMainWindow.test.ts \
+    src/main/window/createMainWindow-tray-minimize-close.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec014#4 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+  else
+    ko "spec014#4 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+    ev "vitest run sobre los archivos tocados por spec 014 en rojo"
+  fi
+}
+
+spec014_criterio5_verificacion_visual() {
+  local orca_json_hits orca_window_hits
+  orca_json_hits=$(grep -c '"ORCA"' src/renderer/src/i18n/locales/en.json)
+  orca_window_hits=$(grep -rn "'Orca'" src/main/window/*.ts 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$orca_json_hits" = "0" ] && [ "$orca_window_hits" = "0" ]; then
+    ok "spec014#5 sin la ballena visible: sin heading \"ORCA\" en el catálogo ni título 'Orca' en la ventana nativa (evidencia de capturas en la spec archivada)"
+  else
+    ko "spec014#5 sin la ballena visible: sin heading \"ORCA\" en el catálogo ni título 'Orca' en la ventana nativa (evidencia de capturas en la spec archivada)"
+    ev "\"ORCA\" en en.json=$orca_json_hits · 'Orca' en src/main/window=$orca_window_hits (deben ser 0)"
+  fi
+}
+
+spec014_criterio1_sin_archivos_de_marca_visual
+spec014_criterio2_selector_de_icono_sin_alternativas
+spec014_criterio3_bandeja_sin_orca
+spec014_criterio4_codigo_sano
+spec014_criterio5_verificacion_visual
+
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

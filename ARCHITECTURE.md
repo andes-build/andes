@@ -381,3 +381,50 @@ Diferido de esta spec, sin implementar: la tarjeta de subagente, los estados inc
 sesión, caída a mitad, respuesta vacía), la revisión de jerga, que el hilo nazca con el alcance del
 Command Center (spec 009, todavía sin mergear), y la paridad de modo developer contra la suite
 completa. Detalle en "Diferido a la spec de restos" de `specs/done/011-el-hilo.md`.
+## Marca visual: ícono, logo y bandeja (spec 014)
+
+La spec 006 cubrió textos, enlaces y actualizador; dejó explícitamente afuera "el ícono y el
+logotipo" a la espera del archivo de diseño de Peter (ver "Fuera de alcance" de
+`specs/done/006-restos-de-la-marca-orca.md`). Esta spec cierra ese hueco: ningún ícono, imagen o
+selector de la interfaz muestra la ballena.
+
+- **`resources/logo.svg`** (usado por `Landing.tsx`, `SidebarSettingsHelpMenu.tsx`,
+  `OnboardingFlow.tsx`, `WelcomeStep.tsx`, `SimpleOnboardingFlow.tsx`, `TitlebarLeftControls.tsx` y
+  `andes-logo-settings-icon.tsx`) y `resources/icon-source/icon.icon/Assets/logo.svg` (fuente del
+  pipeline de Icon Composer, no usada en runtime) pasan a envolver el isologo real de Andes como
+  raster embebido en el `.svg` — no hay vector propio todavía, spec futura si se necesita uno. Se
+  reemplazó solo el contenido de estos dos archivos, sin tocar ningún componente que los importa,
+  para no chocar con las specs 010/011 en curso sobre `Landing.tsx`/sidebar/native-chat.
+- **Ícono de la app, del Dock y del instalador**: `resources/build/icon.icns`, `icon.ico`,
+  `icon.png` (1024, fallback) y `resources/icon.png`/`icon-dev.png` (256, éste último con la
+  insignia naranja "D" que ya distinguía al build de desarrollo) se regeneraron desde el archivo de
+  200×200 que entregó Peter, escalado a 1024 con `sips` (el original queda corto para el
+  instalador; ver `decisions.md`). `resources/build/icon.icns` se arma directo con `iconutil` desde
+  un iconset generado con `sips` en vez de pasar por `xcrun actool`/Icon Composer
+  (`resources/icon-source/generate.sh`), que exige un proyecto `.icon` completo; ese script queda
+  sin correr hasta que exista un logo vectorial real para su fuente.
+  `config/scripts/trim-windows-icon-source.mjs` (ya existía) generó `icon.ico` desde el `icon.png`
+  nuevo sin cambios de código.
+- **Selector de ícono de Ajustes**: `src/shared/app-icon.ts` (`APP_ICON_OPTIONS`) pasa de tres
+  opciones (classic/watercolor/blue, las tres con la ballena) a una sola (`classic` = Andes).
+  `resources/app-icons/orca-blue.png` y `orca-watercolor.png` se borraron.
+  `AppIconSelector.tsx` ya no tiene flechas de ciclado (no hay entre qué elegir), solo muestra el
+  ícono. `src/main/app-icon.ts` se simplificó: la persistencia del ícono del Dock ya no tiene una
+  rama de "ícono personalizado" (código muerto con una sola opción posible) — solo limpia la
+  metadata de Finder que pudo haber quedado de un build viejo con un ícono alternativo pineado.
+- **Bandeja del sistema**: `resources/tray/orca-menu-barTemplate*.png` se renombran a
+  `andes-menu-barTemplate*.png`, regenerados como plantilla monocromo (alpha = luminancia del
+  isologo) en 22×14/44×28. `src/main/tray/system-tray.ts` actualizado a los nombres nuevos.
+- **Hallazgos de texto encontrados al verificar visualmente** (fuera del inventario de imágenes,
+  pero directamente visibles): el heading de la pantalla vacía (`Landing.tsx`) decía "ORCA" en
+  mayúsculas — la spec 006 reemplazó "Orca" con una regla sensible a mayúsculas y esta variante no
+  calzaba; se corrigió solo el catálogo (`en.json`, clave `auto.components.Landing.6ca6ff404e`) sin
+  tocar `Landing.tsx`. El título nativo de la ventana (`createMainWindow.ts`, distinto del título
+  propio de la interfaz) y el título de la notificación de "minimizar a bandeja" en Windows
+  (`main-window-close-lifecycle.ts`) decían literalmente `'Orca'`; los dos pasan a `'Andes'`.
+- **Fuera de alcance, sin tocar**: `BASE_APP_NAME`/`DEV_BUNDLE_DISPLAY_NAME` y el nombre visible de
+  la instancia de desarrollo (texto, no imagen — spec 007, ver `decisions.md`); el marketplace de
+  plugins (`stablyai`, decidido en Gate 1 de la spec 006); `orca.yaml` como nombre de archivo de
+  configuración; el binario `orca` (spec 007); los `orca-plugin.json` de ejemplo y los tests que
+  fijan `resources/darwin/bin/orca` / `linux/bin/orca-ide` / `win32/bin/orca.cmd` (nombres del
+  binario, no marca visual).

@@ -15,27 +15,28 @@ import type { PluginLanguagePackRegistration } from '../../../shared/plugins/plu
 
 export const i18n: I18nInstance = i18next.createInstance()
 
-// Why: only the English catalog is bundled eagerly. The other four locales add
-// ~2MB to the renderer's startup chunk (parsed on every launch) even though the
-// app always boots in English and only switches after the persisted UI language
-// loads. A lazy backend fetches each non-English catalog on demand, so any
-// changeLanguage() call (UI switch or test) transparently loads its bundle
-// instead of paying the parse cost at cold start.
+// Why: empty while English is the only shipped catalog (specs/done/008-un-solo-idioma.md).
+// A lazy backend still fetches each non-English catalog on demand once a
+// translation pass adds a loader back here, so changeLanguage() keeps working
+// without paying a parse cost at cold start.
 const NON_DEFAULT_LOCALE_LOADERS: Record<
   Exclude<SupportedUiLocale, 'en'>,
   () => Promise<{ default: Record<string, unknown> }>
-> = {
-  es: () => import('./locales/es.json'),
-  ja: () => import('./locales/ja.json'),
-  ko: () => import('./locales/ko.json'),
-  zh: () => import('./locales/zh.json')
-}
+> = {}
 
 const lazyLocaleBackend: BackendModule = {
   type: 'backend',
   init: () => {},
   read: (language: string, _namespace: string, callback: ReadCallback) => {
-    const loader = NON_DEFAULT_LOCALE_LOADERS[language as Exclude<SupportedUiLocale, 'en'>]
+    // Why: cast through Record<string, ...> — Exclude<SupportedUiLocale, 'en'> is
+    // `never` while English is the only locale, which collapses a direct index
+    // to `never` too and makes the call below fail to typecheck.
+    const loader = (
+      NON_DEFAULT_LOCALE_LOADERS as Record<
+        string,
+        () => Promise<{ default: Record<string, unknown> }>
+      >
+    )[language]
     if (!loader) {
       // English (and unknown locales) are served from bundled resources; signal
       // "nothing to load" so i18next falls back to the in-memory catalog.

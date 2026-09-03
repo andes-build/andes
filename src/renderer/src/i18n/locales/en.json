@@ -11429,6 +11429,19 @@
         },
         "NativeChatSupportedAgents": {
           "label": "Supported agents:"
+        },
+        "RepeatOnboardingSetting": {
+          "title": "Repeat the initial setup",
+          "description": "Reopen the onboarding wizard.",
+          "button": "Repeat setup"
+        },
+        "SimpleModeSetupGuidePane": {
+          "agent": "Agent",
+          "session": "Session",
+          "skills": "Skills",
+          "notifications": "Notifications",
+          "star": "Star",
+          "folder": "Folder"
         }
       },
       "right": {
@@ -13147,6 +13160,73 @@
                 "721d2bedb6": "Turn on Allow notifications for Orca in System Settings."
               }
             }
+          }
+        },
+        "simple": {
+          "SessionStep": {
+            "description": "Sign in with your {{value0}} subscription in the browser. Andes never asks you for anything here.",
+            "signIn": "Sign in with {{value0}}",
+            "waitingForBrowser": "Waiting for the browser…",
+            "cancel": "Cancel",
+            "ready": "Session ready — {{value0}}"
+          },
+          "SimpleAgentStep": {
+            "copied": "Copied",
+            "copy": "Copy",
+            "docs": "Docs",
+            "noneFound": "We couldn't find an agent on your computer. Install one with the official command below, then search again.",
+            "searchAgain": "Search again",
+            "claudeLabel": "Claude Code",
+            "codexLabel": "Codex"
+          },
+          "SimpleOnboardingFlow": {
+            "welcomeTitle": "Welcome to Andes",
+            "agentTitle": "Your agent",
+            "agentSubtitle": "Andes works with your favorite AI assistant.",
+            "sessionTitle": "Your session",
+            "skillsTitle": "Skills",
+            "notificationsTitle": "Set up notifications",
+            "starTitle": "One last thing",
+            "dialogLabel": "Andes onboarding",
+            "back": "Back",
+            "continue": "Continue",
+            "brandName": "Andes",
+            "folderTitle": "Where does Andes keep your work?",
+            "folderSubtitle": "Andes works on a folder on your computer, and never outside it. Everything lives there, and everything stays on your machine.",
+            "installTitle": "Setting up your folder",
+            "workspaceTitle": "Your first workspace",
+            "workspaceSubtitle": "Give it a name — you can always create more later."
+          },
+          "SkillsStep": {
+            "noNpx": "Installing skills needs Node.js, which is not installed on this computer. You can install it now, or do this later from Settings.",
+            "installNode": "Install Node.js",
+            "description": "Optional. Paste the repository of a skills pack to install it for your agent.",
+            "repoPlaceholder": "https://github.com/owner/pack",
+            "terminalTitle": "Skill setup",
+            "terminalAriaLabel": "Skill setup command"
+          },
+          "StarStep": {
+            "description": "Andes is open source. If you liked it, a star on GitHub helps others find it.",
+            "starButton": "Give it a star",
+            "later": "Not now"
+          },
+          "WelcomeStep": {
+            "intro": "In a few steps we'll set up your assistant, sign you in, prepare your folder, and install skills. Nothing technical needed."
+          },
+          "FolderStep": {
+            "namePlaceholder": "Folder name",
+            "create": "Create",
+            "pickFolder": "Choose folder",
+            "createNew": "Create a new one"
+          },
+          "InstallStep": {
+            "alreadyPrepared": "This folder was already set up. Nothing to add.",
+            "prepared": "Set up: {{value0}}"
+          },
+          "WorkspaceStep": {
+            "namePlaceholder": "Workspace name",
+            "create": "Create",
+            "later": "Later"
           }
         }
       },

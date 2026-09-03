@@ -5,6 +5,7 @@ import { Separator } from '../ui/separator'
 import { CliSection } from './CliSection'
 import { GeneralEditorSettingsSection } from './GeneralEditorSettingsSection'
 import { GeneralSupportSection } from './GeneralSupportSection'
+import { RepeatOnboardingSetting } from './RepeatOnboardingSetting'
 import { GeneralUpdateSettingsSection } from './GeneralUpdateSettingsSection'
 import { GeneralWorkspaceSettingsSection } from './GeneralWorkspaceSettingsSection'
 import {
@@ -232,6 +233,12 @@ export function GeneralPane({
           {section}
         </div>
       ))}
+      {searchQuery.trim().length === 0 ? (
+        <>
+          <Separator />
+          <RepeatOnboardingSetting />
+        </>
+      ) : null}
       {matchesSettingsSearch(searchQuery, getGeneralSupportSearchEntries()) ? (
         <GeneralSupportSection hasPrecedingSections={visibleSections.length > 0} />
       ) : null}

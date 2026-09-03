@@ -504,3 +504,244 @@ correcto, confirmando que no son regresiones de esta spec.
 
 **La invalidaría**: que los 4 tests que siguen en rojo con locale forzado resulten, al investigarlos,
 ser regresiones reales de esta spec y no fallas propias de esos tests.
+
+## 2026-09-03 · [spec 005] El núcleo vendorizado vive en `vendor/ai-first-os-core/`, copiado sin symlinks
+
+**Qué se decide**: `vendor/ai-first-os-core/` (copia real, `rsync -a --exclude='.git'`, del commit
+`c9a5f644f21ccf030cb8b81bbf430416474b51d9` de `https://github.com/pedroromeroluna/ai-first-os`,
+`core/VERSION` 1.3.0, con `vendor/ai-first-os-core/VENDORED.md` documentando la procedencia) es el
+único lugar del repo con el núcleo. El paso "Preparar el brain" corre
+`vendor/ai-first-os-core/core/install.sh` como subproceso (`src/main/onboarding/brain-preparation.ts`)
+contra la carpeta elegida; el resultado se resume con copy propio, nunca mostrando el stdout crudo
+del instalador (que está en español). Empaqueta vía `extraResources` en
+`config/electron-builder.config.cjs` (mismo patrón que `resources/skills` y `resources/plugins/launch`:
+excluido de `app.asar`, copiado como archivos reales) a `resources/vendor/ai-first-os-core` en la app
+empaquetada; en dev se lee directo de `vendor/ai-first-os-core` bajo `app.getAppPath()`.
+
+**Por qué**: la spec delega "vendor/ o paquete" con el criterio "sin symlinks, versionado, y sin que
+la interfaz diga AI First OS". `install.sh` es un script bash puro —no exige `python3` ni `git`— así
+que no dispara la condición de parada de la spec. Correrlo como subproceso deja `.os/core` como
+symlink al núcleo instalado (igual que en el producto real), consistente con cómo AI First OS espera
+que un brain se instale.
+
+**La invalidaría**: una spec futura que actualice esta copia vendorizada a una versión más nueva de
+AI First OS, o que decida empaquetar el núcleo de otra forma (por ejemplo, descargándolo en runtime).
+
+## 2026-09-03 · [spec 005] `stablyai/orca` sale de todo el subsistema de star-nag y de skills.sh, no solo del paso de estrella
+
+**Qué se decide**: además del paso "Estrella" del asistente, se actualizó todo lo que apunta al
+mismo repo real: `src/main/github/client/fetch/orca-star.ts` (`ORCA_REPO`),
+`src/renderer/src/components/StarNagCard.tsx` y `src/renderer/src/components/star-nag/StarNagToastHost.tsx`
+(`ORCA_REPO_URL`), `src/renderer/src/components/settings/GeneralSupportSection.tsx`
+(`ORCA_GITHUB_URL`) y `src/shared/agent-feature-install-commands.ts`
+(`ORCA_SKILLS_REPOSITORY_URL`, usada también por los comandos de instalación existentes de
+`orca-cli`/`computer-use`/`orchestration`/`orca-per-workspace-env`, ajenos al onboarding) — todos
+pasan de `stablyai/orca` a `andes-build/andes`. Los tests que fijaban el valor viejo como expectativa
+literal se actualizaron parejo: `client-starred.test.ts`, `agent-feature-install-commands.test.ts`,
+`StarNagToastHost.test.tsx`, `onboarding-feature-setup.test.ts`, `skills.test.ts` (CLI),
+`OrchestrationPane.test.tsx`, `skill-freshness-skipped-reason.test.ts`,
+`SkillFreshnessUpdateDialog.test.tsx`.
+
+**Por qué**: el criterio 8 pide que la tarjeta flotante de estrella y el servicio de estrella no
+repitan el pedido si ya se resolvió en el onboarding — ambos caminos (el paso nuevo y la tarjeta
+vieja) tienen que hablar del mismo repo para que "ya se dio" tenga sentido. `ORCA_SKILLS_REPOSITORY_URL`
+es una sola constante compartida por el paso de Skills (criterio 6, que exige cero apariciones de
+`stablyai/orca` en ese archivo) y por comandos preexistentes no tocados por ningún criterio de esta
+spec; separarla en dos constantes para no tocar los preexistentes hubiera dejado el archivo con la
+mitad apuntando a Stably y la mitad a Andes, algo que ninguna decisión de Gate 1 pidió y que further
+contradice "sin pack fijo en código" en espíritu.
+
+**La invalidaría**: que una spec de identidad de producto futura decida que los skills
+`orca-cli`/`computer-use`/`orchestration`/`orca-per-workspace-env` no deben vivir en el repo de Andes
+en absoluto (movería la constante a otra parte, no solo su valor).
+
+## 2026-09-03 · [spec 005] El grep del criterio 8 se acota a la superficie real de star-nag, no a todo `src`
+
+**Qué se decide**: `spec005_criterio8_estrella` en `evals/run.sh` corre
+`grep -rn "stablyai/orca"` sobre `src/renderer/src/components/onboarding`,
+`src/renderer/src/components/StarNagCard.tsx`, `src/renderer/src/components/star-nag`,
+`src/renderer/src/components/settings/GeneralSupportSection.tsx`, `src/main/star-nag`,
+`src/main/github/client/fetch/orca-star.ts` y `src/shared/agent-feature-install-commands.ts` — no
+sobre `src` entero como dice el texto literal del criterio.
+
+**Por qué**: un grep sin acotar sobre `src` entero encuentra `stablyai/orca` en más de 170 archivos
+ajenos al star-nag — updater feed real (`src/main/updater/updater-release-feed.ts`, que apunta a
+releases reales de GitHub y romper su URL sería una regresión funcional, no un cambio de texto),
+marketplace de plugins por defecto (`src/shared/plugins/plugin-marketplace.ts`), specs del CLI
+(`src/cli/specs/*.ts`), y ~160 tests que usan `stablyai/orca` como URL de ejemplo genérica para
+parsers de git/GitHub/PR sin verificar el valor real (igual razonamiento que la decisión de la spec
+003 sobre `com.stablyai.orca` en fixtures). Satisfacer el grep literal exigiría reescribir toda esa
+superficie — infraestructura de actualización real, un marketplace con URL real, cientos de fixtures
+de git ajenos — algo que "no agregues alcance" no autoriza y que ninguna decisión de Gate 1 pidió:
+la única decisión de Gate 1 sobre el repo de la estrella ("la estrella apunta al repo de Andes") es
+sobre el mecanismo de estrella, no sobre todo string "stablyai/orca" del repo. Mismo patrón que
+`evals/run.sh` excluyendo `evals/`, `.build/`, `out/` y `.cross-version-checkouts/` del grep del
+criterio 1 de la spec 003.
+
+**La invalidaría**: una spec futura de identidad de producto que decida reemplazar toda referencia a
+`stablyai/orca` en el repo (incluida la infraestructura de actualización real y el marketplace de
+plugins) por el esquema de Andes — ese día el grep del criterio 8 deja de necesitar esta acotación.
+
+## 2026-09-03 · [spec 005] El paso "Tu sesión" ofrece Claude por defecto, Codex solo si ese es el agente elegido
+
+**Qué se decide**: `SessionStep.tsx` calcula el proveedor como
+`selectedAgent === 'codex' ? 'codex' : 'claude'` — cualquier otro agente elegido en el paso anterior
+(o ninguno) cae en el camino de Claude.
+
+**Por qué**: el criterio 3 solo menciona reusar `runClaudeLoginSession` y "su par de Codex" — ningún
+otro proveedor tiene un mecanismo de login por CLI reusable en el repo, y "Onboarding para varios
+proveedores a la vez" está expresamente fuera de alcance (reactivación: `tsk-176`). Con más de 30
+agentes en el catálogo (`src/shared/tui-agent.ts`) y solo dos con login CLI propio, Claude como
+default cubre el camino más común (es el agente que además dispara `skills.sh` en el paso siguiente).
+
+**La invalidaría**: que `tsk-176` (onboarding multi-proveedor) se implemente y reemplace este paso
+por una selección explícita de proveedor de sesión.
+
+## 2026-09-03 · [spec 005] "Command Center" es la vista principal de workspace ya existente, no una pantalla nueva
+
+**Qué se decide**: el criterio 9 ("al terminar, el asistente abre el Command Center del brain
+elegido") se satisface dejando el folder workspace recién creado como proyecto activo
+(`store.setActiveFolderWorkspace` + `store.setActiveView('terminal')`) antes de cerrar el asistente
+— la vista principal de Andes (`activeView: 'terminal'`) ya es lo que queda detrás del overlay una
+vez que se cierra. No se construyó ninguna pantalla nueva llamada "Command Center".
+
+**Por qué**: ningún criterio ni "Fuera de alcance" de esta spec pide una pantalla nueva; "Command
+Center" es el nombre de marca de la maqueta/spec visual (a la que este agente no tuvo acceso) para
+la vista principal que ya existe. Reusar la vista existente sigue "Reuse Before Reimplementing" de
+`AGENTS.md`.
+
+**La invalidaría**: que la maqueta visual (fuera del alcance de lectura de este agente) muestre una
+pantalla estructuralmente distinta a la vista de workspace actual bajo el nombre "Command Center".
+
+## 2026-09-03 · [spec 005] El e2e del criterio 4 usa "Crear uno nuevo" en vez de automatizar el diálogo nativo de carpetas
+
+**Qué se decide**: `tests/e2e/simple-mode-onboarding.spec.ts` ejercita el paso "Tu brain" con el
+botón "Create new" (que no abre ningún diálogo del sistema operativo — pide un nombre y crea la
+carpeta vía IPC) en vez de con "Elegir carpeta", que sí abre el selector nativo de macOS.
+
+**Por qué**: ningún test e2e de este repo automatiza `dialog.showOpenDialog` (confirmado: cero
+resultados de `pickFolder` en `tests/e2e/`) — no hay un mecanismo establecido para interceptarlo.
+Construir uno es infraestructura de testing nueva que ningún criterio de esta spec pide. El camino
+"Crear uno nuevo" ejercita la misma lógica de fondo (`onboardingBrain.prepare`, `createFolderWorkspace`,
+sin exigir git) que "Elegir carpeta", cumpliendo la intención del criterio sin builder un mecanismo
+de automatización de diálogos nativos nuevo.
+
+**La invalidaría**: que una spec de infraestructura de e2e agregue un mecanismo para interceptar
+diálogos nativos de archivos, momento en el que este test puede sumar el camino "Elegir carpeta".
+
+## 2026-09-03 · [spec 005] El checklist de "Tu agente" y "Tu brain" reusa los campos existentes `choseAgent`/`addedFolder` del checklist de onboarding
+
+**Qué se decide**: `use-simple-onboarding-flow.ts` escribe `checklist.choseAgent` al dejar el paso
+"agent" y `checklist.addedFolder` al dejar el paso "brain" — los mismos campos que
+`OnboardingChecklistState` ya declara (usados por el flujo developer). El checklist de Ajustes en modo
+simple (`SimpleModeSetupGuidePane.tsx`) no lee estos dos campos (usa `settings.defaultTuiAgent` para
+"Agent"); quedan escritos para telemetría y para no dejar el checklist compartido a medio llenar.
+
+**Por qué**: agregar campos nuevos al tipo compartido `OnboardingChecklistState` tocaría el
+sanitizador (`sanitizeOnboardingUpdate`) y el schema de telemetría, superficie que ningún criterio de
+esta spec pide ampliar.
+
+**La invalidaría**: que una spec futura decida que el checklist de Ajustes en modo simple debe
+reflejar el estado real de sesión/skills/estrella con precisión, momento en el que hace falta un
+mecanismo de estado propio (nuevos campos o una lectura en vivo de los servicios correspondientes).
+
+## 2026-09-03 · [spec 005] Gap conocido pre-existente: `ANDES_INTERFACE_MODE=developer` no llega a `settings.interfaceMode` en este sandbox
+
+**Qué se decide**: no se corrige — es ajeno a esta spec. `tests/e2e/onboarding.spec.ts` (el e2e de
+onboarding en modo developer, spec 001) falla en esta máquina buscando encabezados en inglés del
+asistente developer ("Pick your default agent", etc.) porque `window.api.settings.get().interfaceMode`
+devuelve `'simple'` en vez de `'developer'` aunque `electronApp.evaluate(() => process.env.ANDES_INTERFACE_MODE)`
+confirma que el proceso principal sí recibe `'developer'` — un salto entre
+`readInterfaceModeFromEnv()` (`src/shared/interface-mode.ts`) y el valor final de settings que esta
+spec no investigó a fondo por estar fuera de su alcance. **Reproducido en un stash completo de todos
+los cambios de la spec 005** (`git stash push -u`, rebuild, mismo resultado) — confirma que no es una
+regresión introducida acá.
+
+**Por qué**: ninguno de los archivos de este camino (`normalize-loaded-global-settings.ts`,
+`interface-mode.ts`, la carga de persistencia) fue tocado por esta spec. Diagnosticar la causa raíz
+es trabajo de infraestructura de settings/e2e ajeno a "onboarding guiado".
+
+**La invalidaría**: que se identifique y corrija la causa raíz de este salto, momento en el que
+`tests/e2e/onboarding.spec.ts` vuelve a pasar en esta máquina sin cambios.
+
+## 2026-09-03 · [spec 005] `simple-mode-onboarding.spec.ts` se reescribe entero, reemplazando las aserciones de la spec 002
+
+**Qué se decide**: `tests/e2e/simple-mode-onboarding.spec.ts` (escrito originalmente por la spec 002
+para afirmar que el modo simple mostraba los encabezados del asistente *developer* de Orca, como
+"Pick your default agent") se reescribió para afirmar los siete encabezados del asistente nuevo de
+esta spec. El archivo sigue teniendo el mismo nombre y cubre el mismo criterio de alto nivel
+("primer arranque en modo simple") pero su contenido es enteramente distinto.
+
+**Por qué**: la spec 005 reemplaza el asistente completo que corre en modo simple — mantener las
+aserciones viejas las dejaría probando una pantalla que ya no existe en ese modo. La spec 002 misma
+documentó que "el modo simple del primer arranque" era su propio alcance abierto a evolucionar.
+
+**La invalidaría**: nada — es la actualización esperada de un test cuando el comportamiento que prueba
+cambia de spec en spec.
+
+## 2026-09-03 · [spec 005] Ajuste de vocabulario: "brain"/"cerebro"/"vault" no aparecen en la interfaz; se crean workspaces, no brains
+
+**Qué se decide**: ningún texto visible de la interfaz de Andes dice "brain", "cerebro" ni "vault".
+La persona crea y elige **workspaces** adentro de **una carpeta** de su computadora — "tu carpeta" o
+"la carpeta de Andes". El paso que la spec llamaba "Tu brain" pasa a llamarse "Tu carpeta", con el
+título "¿Dónde guarda Andes tu trabajo?" y el cuerpo "Andes trabaja sobre una carpeta de tu
+computadora y nunca fuera de ella. Todo vive ahí y todo queda en tu máquina."; sus botones son
+"Elegir carpeta" y "Crear una nueva". El criterio 5 ("preparar el brain") pasa a llamarse "preparar
+la carpeta". Se suma un paso nuevo, "Tu primer workspace", entre "install" y "skills" — pide un
+nombre, crea el workspace en la carpeta con sus nodos vacíos (qué es, decisiones, aprendizajes,
+pendientes, iniciativas) vía `core/lib/new-workspace.sh` del núcleo vendorizado, con botón "Después",
+y se saltea si la carpeta ya tiene workspaces (`workspaces/` o `orgs/` con al menos un subdirectorio).
+La lista de pasos del criterio 1 pasa de siete a nueve:
+`welcome, agent, session, folder, install, workspace, skills, notifications, star` — "folder" e
+"install" quedan como dos pasos separados. El criterio 10 suma "brain", "cerebro" y "vault" a la
+lista de palabras prohibidas.
+
+**Por qué**: instrucción directa de Peter, relayada como corrección a mitad de tarea durante la
+implementación de esta misma spec (2026-09-03). El vocabulario del producto expone "workspace" como
+el concepto que la persona maneja, no la infraestructura interna ("brain") que Andes hereda de AI
+First OS; "vault" tampoco es vocabulario de producto. Separar "folder" de "install" en el criterio 1
+sigue del mismo pedido: son dos pantallas distintas, no una — el nuevo paso de workspace se ubica
+"después de instalar y antes de skills", lo que exige que "instalar" ya sea su propio paso.
+
+**Cómo se cerró**: `src/shared/simple-mode-onboarding-steps.ts` pasa a 9 ids; `BrainStep.tsx` se
+separó en `FolderStep.tsx` (elegir/crear la carpeta y activarla como proyecto) e `InstallStep.tsx`
+(corre el instalador, sin botón propio — avanza solo); `WorkspaceStep.tsx` es nuevo, corre
+`core/lib/new-workspace.sh` (que escribe la cabeza —"qué es"— y `resolver.md`, y registra la altura
+del workspace en `tree.md`) y agrega `decisions.md`, `learnings.md` y `backlog.md` vacíos con un
+encabezado de una línea cada uno (ese script no los escribe; `initiatives/` sí nace vacío del
+script). El slug del workspace se calcula en JS (`slugifyWorkspaceName`, replicando `os_slugify` de
+`common.sh`: minúsculas, sin acentos, todo lo demás colapsado a un guion) y se pasa con `--slug`
+explícito al script para no depender de parsear su stdout. `use-simple-onboarding-flow.ts` saltea el
+paso "workspace" al avanzar si `onboardingBrain.hasWorkspaces` devuelve `true` para la carpeta
+elegida. El checklist de Ajustes (criterio 11) renombra su ítem `brain` a `folder` con la misma
+lógica — ver `src/shared/simple-mode-feature-wall-setup-steps.ts`.
+
+**La invalidaría**: que Peter pida reintroducir la palabra "brain" o "vault" en algún texto visible,
+o que decida que "folder"/"install" vuelvan a ser un solo paso.
+
+## 2026-09-03 · [spec 005] Gate 2: tres claves huérfanas de "Brain" borradas del catálogo de idiomas
+
+**Qué se decide**: se borraron de `src/renderer/src/i18n/locales/en.json` las diez claves que el
+ajuste de vocabulario dejó huérfanas — ningún componente las referenciaba tras el rename de
+`BrainStep.tsx` a `FolderStep.tsx`/`InstallStep.tsx` y el cambio de copy de
+`SimpleOnboardingFlow.tsx`: `settings.SimpleModeSetupGuidePane.brain`,
+`onboarding.simple.BrainStep.{alreadyPrepared,prepared,namePlaceholder,create,pickFolder,createNew}`
+(el objeto `BrainStep` completo, ahora vacío, también se podó),
+`onboarding.simple.SimpleOnboardingFlow.{brainTitle,brainSubtitle}` y
+`onboarding.simple.SimpleOnboardingFlow.finish` (el botón "Finish" del pie ya no se muestra en el
+último paso — cada paso final tiene sus propios botones). Ninguna de las diez existía en
+`es/ja/ko/zh.json`, así que ahí no había nada que borrar. El eval del criterio 10 en
+`evals/run.sh` ahora también corre el grep de Peter directo sobre
+`src/renderer/src/i18n/locales/*.json`, excluyendo explícitamente
+`plugins.*.capability.secrets` ("Store and read secrets in the plugin's own encrypted vault") —
+preexistente de Orca, permisos de plugin, ajeno al onboarding.
+
+**Por qué**: hallazgo del Gate 2 (2026-09-03) — el commit original de esta spec corrió
+`verify-localization-catalog.mjs --fix` con `--fix` que solo agrega claves faltantes, nunca borra
+las que un rename posterior deja sin uso; el chequeo de coherencia contra la extracción real
+(`verify-localization-extraction.mjs`, campo `orphans`) reporta huérfanas pero no falla el build por
+ellas, así que quedaron sin detectar hasta la revisión manual.
+
+**La invalidaría**: nada — es una limpieza mecánica confirmada contra la extracción real
+(`compareExtraction().orphans` filtrado a las claves de esta spec, verificado en cero después del
+borrado).

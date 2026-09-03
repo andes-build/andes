@@ -76,6 +76,10 @@ export function createPreflightApi(): NonNullable<Partial<PreloadApi>['preflight
             .then((result) => result as RefreshAgentsResult)
             .catch(() => fallbackRefreshAgents)
         : Promise.resolve(fallbackRefreshAgents),
+    // Why: the onboarding Skills step is a local-only surface (the paired web
+    // client never shows onboarding); no runtime RPC exists for this, so the
+    // web host capability shim reports "unavailable" rather than adding one.
+    detectNpx: () => Promise.resolve(false),
     detectRemoteAgents: async (args) =>
       requireActiveEnvironmentOrNull()
         ? callRuntimeResult<string[]>('preflight.detectRemoteAgents', args).catch(() => [])

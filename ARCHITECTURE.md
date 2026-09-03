@@ -177,3 +177,73 @@ automática del modo developer al montar un repositorio.
   `mobile-transport.lifecycle-liveness`) se eliminaron del manifiesto. Los gates mixtos
   (`terminal-query.mobile-view-authority`, `terminal-runtime.mobile-stream-budget`) conservan sus
   archivos de `src/` (motor/renderer) y perdieron solo las referencias a `mobile/`.
+
+## Onboarding guiado — modo simple (spec 005)
+
+El modo simple no reusa el asistente de Orca: `OnboardingFlowRouter.tsx` (montado en
+`AppRootSurfaces.tsx` en lugar de `OnboardingFlow` directo) elige entre el asistente developer de
+Orca (`OnboardingFlow.tsx`, sin cambios) y `SimpleOnboardingFlow.tsx` según `useInterfaceMode()`.
+
+- **Pasos** (`src/shared/simple-mode-onboarding-steps.ts`): `welcome, agent, session, folder,
+  install, workspace, skills, notifications, star` — nueve, fijos, sin skip salvo "workspace" (ver
+  abajo). La lista original de Gate 1 tenía siete y fusionaba "folder"/"install" en un solo paso
+  "brain"; el ajuste del 2026-09-03 (📌 Peter) los separó y agregó "workspace", y sacó la palabra
+  "brain" de todo texto visible (ver `decisions.md`).
+- **Tu agente** (`SimpleAgentStep.tsx`): reusa `AgentStep.tsx` de Orca sin tocarlo; si no hay
+  agentes detectados, agrega un bloque con los comandos oficiales de instalación de Claude Code y
+  Codex, un botón de copiar (`window.api.ui.writeClipboardText`), un link a la documentación de cada
+  uno, y "Search again" (reusa `refreshDetectedAgents` del store).
+- **Tu sesión** (`SessionStep.tsx`): un solo proveedor a la vez — Claude por default, Codex si el
+  agente elegido es `codex` — vía `window.api.claudeAccounts.add` / `codexAccounts.add`, que ya
+  envuelven `runClaudeLoginSession` y su par de Codex. Nunca muestra una contraseña o token.
+- **Tu carpeta** (`FolderStep.tsx`): "Elegir carpeta" (`window.api.repos.pickFolder`) o "Crear una
+  nueva" (IPC `onboardingBrain:createFolder`, crea `<Documents>/Andes/<slug>`); cualquiera de las
+  dos activa la carpeta como proyecto (`createProjectGroup` + `createFolderWorkspace` +
+  `setActiveFolderWorkspace` + `setActiveView('terminal')`) sin abrir el modal "Add Project". No
+  exige que la carpeta sea un repositorio git.
+- **Preparar la carpeta** (`InstallStep.tsx`): corre sin botón propio — al entrar, llama
+  `onboardingBrain:prepare` y avanza sola al terminar. El núcleo que instala es una copia
+  vendorizada versionada del proyecto público AI First OS, en `vendor/ai-first-os-core/`
+  (`vendor/ai-first-os-core/VENDORED.md` documenta el commit y la versión exactos) — copiada con
+  `rsync`, sin symlinks, empaquetada vía `extraResources` a `resources/vendor/ai-first-os-core` en
+  el build (excluida de `app.asar`, mismo patrón que `resources/skills`). `src/main/onboarding/
+  brain-preparation.ts` corre `<núcleo>/install.sh` como subproceso (`runProcess`, nunca
+  `child_process` directo) contra la carpeta elegida y detecta "ya preparada" chequeando
+  `.os/core`, `CLAUDE.md`, `.claude/agents` antes de correrlo. Ningún texto de la interfaz dice "AI
+  First OS".
+- **Tu primer workspace** (`WorkspaceStep.tsx`, ajuste del 2026-09-03, sin criterio propio): pide un
+  nombre y corre `<núcleo>/lib/new-workspace.sh` (`src/main/onboarding/workspace-creation.ts`), que
+  escribe la cabeza del workspace ("qué es") y `resolver.md`, y registra su altura en `tree.md`;
+  después de correrlo se agregan `decisions.md`, `learnings.md` y `backlog.md` vacíos (con un
+  encabezado de una línea cada uno — el script no los escribe) junto al `initiatives/` que el script
+  sí crea. El slug se calcula en JS (`slugifyWorkspaceName`, replica `os_slugify` de `common.sh`) y
+  se pasa explícito con `--slug` al script. El paso se saltea (`hasExistingWorkspaces`, IPC
+  `onboardingBrain:hasWorkspaces`) si la carpeta ya tiene `workspaces/` u `orgs/` con al menos un
+  subdirectorio — chequeado en `use-simple-onboarding-flow.ts` al avanzar hacia este paso.
+- **Skills** (`SkillsStep.tsx`, opcional): sin pack fijo en código — un campo de texto para el repo,
+  sugerido vacío por defecto. Construye el comando con `buildSkillsPackInstallCommand`
+  (`src/shared/agent-feature-install-commands.ts`, nueva función junto a la existente
+  `buildAgentFeatureSkillInstallArgs` — comparten la validación de agentes objetivo) dirigido
+  exactamente a los agentes detectados en el paso "Tu agente", y lo corre en el mismo
+  `OnboardingInlineCommandTerminal` que ya usa Orca. Antes chequea `npx` reusando el mismo mecanismo
+  de PATH rehidratado que la detección de agentes (`detectNpxAvailabilityWithShellPathHydration`,
+  IPC `preflight:detectNpx`); sin `npx`, ofrece el link oficial de Node y sigue.
+- **Notificaciones**: reusa `NotificationStep.tsx` de Orca sin cambios.
+- **Estrella** (`StarStep.tsx`): último paso — "Give it a star" abre `https://github.com/andes-build/
+  andes` y marca `window.api.starNag.complete()`; "Not now" marca `starNag.later()`. Ambos botones
+  terminan el asistente de inmediato (no hay un botón "Finish" separado en el último paso). El mismo
+  repo reemplaza a `stablyai/orca` en toda la superficie real de star-nag —
+  `src/main/github/client/fetch/orca-star.ts`, `StarNagCard.tsx`, `StarNagToastHost.tsx`,
+  `GeneralSupportSection.tsx` y `agent-feature-install-commands.ts` (esta última también usada por
+  comandos preexistentes de Orca ajenos al onboarding — ver `decisions.md`).
+- **Checklist de Ajustes en modo simple** (`SimpleModeSetupGuidePane.tsx`, criterio 11): lista aparte
+  de la de Orca — `agent, session, folder, skills, notifications, star`
+  (`src/shared/simple-mode-feature-wall-setup-steps.ts`) — enrutada desde
+  `settings-setup-workflow-section-renderers.tsx` por `interfaceMode`, igual patrón que
+  `OnboardingFlowRouter`.
+- **Repetir la configuración inicial** (criterio 12): botón en Ajustes → General
+  (`RepeatOnboardingSetting.tsx`), reusa `showOnboardingFromRenderer()` que Orca ya tenía.
+
+No hay una pantalla nueva llamada "Command Center" (criterio 9): terminar el asistente deja la
+carpeta elegida como proyecto activo y `activeView: 'terminal'`, la vista principal que ya existe
+detrás del overlay.

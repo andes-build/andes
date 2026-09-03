@@ -79,7 +79,9 @@ const FloatingTerminalPanel = lazy(() =>
 // Why: lazy so the WebP asset + overlay module aren't fetched unless the experimental flag is on.
 const PetOverlay = lazy(() => import('../components/pet/PetOverlay'))
 // Why: lazy so onboarding's step modules + assets aren't fetched for users past first-launch.
-const OnboardingFlow = lazy(() => import('../components/onboarding/OnboardingFlow'))
+// Routes to the simple-mode wizard or Orca's own developer-mode wizard by
+// interface mode (spec 005) — see OnboardingFlowRouter.tsx.
+const OnboardingFlow = lazy(() => import('../components/onboarding/OnboardingFlowRouter'))
 
 type BoundaryProps = {
   boundaryId: string

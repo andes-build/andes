@@ -81,7 +81,11 @@ vi.mock('@/store', async () => {
       activityBarPosition: mockAppState.activityBarPosition,
       setActivityBarPosition: vi.fn(),
       checksByWorktreeId: {},
-      keybindings: {}
+      keybindings: {},
+      // Why: this suite covers titlebar drag regions across every activity-bar
+      // tab, a developer-mode surface set (spec 002, criterion 4); interfaceMode
+      // gating itself is covered by right-sidebar-activity-visibility.test.ts.
+      settings: { interfaceMode: 'developer' }
     })
     mockAppState.snapshotCache.set(selector, selected)
     return selected

@@ -221,3 +221,20 @@ dos es una aparición del id viejo en el código que Andes distribuye o mantiene
 **La invalidaría**: que se mueva el texto del chequeo a un identificador que no contenga el string
 literal (por ejemplo citándolo solo en la salida `ev`, no en el nombre de la función), o que
 `.build/` deje de estar en `.gitignore`.
+
+
+## 2026-09-02 · [spec 003] `tests/e2e/.cross-version-checkouts/` también queda fuera del grep del criterio 1
+
+**Qué se decide**: la función `spec003_criterio1_sin_com_stablyai_orca` de `evals/run.sh` agrega
+`--exclude-dir=.cross-version-checkouts` a las exclusiones ya documentadas (`evals/`, `.build/`).
+
+**Por qué**: `pnpm test` corre tests de compatibilidad cross-version que clonan versiones viejas y
+ya publicadas de Orca (`tests/e2e/.cross-version-checkouts/v1.4.184`, `v1.4.190`, `v1.4.195`, etc.)
+en un directorio `.gitignore`-ado (`.gitignore:166`) que se regenera en cada corrida de la suite.
+Esas versiones históricas dicen `com.stablyai.orca` porque son releases reales de Orca anteriores a
+Andes — no son código que este repo mantenga ni distribuya. Sin esta exclusión, el eval del
+criterio 1 pasa o falla según si un test anterior en la misma sesión dejó ese directorio poblado,
+lo que lo vuelve no determinístico.
+
+**La invalidaría**: que el mecanismo de cross-version testing deje de clonar checkouts reales de
+Orca, o que ese directorio deje de estar en `.gitignore`.

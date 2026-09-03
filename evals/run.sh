@@ -136,7 +136,7 @@ spec001_criterio9_sin_marca_claude_ni_anthropic
 
 spec003_criterio1_sin_com_stablyai_orca() {
   local hits
-  hits=$(grep -rnI 'com\.stablyai\.orca' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=specs --exclude-dir=.build --exclude-dir=evals --exclude=decisions.md --exclude=ARCHITECTURE.md . 2>/dev/null | wc -l | tr -d ' ')
+  hits=$(grep -rnI 'com\.stablyai\.orca' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=specs --exclude-dir=.build --exclude-dir=evals --exclude-dir=.cross-version-checkouts --exclude=decisions.md --exclude=ARCHITECTURE.md . 2>/dev/null | wc -l | tr -d ' ')
   if [ "$hits" = "0" ]; then
     ok "spec003#1 no queda ninguna aparición de com.stablyai.orca"
   else

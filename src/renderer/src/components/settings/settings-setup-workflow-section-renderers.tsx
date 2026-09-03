@@ -27,10 +27,10 @@ export function renderOrcaAccountSettingsSection(
   return model.showDesktopOnlySettings ? (
     <SettingsSection
       id="orca-account"
-      title={translate('auto.components.settings.orcaAccount.title', 'Orca Account')}
+      title={translate('auto.components.settings.orcaAccount.title', 'Andes Account')}
       description={translate(
         'auto.components.settings.orcaAccount.description',
-        'Share work instantly and reach your desktop from Orca Mobile wherever you are.'
+        'Share work instantly and reach your desktop from Andes Mobile wherever you are.'
       )}
       searchEntries={navigation.getSectionSearchEntries('orca-account')}
     >
@@ -47,7 +47,7 @@ export function renderSetupGuideSettingsSection(context: SettingsRenderContext):
       title={translate('auto.components.settings.Settings.6d119427ef', 'Onboarding checklist')}
       description={translate(
         'auto.components.settings.Settings.6855b0f77d',
-        'Finish the core workflows that make Orca useful for parallel agent work.'
+        'Finish the core workflows that make Andes useful for parallel agent work.'
       )}
       searchEntries={navigation.getSectionSearchEntries('setup-guide')}
       bodyClassName="overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none"

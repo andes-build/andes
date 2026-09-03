@@ -7,11 +7,11 @@ export const getRuntimeEnvironmentsSearchEntry = createLocalizedCatalog(
   (): SettingsSearchEntry => ({
     title: translate(
       'auto.components.settings.runtime.environments.search.3517fb2ec0',
-      'Remote Orca Servers'
+      'Active Server'
     ),
     description: translate(
       'auto.components.settings.runtime.environments.search.4575341c77',
-      'Add a saved remote Orca server, generate a pairing URL, or adjust the advanced default runtime.'
+      'Choose local desktop, add a saved remote Andes server, or generate a pairing URL.'
     ),
     keywords: [
       ...translateSearchKeyword(
@@ -70,7 +70,7 @@ export const getWebRuntimeEnvironmentsSearchEntry = createLocalizedCatalog(
     ),
     description: translate(
       'auto.components.settings.runtime.environments.search.baec27aa8f',
-      'Connect this browser to a saved Orca server.'
+      'Connect this browser to a saved Andes server.'
     ),
     keywords: [
       ...translateSearchKeyword(

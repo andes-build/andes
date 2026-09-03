@@ -78,7 +78,7 @@ export function installMainWindowCloseLifecycle(args: {
           title: 'Orca',
           body: translateMain(
             'tray.minimizeNotice.body',
-            'Orca is still running in the system tray'
+            'Andes is still running in the system tray'
           )
         }).show()
       } catch {

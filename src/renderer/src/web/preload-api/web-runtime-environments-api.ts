@@ -113,7 +113,7 @@ export function createRuntimeEnvironmentsApi(): NonNullable<
           kind: 'host-unreachable',
           message: translate(
             'auto.web.webPreloadApi.remotePairingUnreachable',
-            'Cannot reach Orca at {{endpoint}}.',
+            'Cannot reach Andes at {{endpoint}}.',
             { endpoint: parsed.value.displayEndpoint }
           )
         }
@@ -139,7 +139,7 @@ export function createRuntimeEnvironmentsApi(): NonNullable<
           kind: 'environment-save-failed',
           message: translate(
             'auto.web.webPreloadApi.remotePairingSaveFailed',
-            'Orca verified the host but could not save it. Check browser storage and try again.'
+            'Andes verified the host but could not save it. Check browser storage and try again.'
           )
         }
       }

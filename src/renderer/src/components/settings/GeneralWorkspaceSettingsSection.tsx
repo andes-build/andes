@@ -50,7 +50,7 @@ export function GeneralWorkspaceSettingsSection({
           )}
           description={translate(
             'auto.components.settings.GeneralWorkspaceSettingsSection.externalWorktreesDescription',
-            'Choose which worktrees created outside Orca appear by default on this host.'
+            'Choose whether worktrees created outside Andes appear by default.'
           )}
           keywords={[
             'external',

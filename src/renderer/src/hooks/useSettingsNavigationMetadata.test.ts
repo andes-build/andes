@@ -109,7 +109,7 @@ describe('settings navigation metadata', () => {
     const account = desktopSections.find((section) => section.id === 'orca-account')
 
     expect(account?.group).toBe('setup')
-    expect(account?.searchEntries[0]?.title).toBe('Orca account')
+    expect(account?.searchEntries[0]?.title).toBe('Andes account')
     expect(ids({ isWebClient: true })).not.toContain('orca-account')
   })
 

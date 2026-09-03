@@ -4,11 +4,11 @@ export function skillInstallManagementCopy() {
   return {
     title: translate(
       'auto.components.skills.SkillInstallManagementDialog.44d118a8f7',
-      'Installed by Orca'
+      'Manage installed skills'
     ),
     description: translate(
       'auto.components.skills.SkillInstallManagementDialog.3677ae58e7',
-      'Skills Orca installed from a link. Reinstall, go back to an earlier version, or remove them.'
+      'Update, roll back, or safely remove versions installed by Andes.'
     ),
     localMachine: translate(
       'auto.components.skills.SkillInstallManagementDialog.6cb1fbe039',
@@ -21,7 +21,7 @@ export function skillInstallManagementCopy() {
     ),
     noInstalls: translate(
       'auto.components.skills.SkillInstallManagementDialog.64c71cf7b9',
-      'Orca has not installed any skills on this machine yet.'
+      'No Andes-managed skill installs were found on this machine.'
     ),
     bundleResult: (installed: number, updated: number, keptLocal: number) =>
       translate(

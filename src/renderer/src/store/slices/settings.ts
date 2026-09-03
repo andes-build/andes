@@ -35,6 +35,10 @@ import {
 import * as ownerHydration from './settings-owner-hydration-publication'
 import { persistVisibilityAwareSettings } from './worktree-visibility-settings-write'
 import { getSettingsFocusedExecutionHostId } from '../../../../shared/execution-host'
+import {
+  closeDeveloperOnlySurfacesForSimpleMode,
+  isSwitchingToSimpleMode
+} from './interface-mode-simple-switch'
 
 export type SettingsSlice = SettingsSearchState & {
   settings: GlobalSettings | null
@@ -208,6 +212,7 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
       'activeRuntimeEnvironmentId' in updates || 'worktreeVisibilityDefaults' in updates
     )
     const visibilityOwnerHostId = getSettingsFocusedExecutionHostId(get().settings)
+    const previousInterfaceMode = get().settings?.interfaceMode
     try {
       await persistSettingsUpdates(
         set,
@@ -220,6 +225,9 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
       if ('worktreeVisibilityDefaults' in updates) {
         await get().fetchAllWorktrees({ visibilityOwnerHostId })
       }
+      if (isSwitchingToSimpleMode(previousInterfaceMode, updates.interfaceMode)) {
+        closeDeveloperOnlySurfacesForSimpleMode(get)
+      }
     } catch (err) {
       console.error('Failed to update settings:', err)
     }
@@ -230,6 +238,7 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
       'activeRuntimeEnvironmentId' in updates || 'worktreeVisibilityDefaults' in updates
     )
     const visibilityOwnerHostId = getSettingsFocusedExecutionHostId(get().settings)
+    const previousInterfaceMode = get().settings?.interfaceMode
     await persistSettingsUpdates(
       set,
       updates,
@@ -240,6 +249,9 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
     )
     if ('worktreeVisibilityDefaults' in updates) {
       await get().fetchAllWorktrees({ visibilityOwnerHostId })
+    }
+    if (isSwitchingToSimpleMode(previousInterfaceMode, updates.interfaceMode)) {
+      closeDeveloperOnlySurfacesForSimpleMode(get)
     }
   },
 

@@ -102,7 +102,7 @@ export function AddRepoHostSelector({
                         <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
                           {translate(
                             'auto.components.sidebar.AddRepoHostSelector.addRemoteHostDetail',
-                            'SSH host or Orca server'
+                            'SSH host or Andes server'
                           )}
                         </span>
                       </span>
@@ -153,7 +153,7 @@ export function AddRepoHostSelector({
                         <span className="mt-0.5 text-[11px] text-muted-foreground">
                           {translate(
                             'auto.components.sidebar.AddRepoHostSelector.addRemoteServerDetail',
-                            'Pair with Orca running on another computer.'
+                            'Pair with Andes running on another computer.'
                           )}
                         </span>
                       </button>

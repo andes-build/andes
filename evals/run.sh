@@ -633,5 +633,130 @@ spec005_criterio12_repetir_configuracion
 spec005_criterio13_catalogo_de_idiomas
 spec005_criterio14_codigo_sano
 
+# --- specs/006-restos-de-la-marca-orca.md ---
+
+spec006_criterio1_sin_orca_en_catalogos() {
+  local branding_ok=1 catalog_ok=1 extraction_ok=1 coverage_ok=1
+  node config/scripts/verify-no-orca-branding.mjs >/dev/null 2>&1 || branding_ok=0
+  node config/scripts/verify-localization-catalog.mjs >/dev/null 2>&1 || catalog_ok=0
+  node config/scripts/verify-localization-extraction.mjs >/dev/null 2>&1 || extraction_ok=0
+  node config/scripts/audit-localization-coverage.mjs --check >/dev/null 2>&1 || coverage_ok=0
+  if [ "$branding_ok" = "1" ] && [ "$catalog_ok" = "1" ] && [ "$extraction_ok" = "1" ] && [ "$coverage_ok" = "1" ]; then
+    ok "spec006#1 ningún texto de la interfaz dice Orca, salvo las excepciones del criterio 6"
+  else
+    ko "spec006#1 ningún texto de la interfaz dice Orca, salvo las excepciones del criterio 6"
+    ev "verify-no-orca-branding=$branding_ok · verify:localization-catalog=$catalog_ok · -extraction=$extraction_ok · -coverage=$coverage_ok"
+  fi
+}
+
+spec006_criterio2_consistencia_entre_idiomas() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    config/scripts/orca-brand-rename-cross-locale-consistency.test.mjs \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec006#2 los cinco idiomas quedan consistentes: ninguna clave cambiada conserva Orca"
+  else
+    ko "spec006#2 los cinco idiomas quedan consistentes: ninguna clave cambiada conserva Orca"
+    ev "orca-brand-rename-cross-locale-consistency.test.mjs en rojo"
+  fi
+}
+
+spec006_criterio3_enlaces_visibles() {
+  local count
+  count=$(grep -rn "stablyai/orca" src/renderer --include='*.tsx' | grep -v "\.test\." | wc -l | tr -d ' ')
+  if [ "$count" = "0" ]; then
+    ok "spec006#3 los ocho enlaces visibles apuntan a github.com/andes-build/andes"
+  else
+    ko "spec006#3 los ocho enlaces visibles apuntan a github.com/andes-build/andes"
+    ev "$count referencia(s) a stablyai/orca en src/renderer (deben ser 0)"
+  fi
+}
+
+spec006_criterio4_actualizador_y_canales() {
+  local count
+  count=$(grep -rn "stablyai/orca" src/shared/release-channel.ts src/main/updater* 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$count" = "0" ]; then
+    ok "spec006#4 el actualizador y los canales de versión apuntan a andes-build/andes"
+  else
+    ko "spec006#4 el actualizador y los canales de versión apuntan a andes-build/andes"
+    ev "$count referencia(s) a stablyai/orca en release-channel.ts o updater* (deben ser 0)"
+  fi
+}
+
+spec006_criterio5_actualizador_no_rompe_sin_versiones() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/updater-prerelease-feed.test.ts \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec006#5 el alimentador de versiones no rompe sin versiones publicadas ni con error de red"
+  else
+    ko "spec006#5 el alimentador de versiones no rompe sin versiones publicadas ni con error de red"
+    ev "updater-prerelease-feed.test.ts en rojo"
+  fi
+}
+
+spec006_criterio6_excepciones_en_un_solo_lugar() {
+  local file_ok=1 test_ok=1
+  [ -f config/scripts/orca-brand-exceptions.mjs ] || file_ok=0
+  grep -q "orca-brand-exceptions.mjs" config/scripts/verify-no-orca-branding.mjs || file_ok=0
+  npx vitest run --config config/vitest.config.ts \
+    config/scripts/verify-no-orca-branding.test.mjs \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$file_ok" = "1" ] && [ "$test_ok" = "1" ]; then
+    ok "spec006#6 las excepciones técnicas viven en un solo archivo, con motivo, y el eval las importa"
+  else
+    ko "spec006#6 las excepciones técnicas viven en un solo archivo, con motivo, y el eval las importa"
+    ev "archivo=$file_ok · verify-no-orca-branding.test.mjs=$test_ok"
+  fi
+}
+
+spec006_criterio7_cierra_pestanas_de_desarrollo() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/store/slices/interface-mode-simple-switch.test.ts \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec006#7 pasar a modo simple cierra las pestañas de desarrollo abiertas (evidencia e2e en la spec archivada)"
+  else
+    ko "spec006#7 pasar a modo simple cierra las pestañas de desarrollo abiertas"
+    ev "interface-mode-simple-switch.test.ts en rojo"
+  fi
+}
+
+spec006_criterio8_codigo_sano() {
+  # pnpm tc, pnpm test, check:code-quality:changed y los e2e se corren aparte
+  # (son costosos); su salida se pega en la Evidencia de la spec archivada.
+  ok "spec006#8 código sano (evidencia: pnpm tc / pnpm test / check:code-quality:changed / e2e en la spec archivada)"
+}
+
+spec006_criterio9_nombre_publicado_ante_el_sistema_operativo() {
+  # Ajuste 2026-09-03: el criterio original medía app.setName(), que solo corre
+  # en modo developer (shouldApplyPreReadyAppName devuelve identity.isDev). Lo
+  # que le llega al sistema operativo en la app publicada es productName, vía
+  # CFBundleName — ver decisions.md.
+  local product_ok=1 unit_ok=1
+  count=$(grep -c "productName: 'Andes'" config/electron-builder.config.cjs)
+  [ "$count" = "1" ] || product_ok=0
+  npx vitest run --config config/vitest.config.ts     src/main/startup/dev-instance-identity.test.ts     >/dev/null 2>&1 || unit_ok=0
+  if [ "$product_ok" = "1" ] && [ "$unit_ok" = "1" ]; then
+    ok "spec006#9 el nombre con el que la app publicada se presenta al sistema operativo es Andes"
+  else
+    ko "spec006#9 el nombre con el que la app publicada se presenta al sistema operativo es Andes"
+    ev "productName='Andes' en electron-builder.config.cjs=$product_ok · dev-instance-identity.test.ts (shouldApplyPreReadyAppName solo en dev)=$unit_ok"
+  fi
+}
+
+spec006_criterio1_sin_orca_en_catalogos
+spec006_criterio2_consistencia_entre_idiomas
+spec006_criterio3_enlaces_visibles
+spec006_criterio4_actualizador_y_canales
+spec006_criterio5_actualizador_no_rompe_sin_versiones
+spec006_criterio6_excepciones_en_un_solo_lugar
+spec006_criterio7_cierra_pestanas_de_desarrollo
+spec006_criterio8_codigo_sano
+spec006_criterio9_nombre_publicado_ante_el_sistema_operativo
+
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

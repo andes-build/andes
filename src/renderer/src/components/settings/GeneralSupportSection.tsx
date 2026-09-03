@@ -123,7 +123,7 @@ function SupportSection({
             <SettingsSubsectionHeader
               title={translate(
                 'auto.components.settings.GeneralSupportSection.55a87e5fd1',
-                'Support Orca'
+                'Support Andes'
               )}
             />
             {state === 'loading' ? <SupportRowSkeleton /> : null}
@@ -160,7 +160,7 @@ function SupportRow({
     <SearchableSetting
       title={translate(
         'auto.components.settings.GeneralSupportSection.6922c1fa2b',
-        'Star Orca on GitHub'
+        'Star Andes on GitHub'
       )}
       description={translate(
         'auto.components.settings.GeneralSupportSection.511782265b',

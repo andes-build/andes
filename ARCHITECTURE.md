@@ -247,3 +247,50 @@ Orca (`OnboardingFlow.tsx`, sin cambios) y `SimpleOnboardingFlow.tsx` según `us
 No hay una pantalla nueva llamada "Command Center" (criterio 9): terminar el asistente deja la
 carpeta elegida como proyecto activo y `activeView: 'terminal'`, la vista principal que ya existe
 detrás del overlay.
+
+## Restos de la marca Orca (spec 006)
+
+- **Catálogos de idiomas**: los cinco (`en, es, ja, ko, zh` en `src/renderer/src/i18n/locales/`) no
+  dicen "Orca" salvo las excepciones técnicas de `config/scripts/orca-brand-exceptions.mjs` (único
+  archivo, con motivo por entrada), verificado por `config/scripts/verify-no-orca-branding.mjs`
+  (`\bOrca\b` sobre valores, tras aplicar las excepciones). "Orca CLI" describe la herramienta sin
+  marca ("the command line tool" / "the command line" en inglés, equivalente en cada idioma) porque
+  el binario real sigue llamándose `orca` — ver `decisions.md`. "Orca Server" y "Orca Cloud" sí se
+  renombraron a Andes (son un servicio real de la app, no el binario). Los comandos literales entre
+  comillas invertidas (`` `orca worktree create` ``, `` `orca serve` ``) no cambiaron: son el
+  binario real. Las 33 claves huérfanas de "Orca Mobile"/"Orca Relay" (emparejamiento móvil borrado
+  en la spec 001, sin referencia viva en el código) se borraron del catálogo en vez de traducirse;
+  las pocas que sí siguen vivas (`menu.showMobileButton`, `orcaAccount.*`,
+  `orca.profiles.signout.confirm.description`) se renombraron igual que el resto.
+- **Enlaces visibles**: los ocho del inventario de la spec apuntan a `github.com/andes-build/andes`
+  (`Landing.tsx`, `SidebarFeedbackDialog.tsx`, `SidebarSettingsHelpMenu.tsx`,
+  `TerminalErrorToast.tsx`, `ShareUsageButton.tsx`, `share-card-utils.tsx`,
+  `ProjectViewStates.tsx`, `link-routing-preference-dialog.tsx`).
+- **Actualizador**: `HOURLY_RELEASE_REPO`, `DAILY_RELEASE_REPO`, `ADHOC_RELEASE_REPO` y
+  `MAIN_RELEASE_REPO` (`src/shared/release-channel.ts`) son los cuatro `'andes-build/andes'` — sin
+  repo propio de Andes para canales de desarrollo, los cuatro comparten el único repo público (ver
+  `decisions.md`: el riesgo de desplazar el feed de stable/RC que motivaba repos separados en Orca
+  vuelve el día que existan builds hourly/daily/adhoc reales, no antes). Las tres URL de descarga
+  (`updater-prerelease-feed.ts`, `updater/updater-release-feed.ts`, `updater/updater-setup.ts`)
+  apuntan al mismo repo. Ningún cambio tocó la firma del paquete ni el flujo de
+  `electron-updater` más allá de las URL. El alimentador de versiones
+  (`fetchNewerReleaseTagsWithReadiness`) ya degradaba sin versiones publicadas o con error de red a
+  `{ tags: [], state: 'no-newer' | 'unavailable' }` sin lanzar — cubierto con test dedicado.
+- **Marketplace de plugins**: sigue siendo el de Orca (`stablyai`), decidido en Gate 1 — fuera de
+  alcance, ver "Fuera de alcance" de `specs/done/006-restos-de-la-marca-orca.md`.
+- **Cierra el hueco de la spec 002**: pasar de developer a simple ahora cierra las pestañas de
+  desarrollo ya abiertas — `src/renderer/src/store/slices/interface-mode-simple-switch.ts`
+  (`closeDeveloperOnlySurfacesForSimpleMode`, llamada desde `updateSettings`/`updateSettingsOrThrow`
+  cuando `interfaceMode` pasa de `developer` a `simple`): cierra toda pestaña `browser`/`simulator`
+  de `unifiedTabsByWorktree` (con `closeBrowserTab` primero para las de tipo `browser`, que también
+  limpia `browserTabsByWorktree`), manda `activeView` de vuelta a `terminal` si estaba en
+  `tasks`/`automations`/`artifacts`, y cierra el drawer del dashboard de agentes. Nunca toca
+  `terminal` ni `agent-session`: la conversación sigue.
+- **La app publicada ya se llama Andes ante el sistema operativo**: `productName: 'Andes'`
+  (`config/electron-builder.config.cjs`) fija el `CFBundleName`/AppUserModelId real de cualquier
+  build empaquetado. Lo que queda diciendo "Orca"/"Orca Dev" es solo la instancia de *desarrollo*
+  (`BASE_APP_NAME`, `src/main/startup/dev-instance-identity.ts`), aplicado por `app.setName()` —
+  gateado a `isDev` (`shouldApplyPreReadyAppName`) y sin efecto en un paquete publicado. Ese
+  renombre cosmético de desarrollo pasa a la spec 007: `app.setName()` alimenta también el nombre
+  del ítem de Keychain que `safeStorage` resuelve antes de `ready`, así que cambiarlo sin cuidado
+  arriesga los secretos ya cifrados del perfil de desarrollo — ver "Decisiones".

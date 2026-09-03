@@ -79,11 +79,11 @@ export function GeneralRemoteServerUpdates(): React.JSX.Element | null {
     <SearchableSetting
       title={translate(
         'auto.components.settings.GeneralRemoteServerUpdates.title',
-        'Remote Orca Servers'
+        'Remote Andes Servers'
       )}
       description={translate(
         'auto.components.settings.GeneralRemoteServerUpdates.description',
-        'Check and update paired Orca servers from this client.'
+        'Check and update paired Andes servers from this client.'
       )}
       keywords={['remote server', 'update all', 'paired', 'version']}
       className="space-y-3"

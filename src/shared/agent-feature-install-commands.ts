@@ -2,7 +2,7 @@ import { isSkillsCliAgentKeyShaped } from './skills-cli-agent-keys'
 
 export const ORCA_SKILLS_REPOSITORY_URL = 'https://github.com/andes-build/andes'
 
-export const ORCA_CLI_SKILL_NAME = 'orca-cli'
+export const ORCA_CLI_SKILL_NAME = 'andes-cli'
 export const COMPUTER_USE_SKILL_NAME = 'computer-use'
 export const ORCHESTRATION_SKILL_NAME = 'orchestration'
 export const EPHEMERAL_VMS_SKILL_NAME = 'orca-per-workspace-env'

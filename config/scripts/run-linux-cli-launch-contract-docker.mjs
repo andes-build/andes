@@ -11,9 +11,9 @@ const platform = valueAfter('--platform')
 const dockerPlatformArgs = platform ? ['--platform', platform] : []
 
 const suffix = `${process.pid}-${Date.now()}`
-const artifactVolume = `orca-cli-contract-artifact-${suffix}`
+const artifactVolume = `andes-cli-contract-artifact-${suffix}`
 const tagArchitecture = platform?.split('/')[1] ?? process.arch
-const tag = `orca-cli-launch-contract:ubuntu-24.04-${tagArchitecture}-${suffix}`
+const tag = `andes-cli-launch-contract:ubuntu-24.04-${tagArchitecture}-${suffix}`
 const base = 'ubuntu@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90'
 const containers = new Set()
 let artifactVolumeCreated = false
@@ -152,7 +152,7 @@ function runContract() {
 }
 
 function runCase(caseName) {
-  const container = `orca-cli-contract-${caseName}-${suffix}`
+  const container = `andes-cli-contract-${caseName}-${suffix}`
   containers.add(container)
   // FUSE and extra capabilities would invalidate the test conditions.
   return docker(
@@ -192,7 +192,7 @@ function buildImage() {
 // Extract unprivileged so chrome-sandbox is not root-owned setuid.
 function stageArtifacts() {
   console.log('Staging the AppImage payload…')
-  const container = `orca-cli-contract-stage-${suffix}`
+  const container = `andes-cli-contract-stage-${suffix}`
   containers.add(container)
   docker(
     [

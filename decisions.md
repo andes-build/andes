@@ -825,3 +825,107 @@ puntual.
 
 **Corregido el 2026-09-03**: esto es solo de desarrollo, no afecta a la app publicada; el renombre
 cosmético de desarrollo se trata en la spec 007, con la advertencia del llavero.
+
+## 2026-09-03 · [spec 007] El nombre de la instancia de desarrollo pasa a "Andes Dev": quien tenga un perfil vivo reinicia sesión una vez
+
+**Qué se decide**: `BASE_APP_NAME` (`src/main/startup/dev-instance-identity.ts`) pasa de `'Orca'` a
+`'Andes'`, y `DEV_BUNDLE_DISPLAY_NAME` (`config/scripts/dev-electron-bundle-identity.mjs`) de
+`'Orca Dev'` a `'Andes Dev'`. El ítem del llavero de macOS pasa de "Orca Dev Safe Storage" a "Andes
+Dev Safe Storage". La carpeta de datos (`userData`, fijada a `<appData>/orca-dev` en
+`configure-process.ts`) no se toca.
+
+**Por qué**: instrucción de Peter en el Gate 1 de esta spec (2026-09-03), cerrando la alternativa que
+la spec 006 había dejado abierta (ver la entrada del mismo día arriba). `app.setName()` alimenta a la
+vez el nombre visible (notificaciones, Dock) y el nombre del ítem de Keychain que `safeStorage`
+resuelve antes de `ready` — no hay forma de cambiar uno sin el otro. Quien tenga un perfil de
+desarrollo con sesión guardada (cuentas de Claude/Codex, secretos de host o de plugin, todos cifrados
+bajo el ítem viejo) pierde acceso a esos secretos y tiene que volver a iniciar sesión una vez; el
+costo es único y el nombre de desarrollo confuso ("Orca Dev") molestaba a todos los que construyen
+Andes todos los días.
+
+**Reemplaza a**: la entrada "Bloqueado" de la spec 006 sobre el mismo tema (2026-09-03).
+
+**La invalidaría**: nada — es la contrapartida ya aceptada del costo que la entrada anterior dejó
+pendiente de decidir.
+
+## 2026-09-03 · [spec 007] El comando se renombra en macOS y en el modo desarrollo; el launcher nativo de Windows y el paquete de Linux no
+
+**Qué se decide**: `orca` pasa a `andes` como comando instalado en el PATH en macOS
+(`/usr/local/bin/andes`, o `~/.local/bin/andes` en Apple Silicon sin `/usr/local/bin`) y en el modo
+desarrollo, en cualquier plataforma (`andes-dev`, `config/scripts/andes-dev.mjs`). El launcher nativo
+de Windows (`native/windows-cli-launcher/`, compilado a `resources/bin/orca.exe`, con el wrapper
+`resources/win32/bin/orca.cmd`) y el empaquetado de Linux (`executableName: 'orca-ide'` en
+`config/electron-builder.config.cjs`, ya distinto de `orca` desde antes de esta spec por el choque con
+el lector de pantalla GNOME Orca) **no se tocan**: `LINUX_CLI_COMMAND_NAME` sigue en `'orca-ide'` y
+`getBundledLauncherPath('win32', …)` sigue devolviendo `orca.exe`. `cli-install-location.ts` refleja
+esto con un `commandName` de tres ramas: `linux` → `orca-ide`, `win32` → `orca`, cualquier otra
+plataforma (macOS) → `andes`.
+
+**Por qué**: renombrar el launcher de Windows exige tocar en el mismo cambio el proyecto nativo
+(`native/windows-cli-launcher/`, C#), el mapeo de `extraResources` de `electron-builder.config.cjs`
+(dos entradas coordinadas, `orca.exe` y `orca.cmd`, con un wrapper `.cmd` que busca `orca.exe` por
+nombre literal) y el pipeline de build de ese ejecutable — nada de eso se puede compilar ni verificar
+desde esta sesión (agente en macOS, sin toolchain de Windows), y ningún eval de la spec lo exige. El
+paquete de Linux ya no se llamaba `orca` desde antes de esta spec (era `orca-ide`, decisión de una
+spec anterior para no chocar con el lector de pantalla GNOME); nada en esta spec obligaba a tocarlo,
+y hacerlo exigiría coordinar el `.desktop` entry, el `StartupWMClass` y los nombres de paquete
+deb/rpm, que tampoco se pueden construir ni verificar acá.
+
+**La invalidaría**: que una spec futura arme el toolchain de Windows (o un runner Linux) para
+verificar el renombre del launcher nativo y del paquete Linux con evidencia real, en cuyo momento
+"Windows" y "Linux" dejan las tres ramas de `commandName` y se unifican en `andes`.
+
+## 2026-09-03 · [spec 007] `OrchestrationCliCommand` y el flag `--orca-cli` de SSH/relay quedan sin renombrar: viajan a procesos ya lanzados
+
+**Qué se decide**: `OrchestrationCliCommand` (`'orca' | 'orca-ide'`, `src/main/runtime/orchestration/
+cli-command.ts`), el campo de wire RPC `compatibilityCliCommand` (mismo enum, `orchestration-schemas.ts`),
+`resolveCompatibilityCliCommand()` (`src/cli/handlers/orchestration/runtime-compatibility.ts`), y todo
+el subsistema de relay SSH (`src/relay/`, `src/main/ssh/ssh-remote-cli-launcher.ts`,
+`ssh-remote-orca-cli.ts`, el flag `--orca-cli` que uno le agrega al comando y el otro busca en
+`argv`, y el nombre `~/.orca-relay/bin/orca` del shim que se despliega en el host remoto) siguen
+diciendo `orca` sin cambios. El helper `getTuiAgentLaunchCommand` (`src/shared/tui-agent-config.ts`)
+usa `launchCmd: 'orca claude-teams'` (top-level) como identidad genérica y de relay remoto, y agrega
+`launchCmdByPlatform.darwin: 'andes claude-teams'` como la única rama que sí reflejó el renombre.
+
+**Por qué**: esto es exactamente el criterio delegado de la spec ("si el valor viaja a disco o a un
+proceso ya lanzado, se conserva y se documenta"). El shim que el relay SSH despliega en un host remoto
+siempre se llama `orca` (es parte del protocolo de ese subsistema, no del comando local que esta spec
+renombra), y el campo de compatibilidad existe justamente para que un coordinador nuevo siga hablando
+con un participante remoto que corre esa convención. Cambiar cualquiera de estos valores rompe la
+comunicación entre un coordinador y un host remoto sin relación con qué nombre tiene el comando local
+en macOS.
+
+**La invalidaría**: que una spec futura rediseñe el protocolo de relay SSH y su shim remoto, momento
+en el que esta preservación deja de tener sentido.
+
+## 2026-09-03 · [spec 007] `LEGACY_MAC_COMMAND_NAME` se agrega junto al `LEGACY_LINUX_COMMAND_NAME` ya existente: los dos limpian, ninguno instala
+
+**Qué se decide**: `cli-install-constants.ts` suma `LEGACY_MAC_COMMAND_NAME = 'orca'`, comentado
+"solo para desinstalar", igual que el `LEGACY_LINUX_COMMAND_NAME` que ya existía (mecanismo previo,
+no creado por esta spec, para el que ya limpiaba instalaciones que antes de la introducción de
+`orca-ide` habían quedado como `orca` llano en Linux). `cli-command-installation.ts` agrega
+`removeLegacyMacCommandIfManaged`, análogo al método Linux ya existente, generalizando
+`isManagedSymlinkTarget` con un tercer parámetro opcional (`expectedName`, default
+`basename(launcherPath)`) para poder preguntar "¿este symlink es un `orca` administrado?" sin
+duplicar la lógica del patrón de `.app/Contents/Resources/bin/<nombre>`.
+
+**Por qué**: el criterio 3 de la spec exige limpiar una instalación previa con el comando `orca` sin
+dejar dos comandos apuntando a la misma app. En macOS eso no pasaba solo porque el flujo de
+instalación normal solo inspecciona la ruta *nueva* (`/usr/local/bin/andes`); un `orca` viejo en la
+misma carpeta queda huérfano si nadie lo busca a propósito.
+
+**La invalidaría**: nada — es la limpieza mecánica que el criterio pedía.
+
+## 2026-09-03 · [spec 007] El catálogo de idiomas de esta spec toca solo `en.json`: los otros cuatro son territorio de la spec 008 en paralelo
+
+**Qué se decide**: el criterio 5 (comandos vuelven a nombrar "the Andes CLI", comandos literales
+`andes`) se implementó solo en `src/renderer/src/i18n/locales/en.json`. `es.json`, `ja.json`,
+`ko.json` y `zh.json` no se tocaron.
+
+**Por qué**: instrucción directa del agente orquestador al delegar esta spec en paralelo con la 008
+("dejar solo el catálogo inglés", que borra los otros cuatro archivos). Tocar esos archivos hubiera
+sido trabajo descartado en cuanto la 008 mergee, y un choque de ediciones simultáneas sobre los mismos
+archivos mientras las dos ramas están vivas.
+
+**La invalidaría**: que la spec 008 no termine borrando esos catálogos (en cuyo momento faltaría
+completar el criterio 5 en `es/ja/ko/zh.json`).

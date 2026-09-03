@@ -1,4 +1,6 @@
-// Fuente única de las excepciones técnicas de la spec 006 (restos de la marca Orca).
+// Fuente única de las excepciones técnicas de la spec 006 (restos de la marca Orca), actualizada
+// por la spec 007 (el comando se llama andes) al cerrar las dos entradas que dependían del
+// binario sin renombrar.
 // Cada entrada documenta un lugar donde "Orca" sigue apareciendo a propósito porque nombra
 // algo real que el sistema usa, no la marca visible del producto. `evals/run.sh` (spec006#1,
 // spec006#6) importa este archivo en vez de tener la lista escrita dos veces.
@@ -10,13 +12,6 @@
 // catálogos, para que el archivo sea la única lista y no una lista más entre varias.
 
 export const localeValuePatterns = [
-  {
-    // Comando literal del binario real: `orca`, `orca worktree create`, `orca serve`, etc.
-    // El binario sigue llamándose `orca` (nadie lo renombró: ver "Fuera de alcance" de la
-    // spec 006, spec 007 pendiente) — el comando entre comillas invertidas no puede mentir.
-    pattern: /`orca(?:[\s-][a-z0-9-]+)*`/gi,
-    reason: 'comando literal del binario real `orca`, no renombrado (spec 007 pendiente)'
-  },
   {
     // `orca.yaml`: formato de configuración de proyecto, no es marca (ver Estado previo de la
     // spec 006). Ya no matchea \bOrca\b por ser minúscula, pero se declara para dejar la lista
@@ -30,11 +25,6 @@ export const otherExceptions = [
   {
     location: 'src/renderer/src/components/**/*.test.ts(x)? (fixtures de fuente monoespaciada)',
     reason: '"Orca Nerd Font Symbols" es el nombre de una fuente empaquetada, no se renombra'
-  },
-  {
-    location: 'skill "orca-cli" (src/cli/bundled-skill-guides.ts, ORCA_CLI_SKILL_NAME)',
-    reason:
-      'id real del skill, constante de código — el texto visible que lo describe sí se reescribe (ver criterios 1 y 6 de la spec 006)'
   },
   {
     location: 'src/shared/plugins/plugin-marketplace.ts, src/main/plugins/plugin-install-trust.ts',

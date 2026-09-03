@@ -11,12 +11,14 @@ export function getBundledLauncherPath(
   resourcesPath: string
 ): string | null {
   if (platform === 'darwin') {
-    return join(resourcesPath, 'bin', 'orca')
+    return join(resourcesPath, 'bin', 'andes')
   }
   if (platform === 'linux') {
     return join(resourcesPath, 'bin', LINUX_CLI_COMMAND_NAME)
   }
   if (platform === 'win32') {
+    // Why not 'andes.exe': the packaged Windows native launcher (native/windows-cli-launcher/)
+    // is out of scope for spec 007 — see cli-install-location.ts's commandName getter.
     return join(resourcesPath, 'bin', 'orca.exe')
   }
   return null

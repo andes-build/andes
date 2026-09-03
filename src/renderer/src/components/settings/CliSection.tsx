@@ -57,7 +57,7 @@ function getRevealLabel(platform: string): string {
 
 function getInstallDescription(platform: string): string {
   if (platform === 'darwin') {
-    return 'Register `orca` in /usr/local/bin.'
+    return 'Register `andes` in /usr/local/bin.'
   }
   if (platform === 'linux') {
     return 'Register `orca-ide` in ~/.local/bin.'
@@ -69,7 +69,10 @@ function getInstallDescription(platform: string): string {
 }
 
 function getFallbackCommandName(platform: string): string {
-  return platform === 'linux' ? 'orca-ide' : 'orca'
+  if (platform === 'linux') {
+    return 'orca-ide'
+  }
+  return platform === 'win32' ? 'orca' : 'andes'
 }
 
 export function CliSection({

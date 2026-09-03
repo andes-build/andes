@@ -41,7 +41,7 @@ function itWindows(name, test) {
 
 describe('Windows CLI launcher', () => {
   it('reuses a compiled launcher that is at least as new as the C# source', () => {
-    const root = mkdtempSync(join(tmpdir(), 'orca-cli-launcher-reuse-'))
+    const root = mkdtempSync(join(tmpdir(), 'andes-cli-launcher-reuse-'))
     try {
       const sourcePath = join(root, 'OrcaCliLauncher.cs')
       const outputPath = join(root, '.build', 'orca.exe')

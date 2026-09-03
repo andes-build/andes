@@ -12,7 +12,7 @@ afterEach(() =>
 
 describe('CLI version', () => {
   it('reads the package boundary beside the compiled CLI', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'orca-cli-version-'))
+    const root = await mkdtemp(join(tmpdir(), 'andes-cli-version-'))
     const runtimeDir = join(root, 'cli')
     temporaryDirectories.push(root)
     await mkdir(runtimeDir)
@@ -22,7 +22,7 @@ describe('CLI version', () => {
   })
 
   it('rejects missing, malformed, and non-string versions', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'orca-cli-version-invalid-'))
+    const root = await mkdtemp(join(tmpdir(), 'andes-cli-version-invalid-'))
     const runtimeDir = join(root, 'cli')
     temporaryDirectories.push(root)
     await mkdir(runtimeDir)

@@ -9,7 +9,7 @@ const REPO_ROOT = path.resolve(SCRIPT_DIR, '..', '..')
 
 const CANONICAL_GUIDE_NAMES = [
   'computer-use',
-  'orca-cli',
+  'andes-cli',
   'orca-per-workspace-env',
   'orchestration'
 ]
@@ -18,7 +18,7 @@ const CANONICAL_GUIDE_NAMES = [
 // a compatibility ledger: add entries for renames, but never remove them.
 const GUIDE_ALIASES = {
   'computer-use': [],
-  'orca-cli': [],
+  'andes-cli': [],
   'orca-per-workspace-env': [],
   orchestration: []
 }
@@ -28,7 +28,7 @@ const GUIDE_ALIASES = {
 // Migrating a topic here is effectively one-way — earlier fat installs rely on the stub
 // landing to converge — so entries are added as skills convert, never removed. The stub
 // body lives in skill-stubs/<topic>.md; the projection reuses the guide's own frontmatter.
-const STUB_TOPICS = ['computer-use', 'orca-cli', 'orca-per-workspace-env', 'orchestration']
+const STUB_TOPICS = ['computer-use', 'andes-cli', 'orca-per-workspace-env', 'orchestration']
 
 function normalizeMarkdown(markdown) {
   return markdown.replace(/\r\n/g, '\n').replace(/\r/g, '\n')

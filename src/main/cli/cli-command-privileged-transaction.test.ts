@@ -38,16 +38,16 @@ afterEach(async () => {
 })
 
 async function createPrivilegedFixture() {
-  const root = await mkdtemp(join(tmpdir(), 'orca-cli-privileged-transaction-'))
+  const root = await mkdtemp(join(tmpdir(), 'andes-cli-privileged-transaction-'))
   createdRoots.push(root)
   const protectedDirectory = join(root, 'protected')
   protectedDirectories.push(protectedDirectory)
-  const commandPath = join(protectedDirectory, 'orca')
+  const commandPath = join(protectedDirectory, 'andes')
   const userDataPath = join(root, 'user-data')
   const appPath = join(root, 'app')
   await mkdir(protectedDirectory)
   await mkdir(join(appPath, 'out', 'cli'), { recursive: true })
-  await writeFile(join(appPath, 'out', 'cli', 'index.js'), 'console.log("orca")\n')
+  await writeFile(join(appPath, 'out', 'cli', 'index.js'), 'console.log("andes")\n')
   return { root, protectedDirectory, commandPath, userDataPath, appPath }
 }
 
@@ -103,7 +103,7 @@ describe.skipIf(process.platform !== 'darwin' || process.getuid?.() === 0)(
 
     it('restores a trailing-newline symlink inserted after privileged inspection', async () => {
       const fixture = await createPrivilegedFixture()
-      const staleTarget = join(fixture.userDataPath, 'cli', 'bin', 'old', 'orca')
+      const staleTarget = join(fixture.userDataPath, 'cli', 'bin', 'old', 'andes')
       const foreignTarget = `${staleTarget}\n`
       await symlink(staleTarget, fixture.commandPath)
       const original = await lstat(fixture.commandPath, { bigint: true })
@@ -131,7 +131,7 @@ describe.skipIf(process.platform !== 'darwin' || process.getuid?.() === 0)(
       await expect(installer.install()).rejects.toThrow()
       await expect(readlink(fixture.commandPath)).resolves.toBe(foreignTarget)
       expect(
-        (await readdir(fixture.protectedDirectory)).some((name) => name.startsWith('.orca-cli-'))
+        (await readdir(fixture.protectedDirectory)).some((name) => name.startsWith('.andes-cli-'))
       ).toBe(false)
     })
 
@@ -160,13 +160,13 @@ describe.skipIf(process.platform !== 'darwin' || process.getuid?.() === 0)(
       await expect(installer.install()).rejects.toThrow()
       await expect(readFile(fixture.commandPath, 'utf8')).resolves.toBe(foreignContent)
       expect(
-        (await readdir(fixture.protectedDirectory)).some((name) => name.startsWith('.orca-cli-'))
+        (await readdir(fixture.protectedDirectory)).some((name) => name.startsWith('.andes-cli-'))
       ).toBe(false)
     })
 
     it('restores the displaced command when publication setup fails', async () => {
       const fixture = await createPrivilegedFixture()
-      const staleTarget = join(fixture.userDataPath, 'cli', 'bin', 'old', 'orca')
+      const staleTarget = join(fixture.userDataPath, 'cli', 'bin', 'old', 'andes')
       await symlink(staleTarget, fixture.commandPath)
       const installer = new CliInstaller({
         ...fixtureInstallerOptions(fixture),
@@ -182,7 +182,7 @@ describe.skipIf(process.platform !== 'darwin' || process.getuid?.() === 0)(
       await expect(installer.install()).rejects.toThrow()
       await expect(readlink(fixture.commandPath)).resolves.toBe(staleTarget)
       expect(
-        (await readdir(fixture.protectedDirectory)).some((name) => name.startsWith('.orca-cli-'))
+        (await readdir(fixture.protectedDirectory)).some((name) => name.startsWith('.andes-cli-'))
       ).toBe(false)
     })
   }

@@ -7,9 +7,13 @@ export function resolveOrchestrationCliExecutable(
     return configured
   }
   if (env.ORCA_DEV_REPO_ROOT) {
-    return 'orca-dev'
+    return 'andes-dev'
   }
-  return platform === 'linux' ? 'orca-ide' : 'orca'
+  if (platform === 'linux') {
+    return 'orca-ide'
+  }
+  // Why not 'andes' on win32: the packaged Windows native launcher is out of scope for spec 007.
+  return platform === 'win32' ? 'orca' : 'andes'
 }
 
 export function buildOrchestrationRecoveryCommand(

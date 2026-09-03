@@ -269,7 +269,15 @@ export function buildPtyHostEnv(
     baseEnv.BROWSER === undefined &&
     process.env.BROWSER === undefined
   ) {
-    const cliCommand = opts.isWsl ? (opts.isPackaged ? 'orca-ide' : 'orca-dev') : 'orca'
+    // Why not 'andes' on win32: the packaged Windows native launcher is out of scope for
+    // spec 007 — see cli-install-location.ts's commandName getter.
+    const cliCommand = opts.isWsl
+      ? opts.isPackaged
+        ? 'orca-ide'
+        : 'orca-dev'
+      : process.platform === 'win32'
+        ? 'orca'
+        : 'andes'
     baseEnv.BROWSER = `${cliCommand} open-url --url %s`
   }
 

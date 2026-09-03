@@ -10,8 +10,11 @@ type GuideInvocation = {
   snippet: string
 }
 
-// Why: guides write examples as `orca ...`, `orca-dev ...`, or the `ORCA` placeholder.
-const CLI_INVOCATION = /(?:^|[\s`(])(?:orca|orca-dev|orca-ide|ORCA)\s+([^\n`]*)/g
+// Why: guides write examples as `orca ...`/`andes ...`, `orca-dev ...`/`andes-dev ...`, or the
+// `ORCA`/`ANDES` placeholder — andes-cli was renamed off the orca/ORCA convention in spec 007,
+// the other guides were not (see decisions.md).
+const CLI_INVOCATION =
+  /(?:^|[\s`(])(?:orca|orca-dev|orca-ide|andes|andes-dev|ORCA|ANDES)\s+([^\n`]*)/g
 
 // Longest path first so `orchestration worker-start` never resolves as `orchestration worker`.
 const SPECS_BY_DEPTH: CommandSpec[] = [...COMMAND_SPECS].sort(

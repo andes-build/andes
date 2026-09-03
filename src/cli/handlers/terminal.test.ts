@@ -128,7 +128,7 @@ describe('terminal close CLI', () => {
     printHelp(COMMAND_SPECS, ['terminal', 'close'])
 
     const help = String(log.mock.calls[0]?.[0])
-    expect(help).toContain('orca terminal close [--terminal <handle>] [--tab] [--json]')
+    expect(help).toContain('andes terminal close [--terminal <handle>] [--tab] [--json]')
     expect(help).toContain('durable persistence')
   })
 })
@@ -162,7 +162,7 @@ describe('terminal send CLI', () => {
       enter: true,
       interrupt: false,
       agentPrompt: true,
-      client: { id: 'orca-cli', type: 'desktop' }
+      client: { id: 'andes-cli', type: 'desktop' }
     })
   })
 
@@ -234,14 +234,14 @@ describe('terminal send CLI', () => {
       text: 'x',
       enter: false,
       interrupt: false,
-      client: { id: 'orca-cli', type: 'desktop' }
+      client: { id: 'andes-cli', type: 'desktop' }
     })
     expect(call).toHaveBeenNthCalledWith(2, 'terminal.send', {
       terminal: 'term-1',
       text: undefined,
       enter: true,
       interrupt: false,
-      client: { id: 'orca-cli', type: 'desktop' }
+      client: { id: 'andes-cli', type: 'desktop' }
     })
   })
 })

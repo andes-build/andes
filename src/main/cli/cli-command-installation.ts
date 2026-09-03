@@ -8,7 +8,6 @@ import {
 } from './appimage-extracted-root'
 import { CliCommandInspection } from './cli-command-inspection'
 import {
-  buildMacPrivilegedSymlinkTransaction,
   capturedExpectedEntry,
   hasSameIdentity,
   hasSameSnapshot,
@@ -20,6 +19,11 @@ import {
 } from './cli-command-filesystem-transaction'
 import { DEV_LAUNCHER_DIR, LEGACY_LINUX_COMMAND_NAME } from './cli-install-constants'
 import { buildWindowsForwarder } from './cli-dev-launcher'
+import {
+  installSymlinkWithPrivileges,
+  removeLegacyMacCommandIfManaged,
+  removeSymlinkWithPrivileges
+} from './cli-command-macos-install'
 import { isPermissionError } from './cli-install-errors'
 import { isPathInsideOrEqual } from './cli-install-path-format'
 
@@ -122,6 +126,24 @@ export class CliCommandInstallation extends CliCommandInspection {
         error instanceof Error ? error.message : String(error)
       )
     }
+  }
+
+  /** Cleans up a pre-rename `orca` symlink left at the macOS default command path (spec 007) —
+   *  implementation lives in cli-command-legacy-mac.ts to keep this class under the line ratchet. */
+  protected async removeLegacyMacCommandIfManaged(launcherPath: string | null): Promise<void> {
+    await removeLegacyMacCommandIfManaged({
+      platform: this.platform,
+      commandPathOverride: this.commandPathOverride,
+      macCommandPath: this.macCommandPath,
+      launcherPath,
+      isManagedSymlinkTarget: (resolvedTarget, targetLauncherPath, expectedName) =>
+        this.isManagedSymlinkTarget(resolvedTarget, targetLauncherPath, expectedName),
+      buildStatus: (args) => this.buildStatus(args),
+      quarantineCommandPath: (commandPath) => this.quarantineCommandPath(commandPath),
+      restoreQuarantinedCommand: (quarantine, commandPath) =>
+        this.restoreQuarantinedCommand(quarantine, commandPath),
+      discardQuarantinedCommand: (quarantine) => this.discardQuarantinedCommand(quarantine)
+    })
   }
 
   protected async quarantineCommandPath(commandPath: string): Promise<CommandQuarantine> {
@@ -282,34 +304,19 @@ export class CliCommandInstallation extends CliCommandInspection {
     launcherPath: string,
     inspected: StableCommandInspection
   ): Promise<void> {
-    await this.privilegedRunner(
-      buildMacPrivilegedSymlinkTransaction({
-        action: 'install',
-        commandPath,
-        launcherPath,
-        expected: inspected.snapshot?.identity ?? null,
-        expectedFileSha256: inspected.fileSha256,
-        expectedRawSymlinkTarget: inspected.rawSymlinkTarget
-      })
-    )
-    const installed = await this.inspectStableSymlink(commandPath, launcherPath)
-    if (installed.status.state !== 'installed') {
-      throw new Error(`Could not register the Orca command at ${commandPath}.`)
-    }
+    await installSymlinkWithPrivileges({
+      commandPath,
+      launcherPath,
+      inspected,
+      privilegedRunner: this.privilegedRunner,
+      inspectStableSymlink: (path, launcher) => this.inspectStableSymlink(path, launcher)
+    })
   }
 
   private async removeSymlinkWithPrivileges(
     commandPath: string,
     inspected: StableCommandInspection
   ): Promise<void> {
-    await this.privilegedRunner(
-      buildMacPrivilegedSymlinkTransaction({
-        action: 'remove',
-        commandPath,
-        expected: inspected.snapshot?.identity ?? null,
-        expectedFileSha256: inspected.fileSha256,
-        expectedRawSymlinkTarget: inspected.rawSymlinkTarget
-      })
-    )
+    await removeSymlinkWithPrivileges({ commandPath, inspected, privilegedRunner: this.privilegedRunner })
   }
 }

@@ -181,7 +181,7 @@ function createHarness() {
   }
 
   /** A renderer graph sync that mentions ONLY `worktreeIds` — i.e. the panes the
-   *  renderer currently has mounted. Any orca-cli dispatch triggers one.
+   *  renderer currently has mounted. Any andes-cli dispatch triggers one.
    *  `version` must climb, or web clients drop the frame as stale. */
   let syncVersion = 0
   const syncRendererGraph = (worktreeIds: readonly string[]): void => {
@@ -251,7 +251,7 @@ describe('graph sync must not prune a tab whose daemon PTY is live', () => {
     await h.createCliTerminal(WT_CLI)
     expect(h.hasSnapshot(WT_CLI)).toBe(true)
 
-    // An orca-cli dispatch in another worktree drives a renderer graph sync that
+    // An andes-cli dispatch in another worktree drives a renderer graph sync that
     // does not mention WT_CLI at all.
     h.syncRendererGraph([WT_OTHER])
     vi.advanceTimersByTime(300)

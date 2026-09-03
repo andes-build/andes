@@ -149,3 +149,61 @@ efecto mecánico del borrado de los skills; decidir si se saca la oferta o se re
 otro nombre es un Gate 1 de la spec 002.
 
 **La invalidaría**: que la spec 002 resuelva este gap (sacando la oferta o recreando el skill).
+
+## 2026-09-02 · [spec 004] "No se ofrece" alcanza a Fuentes de tareas, Integraciones y el feature-wall, no al board ya conectado
+
+**Qué se decide**: se borra o se apaga todo lo que ofrece *conectar* o *instalar* Linear —
+navegación de Ajustes, tarjeta de Integraciones, proveedor de Fuentes de tareas, tarjeta del
+feature-wall, tile del tour, checklist de onboarding, avisos y recordatorios de la barra
+lateral. No se toca lo que ya sirve a un usuario con Linear conectado desde antes: el tipo
+compartido `TaskProvider` conserva `'linear'`, y `task-page/linear/` (el tablero, la lista, el
+detalle de issues), `linked-work-item-context.ts` y `linear-board-drag-payload.ts` no cambian.
+
+**Por qué**: el criterio 2 de la spec pide "no se ofrece en ninguna superficie", pero la spec no
+investigó el alcance real — el "Estado previo" solo nombra el cluster de settings/sidebar del
+skill de instalación. Al tirar del hilo (los archivos citados importan constantes que no existen
+en ningún otro lado), aparecieron tres superficies más que sí ofrecían Linear y que la spec no
+mencionó: el proveedor de Fuentes de tareas en Ajustes, la tarjeta de Integraciones del
+feature-wall (`ConnectIntegrationsList`) y el checklist de features del onboarding
+(`onboarding-feature-setup.ts`). Borrar en cambio el tipo `TaskProvider` completo — que sí haría
+desaparecer el tablero de Linear ya conectado — es un cambio de una categoría distinta (apaga una
+integración que ya funciona para quien la tenía, no solo dejar de ofrecerla) y no lo pide ningún
+criterio de la spec.
+
+**La invalidaría**: una spec futura que decida borrar también `src/main/linear/` y
+`src/shared/linear/` (la condición de reactivación que la propia spec 004 deja escrita) — ese día
+`TaskProvider` sí pierde `'linear'` y el board deja de existir.
+
+## 2026-09-02 · [spec 004] `onboardingFeatureSetup` conserva `linearTickets` en el tipo, lo saca de la lista que actúa
+
+**Qué se decide**: `OnboardingFeatureSetupId` sigue incluyendo `'linearTickets'` como miembro del
+tipo (lo exigen los `Record<OnboardingFeatureSetupId, _>` de `agent-capability-setup-status.ts` y
+el schema de telemetría en `src/shared/telemetry-onboarding-foundation-schemas.ts`, ninguno de los
+dos tocado por esta spec). Lo que cambia es `ONBOARDING_FEATURE_SETUP_IDS`: ya no incluye
+`'linearTickets'`, así que ningún flujo puede seleccionarlo, instalarlo ni contarlo como elegido —
+`FEATURE_SKILL_NAMES.linearTickets` queda en `''` porque ese valor nunca se lee.
+
+**Por qué**: sacar `linearTickets` del tipo entero exigía tocar el schema de telemetría
+compartido (analítica ya en producción, fuera del alcance de esta spec) y cada `Record` que lo
+usa. El patrón ya existía en el repo — `agent-capability-setup-status.ts` fuerza
+`linearTickets: false`/estado excluido para el feature-wall genérico con el mismo razonamiento
+("el shape se mantiene, la superficie no ofrece") — así que esta spec lo extiende al resto de
+`onboarding-feature-setup.ts` en vez de reabrir el schema.
+
+**La invalidaría**: que se decida limpiar el schema de telemetría de onboarding (fuera de esta
+spec), lo que permitiría sacar `linearTickets` del tipo entero.
+
+## 2026-09-02 · [spec 004] Gap conocido pre-existente: `verify:localization-extraction` fallaba en `main` antes de esta spec
+
+**Qué se decide**: se corrigió de paso. `dashboard.sidebar.closeActivity` y
+`dashboard.sidebar.openActivity` (usadas en `SidebarHeader.tsx`, ajeno a Linear) faltaban en
+`src/renderer/src/i18n/locales/en.json`; se agregaron con el texto de sus propios fallbacks.
+
+**Por qué**: sin esas dos claves, `verify:localization-extraction` — uno de los dos scripts que
+pide el criterio 4 — ya fallaba en `main` antes de tocar nada de esta spec (confirmado corriendo
+el script contra el commit base con `git stash`). El criterio 4 pide el script en verde; dejarlo
+en rojo por un gap ajeno a Linear habría bloqueado la spec por una razón que no le corresponde.
+Es una corrección de una línea, sin relación con el árbol de Linear.
+
+**La invalidaría**: nada — es un hecho verificado (reproducido en el commit base sin cambios),
+no una apuesta.

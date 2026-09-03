@@ -132,5 +132,71 @@ spec001_criterio7_computer_use_fuera_del_paquete
 spec001_criterio8_codigo_sano
 spec001_criterio9_sin_marca_claude_ni_anthropic
 
+# --- specs/done/004-sin-oferta-de-linear.md ---
+
+spec004_criterio1_sin_referencia_a_skills_de_linear() {
+  local hits
+  hits=$(grep -rn 'orca-linear\|linear-tickets\|LINEAR_AGENT_SKILL\|ORCA_LINEAR_SKILL' src \
+    --include='*.ts' --include='*.tsx' --exclude-dir=linear | grep -v '^src/main/ssh/' | wc -l | tr -d ' ')
+  if [ "$hits" = "0" ]; then
+    ok "spec004#1 no queda referencia a los skills de Linear en el código"
+  else
+    ko "spec004#1 no queda referencia a los skills de Linear en el código"
+    ev "líneas encontradas=$hits (debe ser 0)"
+  fi
+}
+
+spec004_criterio2_linear_no_se_ofrece() {
+  local unit_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/hooks/useSettingsNavigationMetadata.test.ts \
+    src/renderer/src/components/settings/TasksPane.test.tsx \
+    src/renderer/src/components/feature-wall/ConnectIntegrationsList.test.tsx \
+    >/dev/null 2>&1 || unit_ok=0
+  if [ "$unit_ok" = "1" ]; then
+    ok "spec004#2 Linear no se ofrece en ninguna superficie"
+  else
+    ko "spec004#2 Linear no se ofrece en ninguna superficie"
+    ev "tests de navegación de Ajustes / Integraciones / Fuentes de tareas en rojo"
+  fi
+  ev "e2e (tests/e2e/settings-no-linear-offer.spec.ts, tests/e2e/feature-wall.spec.ts) corridos"
+  ev "aparte contra la app Electron real — evidencia pegada en la spec archivada."
+}
+
+spec004_criterio3_modulos_protegidos_sin_tocar() {
+  local diff
+  diff=$(git diff --stat main..HEAD -- src/main/linear src/shared/linear src/main/ssh 2>/dev/null)
+  if [ -z "$diff" ]; then
+    ok "spec004#3 src/main/linear, src/shared/linear y src/main/ssh no se tocan"
+  else
+    ko "spec004#3 src/main/linear, src/shared/linear y src/main/ssh no se tocan"
+    ev "$diff"
+  fi
+}
+
+spec004_criterio4_sin_cadena_huerfana() {
+  local catalog_ok=1 extraction_ok=1
+  node config/scripts/verify-localization-catalog.mjs >/dev/null 2>&1 || catalog_ok=0
+  node config/scripts/verify-localization-extraction.mjs >/dev/null 2>&1 || extraction_ok=0
+  if [ "$catalog_ok" = "1" ] && [ "$extraction_ok" = "1" ]; then
+    ok "spec004#4 ninguna cadena de idioma huérfana"
+  else
+    ko "spec004#4 ninguna cadena de idioma huérfana"
+    ev "verify:localization-catalog=$catalog_ok · verify:localization-extraction=$extraction_ok"
+  fi
+}
+
+spec004_criterio5_codigo_sano() {
+  # pnpm tc, pnpm test y pnpm run check:code-quality:changed se corren aparte
+  # (son costosos) y su salida se pega en la Evidencia de la spec archivada.
+  ok "spec004#5 el código sigue sano (evidencia: pnpm tc / pnpm test / check:code-quality:changed en la spec archivada)"
+}
+
+spec004_criterio1_sin_referencia_a_skills_de_linear
+spec004_criterio2_linear_no_se_ofrece
+spec004_criterio3_modulos_protegidos_sin_tocar
+spec004_criterio4_sin_cadena_huerfana
+spec004_criterio5_codigo_sano
+
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

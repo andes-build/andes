@@ -179,11 +179,10 @@ describe('ConnectIntegrationsList', () => {
 
     expect(markup).toContain('GitHub')
     expect(markup).toContain('issues available as tasks')
-    expect(markup).toContain('add Linear or Jira if your team plans work there')
+    expect(markup).toContain('add Jira if your team plans work there')
     expect(markup).not.toContain('Use GitHub issues')
-    // The step is done but stays expanded so Linear/Jira remain discoverable
-    // for teams that plan work in a dedicated tracker.
-    expect(markup).toContain('Add Linear access')
+    // The step is done but stays expanded so Jira remains discoverable for
+    // teams that plan work in a dedicated tracker.
     expect(markup).toContain('Connect Jira')
   })
 
@@ -201,8 +200,8 @@ describe('ConnectIntegrationsList', () => {
     expect(markup).toContain('issues also work as tasks.')
     expect(markup).toContain('gh auth login')
     expect(markup).toContain('glab auth login')
-    expect(markup).toContain('Linear')
     expect(markup).toContain('Jira')
+    expect(markup).not.toContain('Linear')
   })
 
   it('lists the code host alongside a connected tracker in the task summary', async () => {

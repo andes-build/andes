@@ -8,7 +8,6 @@ import {
   buildAgentFeatureSkillInstallCommand,
   COMPUTER_USE_SKILL_NAME,
   ORCA_CLI_SKILL_NAME,
-  ORCA_LINEAR_SKILL_NAME,
   ORCHESTRATION_SKILL_NAME
 } from '@/lib/agent-feature-install-commands'
 import { BROWSER_USE_ENABLED_STORAGE_KEY } from '@/lib/browser-use-setup-state'
@@ -32,8 +31,7 @@ import { getOnboardingFeatureSetupAgentRuntime } from './onboarding-feature-setu
 const ALL_SKILL_INSTALL_COMMAND = buildAgentFeatureSkillInstallCommand([
   ORCA_CLI_SKILL_NAME,
   COMPUTER_USE_SKILL_NAME,
-  ORCHESTRATION_SKILL_NAME,
-  ORCA_LINEAR_SKILL_NAME
+  ORCHESTRATION_SKILL_NAME
 ])
 const ORCHESTRATION_ONLY_SKILL_INSTALL_COMMAND = buildAgentFeatureSkillInstallCommand([
   ORCHESTRATION_SKILL_NAME
@@ -115,7 +113,7 @@ describe('onboarding feature setup runner', () => {
     })
   })
 
-  it('builds one skill command for selected onboarding feature setup skills', () => {
+  it('builds one skill command for selected onboarding feature setup skills, never offering linearTickets', () => {
     const text = buildOnboardingFeatureSetupClipboardText({
       browserUse: true,
       computerUse: true,
@@ -125,7 +123,7 @@ describe('onboarding feature setup runner', () => {
 
     expect(text).toBe(ALL_SKILL_INSTALL_COMMAND)
     expect(text).toBe(
-      'npx skills add https://github.com/stablyai/orca --skill orca-cli --skill computer-use --skill orchestration --skill orca-linear --global'
+      'npx skills add https://github.com/stablyai/orca --skill orca-cli --skill computer-use --skill orchestration --global'
     )
   })
 
@@ -254,7 +252,7 @@ describe('onboarding feature setup runner', () => {
     )
 
     expect(result).toEqual({
-      selectedIds: ['browserUse', 'computerUse', 'orchestration', 'linearTickets'],
+      selectedIds: ['browserUse', 'computerUse', 'orchestration'],
       cliTouched: false,
       skillCommandsCopied: true,
       skillInstallCommand: ALL_SKILL_INSTALL_COMMAND,

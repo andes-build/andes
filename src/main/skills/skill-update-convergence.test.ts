@@ -51,9 +51,9 @@ describe('convergableSkillNames', () => {
   // source, sees no work, exits 0 and writes nothing — forever.
   it('drops a skill whose lock records a revision the disk does not have', () => {
     const result = convergableSkillNames(
-      [placement('orca-linear', 1)],
-      new Map([['orca-linear', '091d9bcc']]),
-      { 'orca-linear': [PRE_STUB, STUB] }
+      [placement('sample-skill', 1)],
+      new Map([['sample-skill', '091d9bcc']]),
+      { 'sample-skill': [PRE_STUB, STUB] }
     )
     expect([...result]).toEqual([])
   })
@@ -93,9 +93,9 @@ describe('convergableSkillNames', () => {
   // already placed this copy at the pre-stub revision; the gate must honour that.
   it('drops a stale skill whose folder holds files no revision lists', () => {
     const result = convergableSkillNames(
-      [placement('orca-linear', 1, 'canonical-copy', 'digest-with-sidecar')],
-      new Map([['orca-linear', '091d9bcc']]),
-      { 'orca-linear': [PRE_STUB, STUB] }
+      [placement('sample-skill', 1, 'canonical-copy', 'digest-with-sidecar')],
+      new Map([['sample-skill', '091d9bcc']]),
+      { 'sample-skill': [PRE_STUB, STUB] }
     )
     expect([...result]).toEqual([])
   })
@@ -137,9 +137,9 @@ describe('convergableSkillNames', () => {
   // placement and re-arm the unwinnable update on the drifted canonical.
   it('ignores an unidentifiable plugin-cache copy when judging the canonical', () => {
     const result = convergableSkillNames(
-      [placement('orca-linear', 1), placement('orca-linear', null, 'plugin-cache')],
-      new Map([['orca-linear', '091d9bcc']]),
-      { 'orca-linear': [PRE_STUB, STUB] }
+      [placement('sample-skill', 1), placement('sample-skill', null, 'plugin-cache')],
+      new Map([['sample-skill', '091d9bcc']]),
+      { 'sample-skill': [PRE_STUB, STUB] }
     )
     expect([...result]).toEqual([])
   })
@@ -148,22 +148,22 @@ describe('convergableSkillNames', () => {
   // the command only writes the canonical, which is still drifted.
   it('ignores a plugin-cache copy that matches the lock', () => {
     const result = convergableSkillNames(
-      [placement('orca-linear', 1), placement('orca-linear', 2, 'plugin-cache')],
-      new Map([['orca-linear', '091d9bcc']]),
-      { 'orca-linear': [PRE_STUB, STUB] }
+      [placement('sample-skill', 1), placement('sample-skill', 2, 'plugin-cache')],
+      new Map([['sample-skill', '091d9bcc']]),
+      { 'sample-skill': [PRE_STUB, STUB] }
     )
     expect([...result]).toEqual([])
   })
 
   it('judges each locked skill independently', () => {
     const result = convergableSkillNames(
-      [placement('orca-linear', 1), placement('orca-cli', 1)],
+      [placement('sample-skill', 1), placement('orca-cli', 1)],
       new Map([
-        ['orca-linear', '091d9bcc'],
+        ['sample-skill', '091d9bcc'],
         ['orca-cli', 'aaaa1111']
       ]),
       {
-        'orca-linear': [PRE_STUB, STUB],
+        'sample-skill': [PRE_STUB, STUB],
         'orca-cli': [revision(1, 'aaaa1111')]
       }
     )

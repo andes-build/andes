@@ -9,18 +9,14 @@ import type { TaskProvider } from '../../../../shared/task-providers'
 import type { TaskProviderReadiness } from './task-source-setup-state'
 import { TasksPane } from './TasksPane'
 
+type OfferedTaskProvider = Exclude<TaskProvider, 'linear'>
+
 const mocks = vi.hoisted(() => ({
-  readiness: {} as Record<TaskProvider, TaskProviderReadiness>,
+  readiness: {} as Record<OfferedTaskProvider, TaskProviderReadiness>,
   openSettingsTarget: vi.fn(),
   openSettingsPage: vi.fn(),
   refreshPreflightStatus: vi.fn(),
-  checkLinearConnection: vi.fn(),
   checkJiraConnection: vi.fn(),
-  linearSetupProps: [] as {
-    connected: boolean
-    checking: boolean
-    onOpenIntegrations: () => void
-  }[],
   jiraSetupProps: [] as { onOpenIntegrations: () => void }[]
 }))
 
@@ -30,17 +26,6 @@ vi.mock('./use-task-source-provider-readiness', () => ({
 
 vi.mock('./use-integration-provider-status-refresh', () => ({
   useIntegrationProviderStatusRefresh: vi.fn()
-}))
-
-vi.mock('./TaskSourceLinearSetup', () => ({
-  TaskSourceLinearSetup: (props: {
-    connected: boolean
-    checking: boolean
-    onOpenIntegrations: () => void
-  }) => {
-    mocks.linearSetupProps.push(props)
-    return <div data-testid="linear-setup">Linear setup steps</div>
-  }
 }))
 
 vi.mock('./TaskSourceSimpleSetup', () => ({
@@ -74,7 +59,6 @@ vi.mock('@/store', () => ({
       openSettingsPage: () => void
       openSettingsTarget: (target: unknown) => void
       refreshPreflightStatus: () => void
-      checkLinearConnection: () => void
       checkJiraConnection: () => void
       settingsSearchQuery: string
     }) => unknown
@@ -83,19 +67,17 @@ vi.mock('@/store', () => ({
       openSettingsPage: mocks.openSettingsPage,
       openSettingsTarget: mocks.openSettingsTarget,
       refreshPreflightStatus: mocks.refreshPreflightStatus,
-      checkLinearConnection: mocks.checkLinearConnection,
       checkJiraConnection: mocks.checkJiraConnection,
       settingsSearchQuery: ''
     })
 }))
 
 const baseSettings = {
-  visibleTaskProviders: ['github', 'gitlab', 'linear'],
+  visibleTaskProviders: ['github', 'gitlab'],
   defaultTaskSource: 'github'
 } as GlobalSettings
 
 const INCOMPLETE_BANNER = 'Some visible providers still need setup'
-const LINEAR_SETUP_MARKER = 'data-testid="linear-setup"'
 
 function renderPane(): string {
   return renderToStaticMarkup(<TasksPane settings={baseSettings} updateSettings={vi.fn()} />)
@@ -122,21 +104,12 @@ async function rerenderInteractivePane(): Promise<void> {
 
 describe('TasksPane', () => {
   beforeEach(() => {
-    mocks.linearSetupProps = []
     mocks.jiraSetupProps = []
     mocks.openSettingsPage.mockClear()
     mocks.openSettingsTarget.mockClear()
     mocks.readiness = {
       github: { connected: true, checking: false, visible: true },
       gitlab: { connected: true, checking: false, visible: true },
-      // Started-then-stalled: a Linear key is stored but agents have no skill.
-      linear: {
-        connected: true,
-        checking: false,
-        skillInstalled: false,
-        skillChecking: false,
-        visible: true
-      },
       jira: { connected: false, checking: false, visible: false }
     }
   })
@@ -152,15 +125,19 @@ describe('TasksPane', () => {
     container = null
   })
 
+  it('never offers Linear as a task provider', () => {
+    const markup = renderPane()
+
+    expect(markup).not.toContain('Linear')
+  })
+
   it('frames Task Sources as a guided setup hub, not visibility-only toggles', () => {
     const markup = renderPane()
 
     expect(markup).toContain('Task management setup')
-    expect(markup).toContain('Linear also needs the agent skill')
-    expect(markup).toContain(INCOMPLETE_BANNER)
-    expect(markup).toContain('Linear setup steps')
-    expect(markup).toContain('Hide providers you do not use')
-    expect(markup).toContain('API access, the agent skill, and Show in Tasks')
+    expect(markup).toContain('GitHub')
+    expect(markup).toContain('GitLab')
+    expect(markup).toContain('Jira')
   })
 
   it('does not warn on a fresh install where nothing is connected yet', () => {
@@ -168,13 +145,6 @@ describe('TasksPane', () => {
     // default state; the cards still say "Connect required" on their own.
     mocks.readiness.github = { connected: false, checking: false, visible: true }
     mocks.readiness.gitlab = { connected: false, checking: false, visible: true }
-    mocks.readiness.linear = {
-      connected: false,
-      checking: false,
-      skillInstalled: false,
-      skillChecking: false,
-      visible: true
-    }
     mocks.readiness.jira = { connected: false, checking: false, visible: true }
 
     const markup = renderPane()
@@ -184,53 +154,17 @@ describe('TasksPane', () => {
   })
 
   it('hides the incomplete banner when every visible provider is ready', () => {
-    mocks.readiness.linear = {
-      connected: true,
-      checking: false,
-      skillInstalled: true,
-      skillChecking: false,
-      visible: true
-    }
-
     expect(renderPane()).not.toContain(INCOMPLETE_BANNER)
   })
 
   it('does not warn or expand while connection checks are still in flight', () => {
     mocks.readiness.github = { connected: false, checking: true, visible: true }
     mocks.readiness.gitlab = { connected: false, checking: true, visible: true }
-    mocks.readiness.linear = {
-      connected: false,
-      checking: true,
-      skillInstalled: false,
-      skillChecking: true,
-      visible: true
-    }
 
     const markup = renderPane()
 
     expect(markup).not.toContain(INCOMPLETE_BANNER)
-    expect(markup).not.toContain(LINEAR_SETUP_MARKER)
-  })
-
-  it('passes context-safe readiness into the expanded Linear setup', () => {
-    renderPane()
-
-    expect(mocks.linearSetupProps).toEqual([
-      expect.objectContaining({ connected: true, checking: false })
-    ])
-  })
-
-  it('deep-links connected Linear credential management to its integration card', async () => {
-    await renderInteractivePane()
-
-    mocks.linearSetupProps.at(-1)?.onOpenIntegrations()
-
-    expect(mocks.openSettingsPage).toHaveBeenCalledOnce()
-    expect(mocks.openSettingsTarget).toHaveBeenCalledWith({
-      pane: 'integrations',
-      repoId: null,
-      sectionId: 'integrations-linear'
-    })
+    expect(markup).not.toContain('data-testid="jira-setup"')
   })
 
   it('deep-links connected Jira credential management to its integration card', async () => {
@@ -255,112 +189,31 @@ describe('TasksPane', () => {
 
   it('auto-expands only the first incomplete provider', () => {
     mocks.readiness.gitlab = { connected: false, checking: false, visible: true }
+    mocks.readiness.jira = { connected: false, checking: false, visible: true }
 
     const markup = renderPane()
 
-    // GitLab is first in provider order, so Linear stays collapsed.
+    // GitLab is first in provider order, so Jira stays collapsed.
     expect(markup).toContain('Code host setup')
-    expect(markup).not.toContain(LINEAR_SETUP_MARKER)
+    expect(markup).not.toContain('data-testid="jira-setup"')
   })
 
   it('leaves hidden providers out of the incomplete warning', () => {
-    mocks.readiness.linear = {
-      connected: true,
-      checking: false,
-      skillInstalled: false,
-      skillChecking: false,
-      visible: false
-    }
+    mocks.readiness.jira = { connected: false, checking: false, visible: false }
 
     expect(renderPane()).not.toContain(INCOMPLETE_BANNER)
   })
 
-  it('keeps Linear setup mounted while a skill recheck is in flight after auto-expand', async () => {
-    // Same component instance keeps the sticky auto-expand ref across rechecks.
-    await renderInteractivePane()
-    expect(container?.querySelector('[data-testid="linear-setup"]')).not.toBeNull()
-    expect(container?.textContent).toContain(INCOMPLETE_BANNER)
-
-    mocks.readiness.linear = {
-      connected: true,
-      checking: false,
-      skillInstalled: false,
-      skillChecking: true,
-      visible: true
-    }
-    await rerenderInteractivePane()
-
-    // Sticky expand keeps the (possibly open) install terminal mounted mid-scan.
-    expect(container?.querySelector('[data-testid="linear-setup"]')).not.toBeNull()
-  })
-
-  it('keeps the auto-expanded card open after hiding it instead of popping another open', async () => {
-    await renderInteractivePane()
-    expect(container?.querySelector('[data-testid="linear-setup"]')).not.toBeNull()
-
-    // Hiding the stalled provider is the banner's own advice; GitHub must not
-    // silently take over the expansion on a later unrelated render.
-    mocks.readiness.linear = {
-      connected: true,
-      checking: false,
-      skillInstalled: false,
-      skillChecking: false,
-      visible: false
-    }
-    mocks.readiness.github = { connected: false, checking: false, visible: true }
-    await rerenderInteractivePane()
-    await rerenderInteractivePane()
-
-    expect(container?.querySelector('[data-testid="linear-setup"]')).not.toBeNull()
-    expect(container?.textContent).not.toContain('Code host setup')
-  })
-
-  it('keeps Linear expanded when the slower code-host preflight lands after it', async () => {
-    // Cold open: nothing has resolved, so no card auto-expands yet.
-    mocks.readiness.github = { connected: false, checking: true, visible: true }
-    mocks.readiness.gitlab = { connected: false, checking: true, visible: true }
-    mocks.readiness.linear = {
-      connected: false,
-      checking: true,
-      skillInstalled: false,
-      skillChecking: true,
-      visible: true
-    }
-    await renderInteractivePane()
-    expect(container?.querySelector('[data-testid="linear-setup"]')).toBeNull()
-
-    // Linear status + skill scan land first, so Linear auto-expands.
-    mocks.readiness.linear = {
-      connected: true,
-      checking: false,
-      skillInstalled: false,
-      skillChecking: false,
-      visible: true
-    }
-    await rerenderInteractivePane()
-    expect(container?.querySelector('[data-testid="linear-setup"]')).not.toBeNull()
-
-    // gh/glab preflight lands last with gh unauthenticated: GitHub is now the
-    // first incomplete provider, but it must not steal Linear's expansion.
-    mocks.readiness.github = { connected: false, checking: false, visible: true }
+  it('keeps the auto-expanded card open across a recheck of the same instance', async () => {
     mocks.readiness.gitlab = { connected: false, checking: false, visible: true }
+    // Same component instance keeps the sticky auto-expand ref across rerenders.
+    await renderInteractivePane()
+    expect(container?.querySelector('[data-testid="code-host-GitLab"]')).not.toBeNull()
+
+    mocks.readiness.gitlab = { connected: false, checking: true, visible: true }
     await rerenderInteractivePane()
 
-    expect(container?.querySelector('[data-testid="linear-setup"]')).not.toBeNull()
-  })
-
-  it('does not warn about an unconnected code host once Linear is finished', () => {
-    // A code host is single-step, so "not connected" is never a stalled setup.
-    mocks.readiness.linear = {
-      connected: true,
-      checking: false,
-      skillInstalled: true,
-      skillChecking: false,
-      visible: true
-    }
-    mocks.readiness.github = { connected: false, checking: false, visible: true }
-
-    expect(renderPane()).not.toContain(INCOMPLETE_BANNER)
+    expect(container?.querySelector('[data-testid="code-host-GitLab"]')).not.toBeNull()
   })
 
   it('shows a retry action instead of setup instructions when preflight is unavailable', async () => {
@@ -371,13 +224,6 @@ describe('TasksPane', () => {
       visible: true
     }
     mocks.readiness.gitlab = { connected: true, checking: false, visible: true }
-    mocks.readiness.linear = {
-      connected: true,
-      checking: false,
-      skillInstalled: true,
-      skillChecking: false,
-      visible: true
-    }
     await renderInteractivePane()
 
     expect(container?.textContent).toContain('Status unavailable')

@@ -34,7 +34,7 @@ const PRODUCT_WORKFLOW_PHRASES = [
   'enable it from Orca Settings',
   'Before planning or editing',
   'Full Linear context was not loaded',
-  'linear-tickets completion flow',
+  'skill completion flow',
   'post one PR/MR summary comment',
   'move the issue to review'
 ] as const

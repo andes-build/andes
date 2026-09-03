@@ -6,10 +6,7 @@ import {
   GitHubIntegrationCard,
   GitLabIntegrationCard
 } from '@/components/settings/source-control-integration-cards'
-import {
-  JiraIntegrationCard,
-  LinearIntegrationCard
-} from '@/components/settings/task-tracker-integration-cards'
+import { JiraIntegrationCard } from '@/components/settings/task-tracker-integration-cards'
 import {
   IntegrationCardGroup,
   IntegrationCardPresentationProvider
@@ -158,7 +155,7 @@ export function ConnectIntegrationsList(): React.JSX.Element {
                 </span>{' '}
                 {translate(
                   'auto.components.feature.wall.ConnectIntegrationsList.code_host_tasks_summary',
-                  'issues available as tasks · add Linear or Jira if your team plans work there'
+                  'issues available as tasks · add Jira if your team plans work there'
                 )}
               </>
             )
@@ -172,7 +169,6 @@ export function ConnectIntegrationsList(): React.JSX.Element {
           }
         >
           <IntegrationCardGroup>
-            <LinearIntegrationCard />
             <JiraIntegrationCard />
           </IntegrationCardGroup>
           <p className="px-1 pt-0.5 text-[12px] leading-snug text-muted-foreground">

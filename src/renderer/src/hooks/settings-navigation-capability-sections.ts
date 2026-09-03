@@ -1,10 +1,8 @@
-import { LinearIcon } from '@/components/icons/LinearIcon'
 import { getAccountsPaneSearchEntries } from '@/components/settings/accounts-search'
 import { getAgentsPaneSearchEntries } from '@/components/settings/agents-search'
 import { getComputerUsePaneSearchEntries } from '@/components/settings/computer-use-search'
 import { getGeneralPaneSearchEntries } from '@/components/settings/general-search'
 import { getIntegrationsPaneSearchEntries } from '@/components/settings/integrations-search'
-import { getLinearAgentSkillPaneSearchEntries } from '@/components/settings/linear-agent-skill-search'
 import { getOrcaAccountSettingsSearchEntries } from '@/components/settings/orca-account-settings-search'
 import { OrcaLogoSettingsIcon } from '@/components/settings/orca-logo-settings-icon'
 import { getOrchestrationPaneSearchEntries } from '@/components/settings/orchestration-search'
@@ -25,8 +23,7 @@ import type { SettingsNavigationBuildOptions } from './settings-navigation-build
 
 export function buildCapabilitySettingsSections({
   isLocalWindowsHost,
-  isWebClient,
-  isLinearConnected
+  isWebClient
 }: SettingsNavigationBuildOptions): SettingsNavSection[] {
   const showDesktopOnlySettings = !isWebClient
   return [
@@ -72,23 +69,6 @@ export function buildCapabilitySettingsSections({
       }),
       group: 'capabilities'
     },
-    // Why: only surfaced once Linear is connected — a capability that needs a
-    // linked provider before the agent skill has anything to act on.
-    ...(isLinearConnected
-      ? [
-          {
-            id: 'linear',
-            title: translate('auto.hooks.useSettingsNavigationMetadata.linearTitle', 'Linear'),
-            description: translate(
-              'auto.hooks.useSettingsNavigationMetadata.linearDescription',
-              'How Linear works in Orca, setup checklist, agent skill, and example prompts.'
-            ),
-            icon: LinearIcon,
-            searchEntries: getLinearAgentSkillPaneSearchEntries(),
-            group: 'capabilities'
-          }
-        ]
-      : []),
     ...(showDesktopOnlySettings
       ? [
           {

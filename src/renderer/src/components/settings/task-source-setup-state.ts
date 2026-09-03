@@ -5,7 +5,7 @@ export type TaskProviderReadiness = {
   connected: boolean
   checking: boolean
   unavailable?: boolean
-  /** Linear only — agent skill install. Other providers leave this undefined. */
+  /** Set only for a provider whose setup also requires an agent skill install. */
   skillInstalled?: boolean
   skillChecking?: boolean
   visible: boolean
@@ -91,10 +91,12 @@ export function getTaskProviderSetupStatus(
 }
 
 // Exclude in-flight checks so a cold settings open does not flash a warning.
-export function getIncompleteVisibleTaskProviders(
-  providers: readonly TaskProvider[],
-  readinessByProvider: Record<TaskProvider, TaskProviderReadiness>
-): TaskProvider[] {
+// Generic over the provider set (not always the full TaskProvider union) so a
+// surface can pass a narrower, offered-only subset — see Settings > Tasks.
+export function getIncompleteVisibleTaskProviders<P extends TaskProvider>(
+  providers: readonly P[],
+  readinessByProvider: Record<P, TaskProviderReadiness>
+): P[] {
   return providers.filter((provider) => {
     const readiness = readinessByProvider[provider]
     if (!readiness.visible || isTaskProviderChecking(readiness)) {
@@ -113,20 +115,20 @@ export function hasStartedTaskProviderSetup(readiness: TaskProviderReadiness): b
 }
 
 // Warn only about setup that started and stalled partway.
-export function getStalledVisibleTaskProviders(
-  providers: readonly TaskProvider[],
-  readinessByProvider: Record<TaskProvider, TaskProviderReadiness>
-): TaskProvider[] {
+export function getStalledVisibleTaskProviders<P extends TaskProvider>(
+  providers: readonly P[],
+  readinessByProvider: Record<P, TaskProviderReadiness>
+): P[] {
   return getIncompleteVisibleTaskProviders(providers, readinessByProvider).filter((provider) =>
     hasStartedTaskProviderSetup(readinessByProvider[provider])
   )
 }
 
 // Expand one unfinished provider because defaults expose every provider.
-export function getAutoExpandedTaskProvider(
-  providers: readonly TaskProvider[],
-  readinessByProvider: Record<TaskProvider, TaskProviderReadiness>
-): TaskProvider | null {
+export function getAutoExpandedTaskProvider<P extends TaskProvider>(
+  providers: readonly P[],
+  readinessByProvider: Record<P, TaskProviderReadiness>
+): P | null {
   return getIncompleteVisibleTaskProviders(providers, readinessByProvider)[0] ?? null
 }
 
@@ -134,14 +136,14 @@ export function getAutoExpandedTaskProvider(
 // it keeps it for the life of the pane: releasing the slot when that provider
 // finishes (or gets hidden) would let a later gh/glab preflight pop a different
 // card open under the user, and could unmount an open install terminal.
-export function resolveStickyAutoExpandedTaskProvider({
+export function resolveStickyAutoExpandedTaskProvider<P extends TaskProvider>({
   providers,
   readinessByProvider,
   previousAutoExpanded
 }: {
-  providers: readonly TaskProvider[]
-  readinessByProvider: Record<TaskProvider, TaskProviderReadiness>
-  previousAutoExpanded: TaskProvider | null
-}): TaskProvider | null {
+  providers: readonly P[]
+  readinessByProvider: Record<P, TaskProviderReadiness>
+  previousAutoExpanded: P | null
+}): P | null {
   return previousAutoExpanded ?? getAutoExpandedTaskProvider(providers, readinessByProvider)
 }

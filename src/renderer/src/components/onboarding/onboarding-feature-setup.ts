@@ -5,7 +5,6 @@ import type {
 } from '../../../../shared/computer-use-permissions-types'
 import {
   COMPUTER_USE_SKILL_NAME,
-  ORCA_LINEAR_SKILL_NAME,
   ORCA_CLI_SKILL_NAME,
   ORCHESTRATION_SKILL_NAME,
   buildAgentFeatureSkillInstallCommand
@@ -41,11 +40,14 @@ export const DEFAULT_ONBOARDING_FEATURE_SETUP_SELECTION: OnboardingFeatureSetupS
   linearTickets: false
 }
 
+// Why: `linearTickets` stays a member of OnboardingFeatureSetupId — the shape
+// telemetry and every Record<OnboardingFeatureSetupId, _> across the feature
+// wall depend on — but this repo does not offer it (spec 004): it is left out
+// of the ids that actually get selected, installed, or telemetered as chosen.
 export const ONBOARDING_FEATURE_SETUP_IDS: readonly OnboardingFeatureSetupId[] = [
   'browserUse',
   'computerUse',
-  'orchestration',
-  'linearTickets'
+  'orchestration'
 ]
 
 const ONBOARDING_PROGRESS_FEATURE_SETUP_IDS: readonly OnboardingFeatureSetupId[] = [
@@ -58,7 +60,9 @@ const FEATURE_SKILL_NAMES: Record<OnboardingFeatureSetupId, string> = {
   browserUse: ORCA_CLI_SKILL_NAME,
   computerUse: COMPUTER_USE_SKILL_NAME,
   orchestration: ORCHESTRATION_SKILL_NAME,
-  linearTickets: ORCA_LINEAR_SKILL_NAME
+  // Why: never read — ONBOARDING_FEATURE_SETUP_IDS excludes 'linearTickets' from
+  // every lookup that would use this value.
+  linearTickets: ''
 }
 
 const FEATURE_TELEMETRY_IDS: Record<

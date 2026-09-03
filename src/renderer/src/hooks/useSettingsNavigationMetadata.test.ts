@@ -63,25 +63,10 @@ describe('settings navigation metadata', () => {
     )
   })
 
-  it('adds the Linear capability section right after Orchestration only when connected', () => {
+  it('never adds a Linear capability section, connected or not', () => {
     expect(ids()).not.toContain('linear')
-
-    const connectedIds = ids({ isLinearConnected: true })
-    expect(connectedIds).toContain('linear')
-    expect(connectedIds.indexOf('linear')).toBe(connectedIds.indexOf('orchestration') + 1)
-
-    const linearSection = buildSettingsNavigationMetadata({
-      isMac: false,
-      isWindows: false,
-      isWebClient: false,
-      isLinearConnected: true,
-      repos: [repo]
-    }).find((section) => section.id === 'linear')
-    expect(linearSection?.group).toBe('capabilities')
-  })
-
-  it('keeps the Linear capability section available on web clients when connected', () => {
-    expect(ids({ isWebClient: true, isLinearConnected: true })).toContain('linear')
+    expect(ids({ isLinearConnected: true })).not.toContain('linear')
+    expect(ids({ isWebClient: true, isLinearConnected: true })).not.toContain('linear')
   })
 
   it('places Automations, Artifacts, and Share Skills first under Workflows', () => {

@@ -8,7 +8,6 @@ import {
   renderAccountsSettingsSection,
   renderAgentsSettingsSection,
   renderDesktopCapabilitySettingsSections,
-  renderLinearSettingsSection,
   renderOrchestrationSettingsSection
 } from './settings-capability-section-renderers'
 import {
@@ -116,7 +115,6 @@ export function renderSettingsPage(context: SettingsRenderContext): React.JSX.El
                 {renderAgentsSettingsSection(context)}
                 {renderAccountsSettingsSection(context)}
                 {renderOrchestrationSettingsSection(context)}
-                {renderLinearSettingsSection(context)}
                 {renderDesktopCapabilitySettingsSections(context)}
                 {renderOrcaAccountSettingsSection(context)}
                 {renderSetupGuideSettingsSection(context)}

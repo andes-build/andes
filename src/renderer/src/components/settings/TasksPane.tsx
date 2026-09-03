@@ -8,22 +8,17 @@ import {
   resolveVisibleTaskProvider
 } from '../../../../shared/task-providers'
 import { JiraIcon } from '@/components/icons/JiraIcon'
-import { LinearIcon } from '@/components/icons/LinearIcon'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/store'
 import { SearchableSetting } from './SearchableSetting'
 import { SettingsSubsectionHeader } from './SettingsFormControls'
 import { CodeHostSetupSteps, JiraSetupSteps } from './TaskSourceSimpleSetup'
-import { TaskSourceLinearSetup } from './TaskSourceLinearSetup'
 import { TaskSourceProviderCard } from './TaskSourceProviderCard'
 import {
   getStalledVisibleTaskProviders,
   resolveStickyAutoExpandedTaskProvider
 } from './task-source-setup-state'
-import {
-  JIRA_INTEGRATION_SECTION_ID,
-  LINEAR_INTEGRATION_SECTION_ID
-} from './task-provider-integration-section-ids'
+import { JIRA_INTEGRATION_SECTION_ID } from './task-provider-integration-section-ids'
 import { getTasksPaneSearchKeywords } from './tasks-search'
 import { useIntegrationProviderStatusRefresh } from './use-integration-provider-status-refresh'
 import { useTaskSourceProviderReadiness } from './use-task-source-provider-readiness'
@@ -34,8 +29,15 @@ type TasksPaneProps = {
   updateSettings: (updates: Partial<GlobalSettings>) => void
 }
 
+// Linear is not offered here (spec 004): Settings > Fuentes de tareas never
+// lists it, even for a user whose stored settings still have it visible.
+type OfferedTaskProvider = Exclude<TaskProvider, 'linear'>
+const OFFERED_TASK_PROVIDERS: readonly OfferedTaskProvider[] = TASK_PROVIDERS.filter(
+  (provider): provider is OfferedTaskProvider => provider !== 'linear'
+)
+
 const PROVIDER_META: Record<
-  TaskProvider,
+  OfferedTaskProvider,
   {
     label: string
     description: string
@@ -66,18 +68,6 @@ const PROVIDER_META: Record<
     },
     Icon: ({ className }) => <Gitlab className={className} />
   },
-  linear: {
-    get label() {
-      return translate('auto.components.settings.TasksPane.09ae2d7c51', 'Linear')
-    },
-    get description() {
-      return translate(
-        'auto.components.settings.TasksPane.linearDescription',
-        'Connect Linear, install the agent skill, and show it in Tasks.'
-      )
-    },
-    Icon: ({ className }) => <LinearIcon className={className} />
-  },
   jira: {
     get label() {
       return translate('auto.components.settings.TasksPane.6b23a34f6d', 'Jira')
@@ -102,14 +92,14 @@ export function TasksPane({ settings, updateSettings }: TasksPaneProps): React.J
   useIntegrationProviderStatusRefresh()
 
   // Warn only about started-then-stalled setup; untouched providers are the default.
-  const stalledVisible = getStalledVisibleTaskProviders(TASK_PROVIDERS, readinessByProvider)
-  // Sticky across rechecks so expanded Linear install terminals are not unmounted.
+  const stalledVisible = getStalledVisibleTaskProviders(OFFERED_TASK_PROVIDERS, readinessByProvider)
+  // Sticky across rechecks so an expanded install terminal is not unmounted.
   // Claim during render (not an effect): a layout effect elsewhere can force a
   // sync re-render before passive effects flush and collapse the open card.
   // useState (not a ref write) keeps render pure for React Doctor.
-  const [previousAutoExpanded, setPreviousAutoExpanded] = useState<TaskProvider | null>(null)
+  const [previousAutoExpanded, setPreviousAutoExpanded] = useState<OfferedTaskProvider | null>(null)
   const autoExpandedProvider = resolveStickyAutoExpandedTaskProvider({
-    providers: TASK_PROVIDERS,
+    providers: OFFERED_TASK_PROVIDERS,
     readinessByProvider,
     previousAutoExpanded
   })
@@ -152,7 +142,7 @@ export function TasksPane({ settings, updateSettings }: TasksPaneProps): React.J
           )}
           description={translate(
             'auto.components.settings.TasksPane.setupDescription',
-            'Finish connect + visibility for each provider in one place. Linear also needs the agent skill so coding agents can read and update tickets. At least one provider must stay visible.'
+            'Finish connect + visibility for each provider in one place. At least one provider must stay visible.'
           )}
         />
 
@@ -164,18 +154,11 @@ export function TasksPane({ settings, updateSettings }: TasksPaneProps): React.J
                 'Some visible providers still need setup'
               )}
             </p>
-            {/* Linear is the only multi-step provider today; the generic body
-                covers any future provider that can stall the same way. */}
             <p className="mt-1">
-              {stalledVisible.includes('linear')
-                ? translate(
-                    'auto.components.settings.TasksPane.incompleteBannerBodyWithLinear',
-                    'Hide providers you do not use, or expand a card and finish its steps. For Linear: API access, the agent skill, and Show in Tasks.'
-                  )
-                : translate(
-                    'auto.components.settings.TasksPane.incompleteBannerBody',
-                    'Hide providers you do not use, or expand a card and finish its steps.'
-                  )}
+              {translate(
+                'auto.components.settings.TasksPane.incompleteBannerBody',
+                'Hide providers you do not use, or expand a card and finish its steps.'
+              )}
             </p>
           </div>
         ) : null}
@@ -184,12 +167,12 @@ export function TasksPane({ settings, updateSettings }: TasksPaneProps): React.J
           title={translate('auto.components.settings.TasksPane.f71d8a9dd3', 'Task Providers')}
           description={translate(
             'auto.components.settings.TasksPane.providersDescription',
-            'Each card walks through connection (and skill, for Linear) plus whether it appears in Tasks.'
+            'Each card walks through connection plus whether it appears in Tasks.'
           )}
           keywords={getTasksPaneSearchKeywords()}
           className="space-y-3 py-2"
         >
-          {TASK_PROVIDERS.map((provider) => {
+          {OFFERED_TASK_PROVIDERS.map((provider) => {
             const meta = PROVIDER_META[provider]
             const readiness = readinessByProvider[provider]
             const Icon = meta.Icon
@@ -208,16 +191,7 @@ export function TasksPane({ settings, updateSettings }: TasksPaneProps): React.J
                 defaultExpanded={autoExpandedProvider === provider}
                 onToggleVisible={() => toggleProvider(provider)}
               >
-                {provider === 'linear' ? (
-                  <TaskSourceLinearSetup
-                    connected={readiness.connected}
-                    checking={readiness.checking}
-                    visible={visible}
-                    canHide={canHide}
-                    onToggleVisible={() => toggleProvider('linear')}
-                    onOpenIntegrations={() => openIntegrations(LINEAR_INTEGRATION_SECTION_ID)}
-                  />
-                ) : provider === 'jira' ? (
+                {provider === 'jira' ? (
                   <JiraSetupSteps
                     connected={readiness.connected}
                     checking={readiness.checking}
@@ -259,10 +233,6 @@ export function TasksPane({ settings, updateSettings }: TasksPaneProps): React.J
           >
             {translate('auto.components.settings.TasksPane.integrationsLink', 'Integrations')}
           </Button>
-          {translate(
-            'auto.components.settings.TasksPane.skillHint',
-            '. After Linear is connected, usage examples stay under Settings → Linear.'
-          )}
         </p>
       </section>
     </div>

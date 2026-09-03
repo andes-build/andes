@@ -86,7 +86,7 @@ function deferred<T>(): {
   return { promise, resolve, reject }
 }
 
-const LINEAR_AGENT_SKILL_NAMES = ['orca-linear', 'linear-tickets'] as const
+const SAMPLE_AGENT_SKILL_NAMES = ['sample-skill', 'sample-skill-legacy'] as const
 
 const projectWslRuntime: ProjectExecutionRuntimeResolution = {
   status: 'resolved',
@@ -101,7 +101,7 @@ const projectWslRuntime: ProjectExecutionRuntimeResolution = {
 }
 
 function Probe({ discoveryTarget }: { discoveryTarget?: SkillDiscoveryTarget }): null {
-  latestState = useInstalledAgentSkillNames(LINEAR_AGENT_SKILL_NAMES, {
+  latestState = useInstalledAgentSkillNames(SAMPLE_AGENT_SKILL_NAMES, {
     discoveryTarget,
     sourceKinds: GLOBAL_AGENT_SKILL_SOURCE_KINDS
   })
@@ -227,7 +227,7 @@ describe('useInstalledAgentSkill', () => {
     })
 
     await renderProbe()
-    scan.resolve(discoveryResult([skill({ name: 'orca-linear' })], [unavailableSource()]))
+    scan.resolve(discoveryResult([skill({ name: 'sample-skill' })], [unavailableSource()]))
     await act(async () => {
       await scan.promise
     })
@@ -258,7 +258,7 @@ describe('useInstalledAgentSkill', () => {
 
     expect(latestState?.installed).toBe(false)
 
-    hostScan.resolve(discoveryResult([skill({ name: 'linear-tickets' })]))
+    hostScan.resolve(discoveryResult([skill({ name: 'sample-skill-legacy' })]))
     await act(async () => {
       await hostScan.promise
     })
@@ -284,7 +284,7 @@ describe('useInstalledAgentSkill', () => {
 
     const forcedRefresh = latestState?.refresh() ?? Promise.resolve()
 
-    backgroundScan.resolve(discoveryResult([skill({ name: 'linear-tickets' })]))
+    backgroundScan.resolve(discoveryResult([skill({ name: 'sample-skill-legacy' })]))
     await act(async () => {
       await backgroundScan.promise
       await Promise.resolve()
@@ -324,7 +324,7 @@ describe('useInstalledAgentSkill', () => {
       await backgroundScan.promise
     })
 
-    forcedScan.resolve(discoveryResult([skill({ name: 'linear-tickets' })]))
+    forcedScan.resolve(discoveryResult([skill({ name: 'sample-skill-legacy' })]))
     let installed = false
     await act(async () => {
       installed = await forcedRefresh
@@ -337,7 +337,7 @@ describe('useInstalledAgentSkill', () => {
   it('detects a legacy Linear install through WSL skill discovery', async () => {
     const discover = vi
       .fn<(target?: SkillDiscoveryTarget) => Promise<SkillDiscoveryResult>>()
-      .mockResolvedValue(discoveryResult([skill({ name: 'linear-tickets' })]))
+      .mockResolvedValue(discoveryResult([skill({ name: 'sample-skill-legacy' })]))
     Object.defineProperty(window, 'api', {
       configurable: true,
       value: { skills: { discover } }
@@ -355,7 +355,7 @@ describe('useInstalledAgentSkill', () => {
   it('detects a legacy Linear install through project-runtime skill discovery', async () => {
     const discover = vi
       .fn<(target?: SkillDiscoveryTarget) => Promise<SkillDiscoveryResult>>()
-      .mockResolvedValue(discoveryResult([skill({ name: 'linear-tickets' })]))
+      .mockResolvedValue(discoveryResult([skill({ name: 'sample-skill-legacy' })]))
     Object.defineProperty(window, 'api', {
       configurable: true,
       value: { skills: { discover } }
@@ -382,7 +382,7 @@ describe('useInstalledAgentSkill', () => {
     const discover = vi
       .fn<(target?: SkillDiscoveryTarget) => Promise<SkillDiscoveryResult>>()
       .mockReturnValueOnce(firstScan.promise)
-      .mockResolvedValue(discoveryResult([skill({ name: 'orca-linear' })]))
+      .mockResolvedValue(discoveryResult([skill({ name: 'sample-skill' })]))
     Object.defineProperty(window, 'api', {
       configurable: true,
       value: { skills: { discover } }
@@ -391,7 +391,7 @@ describe('useInstalledAgentSkill', () => {
     await renderProbe()
     expect(latestState?.settled).toBe(false)
 
-    firstScan.resolve(discoveryResult([skill({ name: 'orca-linear' })]))
+    firstScan.resolve(discoveryResult([skill({ name: 'sample-skill' })]))
     await act(async () => {
       await firstScan.promise
     })
@@ -420,7 +420,7 @@ describe('useInstalledAgentSkill', () => {
     nowSpy.mockReturnValue(startedAt)
     const discover = vi
       .fn<(target?: SkillDiscoveryTarget) => Promise<SkillDiscoveryResult>>()
-      .mockResolvedValue(discoveryResult([skill({ name: 'orca-linear' })]))
+      .mockResolvedValue(discoveryResult([skill({ name: 'sample-skill' })]))
     Object.defineProperty(window, 'api', {
       configurable: true,
       value: { skills: { discover } }
@@ -444,7 +444,7 @@ describe('useInstalledAgentSkill', () => {
   it('reuses cached discovery when another surface finishes re-checking', async () => {
     const discover = vi
       .fn<(target?: SkillDiscoveryTarget) => Promise<SkillDiscoveryResult>>()
-      .mockResolvedValue(discoveryResult([skill({ name: 'orca-linear' })]))
+      .mockResolvedValue(discoveryResult([skill({ name: 'sample-skill' })]))
     Object.defineProperty(window, 'api', {
       configurable: true,
       value: { skills: { discover } }
@@ -478,7 +478,7 @@ describe('useInstalledAgentSkill', () => {
     })
 
     await renderProbe()
-    firstScan.resolve(discoveryResult([skill({ name: 'orca-linear' })]))
+    firstScan.resolve(discoveryResult([skill({ name: 'sample-skill' })]))
     await act(async () => {
       await firstScan.promise
     })
@@ -498,7 +498,7 @@ describe('useInstalledAgentSkill', () => {
     await flushMicrotasks()
     expect(latestState?.loading).toBe(false)
 
-    forcedScan.resolve(discoveryResult([skill({ name: 'orca-linear' })]))
+    forcedScan.resolve(discoveryResult([skill({ name: 'sample-skill' })]))
     await act(async () => {
       await forcedScan.promise
     })
@@ -518,7 +518,7 @@ describe('useInstalledAgentSkill', () => {
     })
 
     await renderProbe()
-    hostScan.resolve(discoveryResult([skill({ name: 'orca-linear' })]))
+    hostScan.resolve(discoveryResult([skill({ name: 'sample-skill' })]))
     await act(async () => {
       await hostScan.promise
     })
@@ -544,7 +544,7 @@ describe('useInstalledAgentSkill', () => {
         createCompatibleRuntimeStatusResponseIfNeeded(args) ?? {
           id: 'skills',
           ok: true,
-          result: discoveryResult([skill({ name: 'linear-tickets' })])
+          result: discoveryResult([skill({ name: 'sample-skill-legacy' })])
         }
     )
     Object.defineProperty(window, 'api', {
@@ -580,7 +580,7 @@ describe('useInstalledAgentSkill', () => {
   it('scans the local host when several saved runtimes make the install host ambiguous', async () => {
     const discover = vi
       .fn<(target?: SkillDiscoveryTarget) => Promise<SkillDiscoveryResult>>()
-      .mockResolvedValue(discoveryResult([skill({ name: 'linear-tickets' })]))
+      .mockResolvedValue(discoveryResult([skill({ name: 'sample-skill-legacy' })]))
     const call = vi.fn()
     Object.defineProperty(window, 'api', {
       configurable: true,
@@ -627,7 +627,7 @@ describe('useInstalledAgentSkill', () => {
   it('falls back to the local host once an unreadable catalog settles', async () => {
     const discover = vi
       .fn<(target?: SkillDiscoveryTarget) => Promise<SkillDiscoveryResult>>()
-      .mockResolvedValue(discoveryResult([skill({ name: 'linear-tickets' })]))
+      .mockResolvedValue(discoveryResult([skill({ name: 'sample-skill-legacy' })]))
     Object.defineProperty(window, 'api', {
       configurable: true,
       value: { skills: { discover }, runtimeEnvironments: { call: vi.fn() } }
@@ -674,7 +674,7 @@ describe('useInstalledAgentSkill', () => {
   it('hydrates from the warm cache on its very first render pass', async () => {
     const discover = vi
       .fn<(target?: SkillDiscoveryTarget) => Promise<SkillDiscoveryResult>>()
-      .mockResolvedValue(discoveryResult([skill({ name: 'linear-tickets' })]))
+      .mockResolvedValue(discoveryResult([skill({ name: 'sample-skill-legacy' })]))
     Object.defineProperty(window, 'api', {
       configurable: true,
       value: { skills: { discover } }
@@ -703,7 +703,7 @@ describe('useInstalledAgentSkill', () => {
     const discover = vi
       .fn<(target?: SkillDiscoveryTarget) => Promise<SkillDiscoveryResult>>()
       .mockResolvedValueOnce(discoveryResult([]))
-      .mockResolvedValue(discoveryResult([skill({ name: 'linear-tickets' })]))
+      .mockResolvedValue(discoveryResult([skill({ name: 'sample-skill-legacy' })]))
     Object.defineProperty(window, 'api', {
       configurable: true,
       value: { skills: { discover } }
@@ -719,7 +719,9 @@ describe('useInstalledAgentSkill', () => {
     notifyInstalledAgentSkillsChanged()
 
     await expect(discoverInstalledAgentSkills(false, undefined)).resolves.toEqual(
-      expect.objectContaining({ skills: [expect.objectContaining({ name: 'linear-tickets' })] })
+      expect.objectContaining({
+        skills: [expect.objectContaining({ name: 'sample-skill-legacy' })]
+      })
     )
     expect(discover).toHaveBeenCalledTimes(2)
   })

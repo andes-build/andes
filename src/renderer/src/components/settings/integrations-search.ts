@@ -189,37 +189,5 @@ export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
         'disconnect'
       )
     ]
-  },
-  {
-    title: translate(
-      'auto.components.settings.integrations.search.b027b4b318',
-      'Linear Integration'
-    ),
-    description: translate(
-      'auto.components.settings.integrations.search.16a486a49d',
-      'Connect Linear to browse and link issues.'
-    ),
-    keywords: [
-      ...translateSearchKeyword(
-        'auto.components.settings.integrations.search.7319e3015b',
-        'linear'
-      ),
-      ...translateSearchKeyword(
-        'auto.components.settings.integrations.search.c450244ad7',
-        'integration'
-      ),
-      ...translateSearchKeyword(
-        'auto.components.settings.integrations.search.faa0b5a0d9',
-        'api key'
-      ),
-      ...translateSearchKeyword(
-        'auto.components.settings.integrations.search.3c3d3d8ffa',
-        'connect'
-      ),
-      ...translateSearchKeyword(
-        'auto.components.settings.integrations.search.a626990bd2',
-        'disconnect'
-      )
-    ]
   }
 ])

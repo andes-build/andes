@@ -26,6 +26,7 @@ type MockState = {
     experimentalAgentDashboardPopout?: boolean
     agentsSidebarIntroShown?: boolean
     agentsSidebarMigratedFromExperimental?: boolean
+    interfaceMode?: 'simple' | 'developer'
   }
 }
 
@@ -104,7 +105,9 @@ beforeEach(() => {
     openModal: vi.fn(),
     updateSettings: vi.fn(),
     activeContextualTourId: null,
-    settings: {}
+    // Why: this suite covers layout/composition, not interface-mode gating
+    // (see sidebar-header-actions.simple-mode.test.tsx for that).
+    settings: { interfaceMode: 'developer' }
   }
   container = document.createElement('div')
   document.body.append(container)
@@ -292,5 +295,27 @@ describe('SidebarHeader', () => {
     })
     expect(container.querySelector('[aria-label="More workspace actions"]')).toBeNull()
     expect(container.querySelector('[aria-label="Add Project"]')).toBeNull()
+  })
+
+  // Spec 002, criterion 6: no new-worktree button, no repo filter, in simple mode.
+  it('hides New workspace and workspace options in simple mode at the wide layout', () => {
+    mockState.settings = { interfaceMode: 'simple' }
+    act(() => {
+      root.render(<SidebarHeader onWorkspaceBoardMenuOpenChange={vi.fn()} />)
+    })
+
+    expect(container.querySelector('[aria-label="New workspace"]')).toBeNull()
+    expect(container.querySelector('[aria-label="Workspace options"]')).toBeNull()
+  })
+
+  it('hides New workspace and the overflow menu in simple mode at compact width', () => {
+    mockState.settings = { interfaceMode: 'simple' }
+    mockState.sidebarWidth = 220
+    act(() => {
+      root.render(<SidebarHeader onWorkspaceBoardMenuOpenChange={vi.fn()} />)
+    })
+
+    expect(container.querySelector('[aria-label="New workspace"]')).toBeNull()
+    expect(container.querySelector('[aria-label="More workspace actions"]')).toBeNull()
   })
 })

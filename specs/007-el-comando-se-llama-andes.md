@@ -53,6 +53,7 @@ cambiarlos rompe la lectura de lo que ya está escrito—; y `vendor/ai-first-os
 | 4 | El skill del comando se llama `andes-cli` y su guía habla de `andes` | `ls skill-guides skill-stubs` sin `orca-cli.md`; `grep -c "orca-cli" src/cli/bundled-skill-guides.ts` = 0; `verify:bundled-skill-guides` y `verify:skill-bundle-manifest` en verde |
 | 5 | Los textos de la interfaz vuelven a nombrar el producto donde la spec 006 los dejó describiendo la herramienta: "the command line tool" pasa a "the Andes CLI" (y su equivalente en los cinco idiomas), y los comandos literales dicen `andes` | `grep -c '"[^"]*Orca CLI[^"]*"' src/renderer/src/i18n/locales/*.json` = 0; `grep -rn '\`orca ' src/renderer/src/i18n/locales/*.json` = 0; `verify:localization-*` en verde |
 | 6 | El archivo de excepciones de la spec 006 queda sin las entradas del binario ni del skill, y con las que siguen valiendo | El archivo no menciona `orca-cli` ni "nombra el binario real"; el eval del criterio 1 de la spec 006 sigue en verde |
+| 7bis | La instancia de desarrollo se presenta como "Andes Dev" ante macOS: notificaciones, Dock y menú | `grep -c "BASE_APP_NAME = 'Andes'" src/main/startup/dev-instance-identity.ts` = 1 · `grep -c "DEV_BUNDLE_DISPLAY_NAME = 'Andes Dev'" config/scripts/dev-electron-bundle-identity.mjs` = 1 |
 | 7 | El comando corre: `andes --help` responde y `andes serve` levanta | Test de humo del CLI construido: `pnpm run build:cli` y después el binario responde `--help` con código 0 |
 | 8 | Código sano | `pnpm tc` · `pnpm test` · `check:code-quality:changed` · `verify:macos-entitlements` en verde; e2e de onboarding y de modo simple en verde |
 
@@ -65,6 +66,16 @@ cambiarlos rompe la lectura de lo que ya está escrito—; y `vendor/ai-first-os
   versión publicada sí lo habría.
 - DECIDIDO por Peter (Gate 1, 2026-09-03, spec 006): `orca.yaml` no se toca, para no romper la
   compatibilidad con proyectos que ya lo usan.
+
+- 🔍 **A cerrar por Peter en Gate 1 — el nombre de la instancia de desarrollo (criterio 7bis)**:
+  renombrar `BASE_APP_NAME` mueve el nombre del ítem del llavero de "Orca Dev Safe Storage" a
+  "Andes Dev Safe Storage", y el perfil de desarrollo de Peter pierde acceso a los secretos ya
+  cifrados: hay que volver a iniciar sesión una vez. La carpeta de datos no se mueve. **Esto no
+  afecta a la app publicada**, que ya se llama Andes por su `productName`. Postura de la sesión:
+  renombrar y aceptar el reinicio de sesión, porque el nombre de desarrollo confunde a todos los
+  que construyen Andes y el costo es único. La alternativa —dos llamadas a `app.setName`, una antes
+  y otra después de `ready`— no está verificada y puede romper el llavero sin arreglar lo visible.
+  El análisis completo está en `decisions.md`, entrada del 2026-09-03.
 
 **Delegadas al agente, con criterio**
 

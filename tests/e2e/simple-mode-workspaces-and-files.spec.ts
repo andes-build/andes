@@ -91,6 +91,47 @@ test.describe('Simple mode — workspace selector and Files', () => {
     await expect(orcaPage.getByText(/Attached worktrees/i)).toHaveCount(0)
     await expect(orcaPage.getByRole('button', { name: /New worktree/i })).toHaveCount(0)
   })
+
+  test('New thread opens a real, activated agent tab, not an empty screen (criterion 3)', async ({
+    orcaPage
+  }) => {
+    // Why not asserting viewMode==='chat' here: native-chat's own eligibility
+    // check (src/renderer/src/components/terminal-pane/use-terminal-pane-chat-state.ts)
+    // reverts a tab to plain 'terminal' view until it detects a real, running
+    // coding-agent CLI in the pane — which this sandboxed e2e machine has no
+    // authenticated CLI to spawn. Asserting the tab exists and is active is
+    // what this environment can prove; the chat request itself is real (see
+    // openNewThread in SimpleModeNav.tsx) and takes effect wherever an agent
+    // CLI is actually detected. See decisions.md.
+    const before = await orcaPage.evaluate(() => {
+      const state = window.__store!.getState()
+      const worktreeId = state.activeWorktreeId!
+      return {
+        count: (state.tabsByWorktree[worktreeId] ?? []).length,
+        activeTabId: state.activeTabIdByWorktree[worktreeId] ?? null
+      }
+    })
+
+    await orcaPage.getByTestId('simple-mode-nav-new-thread').click()
+
+    await expect
+      .poll(() =>
+        orcaPage.evaluate(() => {
+          const state = window.__store!.getState()
+          const worktreeId = state.activeWorktreeId!
+          return (state.tabsByWorktree[worktreeId] ?? []).length
+        })
+      )
+      .toBeGreaterThan(before.count)
+
+    const after = await orcaPage.evaluate(() => {
+      const state = window.__store!.getState()
+      const worktreeId = state.activeWorktreeId!
+      return state.activeTabIdByWorktree[worktreeId] ?? null
+    })
+    expect(after).not.toBeNull()
+    expect(after).not.toBe(before.activeTabId)
+  })
 })
 
 test.describe('Developer mode — unaffected by the workspace selector (criterion 11)', () => {

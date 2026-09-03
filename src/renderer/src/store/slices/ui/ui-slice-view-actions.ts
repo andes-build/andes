@@ -112,19 +112,6 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
       set((state) => ({
         activeView: state.previousViewBeforeFiles
       })),
-    openCommandCenterPage: () => {
-      set((state) => ({
-        activeView: 'command-center',
-        previousViewBeforeCommandCenter:
-          state.activeView === 'command-center'
-            ? state.previousViewBeforeCommandCenter
-            : state.activeView
-      }))
-    },
-    closeCommandCenterPage: () =>
-      set((state) => ({
-        activeView: state.previousViewBeforeCommandCenter
-      })),
     openMobilePage: () =>
       set((state) => ({
         activeView: 'mobile',

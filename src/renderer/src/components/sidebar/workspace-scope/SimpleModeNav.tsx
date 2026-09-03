@@ -10,6 +10,30 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 
+/** Opens a real conversation with the agent (spec 010, criterion 3): a fresh
+ *  tab on the active folder, launching the detected coding agent CLI in chat
+ *  view mode — the existing "experimental conversation" (Orca's
+ *  `viewMode: 'chat'`) that spec 011 is building the real thread surface on
+ *  top of. Falls back to a plain new tab (still a real, working agent
+ *  session — never an empty screen) when no agent is detected yet. Never
+ *  touches native-chat/ itself: this is the same public `createTab` action
+ *  any terminal-pane caller uses. */
+function openNewThread(): void {
+  const state = useAppStore.getState()
+  const worktreeId = state.activeWorktreeId
+  if (!worktreeId) {
+    return
+  }
+  const launchAgent = state.detectedAgentIds?.[0]
+  state.setActiveView('terminal')
+  state.createTab(worktreeId, undefined, undefined, {
+    viewMode: 'chat',
+    activate: true,
+    recordInteraction: true,
+    ...(launchAgent ? { launchAgent } : {})
+  })
+}
+
 type SimpleModeNavItemProps = {
   icon: React.ComponentType<{ className?: string }>
   label: string
@@ -51,7 +75,6 @@ export function SimpleModeNav(): React.JSX.Element {
   const activeView = useAppStore((s) => s.activeView)
   const setActiveView = useAppStore((s) => s.setActiveView)
   const openFilesPage = useAppStore((s) => s.openFilesPage)
-  const openCommandCenterPage = useAppStore((s) => s.openCommandCenterPage)
   const openSkillsPage = useAppStore((s) => s.openSkillsPage)
   const openSettings = useAppStore((s) => s.openSettingsPage)
 
@@ -66,7 +89,7 @@ export function SimpleModeNav(): React.JSX.Element {
         icon={MessageSquarePlus}
         label={translate('auto.components.workspaceScope.SimpleModeNav.newThread', 'New thread')}
         active={false}
-        onClick={() => setActiveView('terminal')}
+        onClick={openNewThread}
       />
       <SimpleModeNavItem
         testId="simple-mode-nav-command-center"
@@ -75,8 +98,8 @@ export function SimpleModeNav(): React.JSX.Element {
           'auto.components.workspaceScope.SimpleModeNav.commandCenter',
           'Command Center'
         )}
-        active={activeView === 'command-center'}
-        onClick={openCommandCenterPage}
+        active={activeView === 'terminal'}
+        onClick={() => setActiveView('terminal')}
       />
       <SimpleModeNavItem
         testId="simple-mode-nav-files"

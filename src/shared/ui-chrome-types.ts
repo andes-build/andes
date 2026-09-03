@@ -118,5 +118,3 @@ export type TopLevelView =
   | 'mobile'
   // Simple mode (spec 010): the Files screen, scoped to the active workspace.
   | 'files'
-  // Simple mode (spec 010): placeholder until spec 009 supplies the real page.
-  | 'command-center'

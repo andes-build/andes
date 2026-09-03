@@ -98,8 +98,7 @@ const TopLevelViewSchema = z.enum([
   'skills',
   'artifacts',
   'mobile',
-  'files',
-  'command-center'
+  'files'
 ])
 const UiUpdateFields = z
   .object({

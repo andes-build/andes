@@ -19,12 +19,12 @@ export type LogStreamChild = ChildProcessByStdio<null, Readable, Readable>
 
 /** Why: terminals run from the detached helper, which TCC can hold responsible independently. */
 const ANDES_RESPONSIBLE_IDENTIFIERS = new Set([
-  'lat.producthub.andes',
-  'lat.producthub.andes.helper',
-  'lat.producthub.andes.dev',
-  'lat.producthub.andes.dev.helper',
-  'lat.producthub.andes.local',
-  'lat.producthub.andes.local.helper'
+  'build.andes',
+  'build.andes.helper',
+  'build.andes.dev',
+  'build.andes.dev.helper',
+  'build.andes.local',
+  'build.andes.local.helper'
 ])
 
 /** Why: the prompt classes #9756 is about — other-apps' data plus the protected home folders agents sweep. */

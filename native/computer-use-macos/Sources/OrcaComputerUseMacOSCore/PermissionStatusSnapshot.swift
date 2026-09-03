@@ -1,7 +1,7 @@
 import Dispatch
 import Foundation
 
-public let andesBundleId = "lat.producthub.andes"
+public let andesBundleId = "build.andes"
 
 public struct PermissionStatusSnapshot: Equatable, Sendable {
     public let accessibilityGranted: Bool

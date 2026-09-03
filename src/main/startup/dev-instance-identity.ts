@@ -3,7 +3,7 @@ import path from 'node:path'
 import type { AppIdentity } from '../../shared/app-identity'
 
 const BASE_APP_NAME = 'Orca'
-const BASE_APP_USER_MODEL_ID = 'lat.producthub.andes'
+const BASE_APP_USER_MODEL_ID = 'build.andes'
 const MAX_LABEL_LENGTH = 80
 
 export type DevInstanceIdentity = AppIdentity & {

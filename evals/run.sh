@@ -16,7 +16,7 @@ spec001_criterio1_nombre_del_paquete() {
   local name_count appid_count product_count
   name_count=$(grep -c '"name": "andes"' package.json)
   product_count=$(grep -c "productName: 'Andes'" config/electron-builder.config.cjs)
-  appid_count=$(grep -c "appId = 'lat.producthub.andes'" config/electron-builder.config.cjs)
+  appid_count=$(grep -c "appId = 'build.andes'" config/electron-builder.config.cjs)
   if [ "$name_count" = "1" ] && [ "$product_count" = "1" ] && [ "$appid_count" = "1" ]; then
     ok "spec001#1 el paquete se llama Andes"
   else
@@ -136,7 +136,7 @@ spec001_criterio9_sin_marca_claude_ni_anthropic
 
 spec003_criterio1_sin_com_stablyai_orca() {
   local hits
-  hits=$(grep -rnI 'com\.stablyai\.orca' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=specs --exclude-dir=.build --exclude-dir=evals --exclude-dir=.cross-version-checkouts --exclude=decisions.md --exclude=ARCHITECTURE.md . 2>/dev/null | wc -l | tr -d ' ')
+  hits=$(grep -rnI 'com\.stablyai\.orca' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=specs --exclude-dir=.build --exclude-dir=evals --exclude-dir=.cross-version-checkouts --exclude-dir=out --exclude=decisions.md --exclude=ARCHITECTURE.md . 2>/dev/null | wc -l | tr -d ' ')
   if [ "$hits" = "0" ]; then
     ok "spec003#1 no queda ninguna aparición de com.stablyai.orca"
   else
@@ -147,8 +147,8 @@ spec003_criterio1_sin_com_stablyai_orca() {
 
 spec003_criterio2_esquema_unico_de_ids() {
   local expected got
-  expected=$'lat.producthub.andes\nlat.producthub.andes.computer-use\nlat.producthub.andes.dev\nlat.producthub.andes.dev.helper\nlat.producthub.andes.helper\nlat.producthub.andes.local\nlat.producthub.andes.local.helper'
-  got=$(grep -rhoIE 'lat\.producthub\.andes[a-z.-]*' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.build src config native tests 2>/dev/null | sort -u)
+  expected=$'build.andes\nbuild.andes.computer-use\nbuild.andes.dev\nbuild.andes.dev.helper\nbuild.andes.helper\nbuild.andes.local\nbuild.andes.local.helper'
+  got=$(grep -rhoIE 'build\.andes[a-z.-]*' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.build src config native tests 2>/dev/null | sort -u)
   if [ "$got" = "$expected" ]; then
     ok "spec003#2 los ids nuevos siguen un solo esquema"
   else
@@ -166,7 +166,7 @@ spec003_criterio3_ayudante_reconoce_andes() {
     return
   fi
   (cd native/computer-use-macos && swift build >/tmp/spec003-swift-build.log 2>&1) || build_ok=0
-  grep -q 'let andesBundleId = "lat.producthub.andes"' \
+  grep -q 'let andesBundleId = "build.andes"' \
     native/computer-use-macos/Sources/OrcaComputerUseMacOS/main.swift || grep_ok=0
   grep -q 'hasPrefix(andesBundleId + ".dev.")' \
     native/computer-use-macos/Sources/OrcaComputerUseMacOS/main.swift || grep_ok=0
@@ -194,11 +194,23 @@ spec003_criterio5_codigo_sano() {
   ok "spec003#5 el código sigue sano (evidencia: pnpm tc / pnpm test / check:code-quality:changed / verify:macos-entitlements en la spec archivada)"
 }
 
+spec003_criterio6_sin_referencias_a_product_hub() {
+  local hits
+  hits=$(grep -rniE 'producthub|product hub' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.build --exclude-dir=.cross-version-checkouts --exclude-dir=specs --exclude-dir=evals --exclude-dir=out --exclude=decisions.md . 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$hits" = "0" ]; then
+    ok "spec003#6 ninguna referencia a Product Hub en el repo"
+  else
+    ko "spec003#6 ninguna referencia a Product Hub en el repo"
+    ev "líneas encontradas=$hits (debe ser 0)"
+  fi
+}
+
 spec003_criterio1_sin_com_stablyai_orca
 spec003_criterio2_esquema_unico_de_ids
 spec003_criterio3_ayudante_reconoce_andes
 spec003_criterio4_sin_formulas_homebrew
 spec003_criterio5_codigo_sano
+spec003_criterio6_sin_referencias_a_product_hub
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

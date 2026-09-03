@@ -4100,7 +4100,7 @@ private func isAuthorizedAgentPeer(_ pid: pid_t) -> Bool {
     return isTrustedOrcaApplication(parentPid)
 }
 
-private let andesBundleId = "lat.producthub.andes"
+private let andesBundleId = "build.andes"
 
 private func isTrustedOrcaApplication(_ pid: pid_t) -> Bool {
     guard let app = NSRunningApplication(processIdentifier: pid),

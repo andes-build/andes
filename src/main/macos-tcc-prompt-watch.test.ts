@@ -15,7 +15,7 @@ const REAL_PROMPT_LINE =
 
 // Same shape, but the #9756 case: an agent CLI accesses, Orca is held responsible.
 const ORCA_APPDATA_LINE =
-  '2026-07-27 15:40:02.001 Df tccd[79149:c81551c] [com.apple.TCC:access] AUTHREQ_PROMPTING: msgID=80871.99, service=kTCCServiceSystemPolicyAppData, subject=Sub:{node-5555494487fbc7467d473fd8b0a397018cbf954b}Resp:{TCCDProcess: identifier=lat.producthub.andes, pid=47548, auid=501, euid=501, binary_path=/opt/homebrew/Cellar/node/26.5.0/bin/node},'
+  '2026-07-27 15:40:02.001 Df tccd[79149:c81551c] [com.apple.TCC:access] AUTHREQ_PROMPTING: msgID=80871.99, service=kTCCServiceSystemPolicyAppData, subject=Sub:{node-5555494487fbc7467d473fd8b0a397018cbf954b}Resp:{TCCDProcess: identifier=build.andes, pid=47548, auid=501, euid=501, binary_path=/opt/homebrew/Cellar/node/26.5.0/bin/node},'
 
 // Preflight checks dominate the TCC subsystem and must never count as a dialog.
 const PREFLIGHT_LINE =
@@ -34,7 +34,7 @@ describe('parseTccPromptEvent', () => {
   it('separates the accessing binary from the responsible app', () => {
     const event = parseTccPromptEvent(ORCA_APPDATA_LINE)
     // The whole point of #9756: the dialog says Orca, but node did the access.
-    expect(event?.responsibleIdentifier).toBe('lat.producthub.andes')
+    expect(event?.responsibleIdentifier).toBe('build.andes')
     expect(event?.accessingIdentifier).toBe('node-5555494487fbc7467d473fd8b0a397018cbf954b')
     expect(event?.binaryPath).toBe('/opt/homebrew/Cellar/node/26.5.0/bin/node')
   })
@@ -51,12 +51,12 @@ describe('parseTccPromptEvent', () => {
 describe('isOrcaAttributedPrompt', () => {
   it('accepts the app and detached terminal helper across Orca build identities', () => {
     for (const id of [
-      'lat.producthub.andes',
-      'lat.producthub.andes.helper',
-      'lat.producthub.andes.dev',
-      'lat.producthub.andes.dev.helper',
-      'lat.producthub.andes.local',
-      'lat.producthub.andes.local.helper'
+      'build.andes',
+      'build.andes.helper',
+      'build.andes.dev',
+      'build.andes.dev.helper',
+      'build.andes.local',
+      'build.andes.local.helper'
     ]) {
       expect(
         isOrcaAttributedPrompt({
@@ -83,7 +83,7 @@ describe('isOrcaAttributedPrompt', () => {
       isOrcaAttributedPrompt({
         service: 'kTCCServiceMicrophone',
         accessingIdentifier: 'orca',
-        responsibleIdentifier: 'lat.producthub.andes'
+        responsibleIdentifier: 'build.andes'
       })
     ).toBe(false)
   })
@@ -152,7 +152,7 @@ describe('MacosTccPromptWatch', () => {
     expect(onPrompt).toHaveBeenCalledTimes(1)
     expect(onPrompt.mock.calls[0][0]).toMatchObject({
       service: 'kTCCServiceSystemPolicyAppData',
-      responsibleIdentifier: 'lat.producthub.andes'
+      responsibleIdentifier: 'build.andes'
     })
     watch.stop()
   })

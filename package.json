@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "The Agentic Work Environment (AWE) for AI Native Companies",
   "homepage": "https://andes.build",
-  "author": "stablyai",
+  "author": "Andes contributors",
   "bin": {
     "orca": "./out/cli/index.js",
     "orca-dev": "./config/scripts/orca-dev.mjs"

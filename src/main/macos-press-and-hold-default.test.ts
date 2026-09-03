@@ -13,7 +13,7 @@ import {
   type PressAndHoldRecord
 } from './macos-press-and-hold-default'
 
-const ANDES_DOMAIN = 'lat.producthub.andes'
+const ANDES_DOMAIN = 'build.andes'
 
 type HostOverrides = Partial<PressAndHoldHost> & { record?: PressAndHoldRecord | null }
 
@@ -141,11 +141,11 @@ describe('ensureMacPressAndHoldDefault', () => {
     })
 
     it('accepts Orca and its channel-scoped bundles, and nothing else', () => {
-      expect(isOrcaPreferencesDomain('lat.producthub.andes')).toBe(true)
-      expect(isOrcaPreferencesDomain('lat.producthub.andes.dev')).toBe(true)
+      expect(isOrcaPreferencesDomain('build.andes')).toBe(true)
+      expect(isOrcaPreferencesDomain('build.andes.dev')).toBe(true)
       expect(isOrcaPreferencesDomain('com.github.Electron')).toBe(false)
       // Why: a prefix test without the dot would accept a lookalike bundle id.
-      expect(isOrcaPreferencesDomain('lat.producthub.andesFake')).toBe(false)
+      expect(isOrcaPreferencesDomain('build.andesFake')).toBe(false)
     })
   })
 
@@ -245,10 +245,10 @@ describe('readBundleIdentifierFromExecutablePath', () => {
   it('reads CFBundleIdentifier from the plist beside the executable', () => {
     const exe = bundleWithPlist(
       '<plist><dict>\n<key>CFBundleName</key>\n<string>Orca</string>\n' +
-        '<key>CFBundleIdentifier</key>\n\t<string>lat.producthub.andes</string>\n</dict></plist>'
+        '<key>CFBundleIdentifier</key>\n\t<string>build.andes</string>\n</dict></plist>'
     )
 
-    expect(readBundleIdentifierFromExecutablePath(exe)).toBe('lat.producthub.andes')
+    expect(readBundleIdentifierFromExecutablePath(exe)).toBe('build.andes')
   })
 
   it('returns null when the plist is missing or carries no identifier', () => {

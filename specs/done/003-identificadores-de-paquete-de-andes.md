@@ -8,7 +8,9 @@ depends_on: []
 Terminar el cambio de identidad que la spec 001 dejó a medias: todo lo que el sistema operativo usa
 para reconocer la app —permisos de macOS, notificaciones, el ayudante de uso de computadora, el
 identificador de Windows, los scripts de build— deja de decir `com.stablyai.orca` y pasa a decir
-`lat.producthub.andes`.
+`build.andes` (dominio invertido de `andes.build` — ver el ajuste al criterio 2 del 2026-09-02;
+el esquema original de esta spec era `lat.producthub.andes`, descartado el mismo día porque Andes
+es open source y no lleva referencias a Product Hub).
 
 **Tipo**: residuals · **Flujo**: requirements-first
 
@@ -38,18 +40,31 @@ tocar código). El terreno no se había movido.
 
 | # | Criterio | Eval | Resultado |
 |---|---|---|---|
-| 1 | No queda ninguna aparición de `com.stablyai.orca` en código, scripts, nativo ni tests | `grep -rn 'com\.stablyai\.orca' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=specs --exclude=decisions.md --exclude=ARCHITECTURE.md .` devuelve 0 líneas | PASS — ver decisiones sobre las dos exclusiones adicionales que necesitó el eval (`evals/`, `.build/`, `.cross-version-checkouts/`) |
-| 2 | Los ids nuevos siguen un solo esquema: `lat.producthub.andes`, `lat.producthub.andes.helper`, `lat.producthub.andes.dev`, `lat.producthub.andes.dev.helper`, `lat.producthub.andes.local`, `lat.producthub.andes.local.helper`, `lat.producthub.andes.computer-use` | `grep -rhoE 'lat\.producthub\.andes[a-z.-]*' --exclude-dir=node_modules --exclude-dir=.git src config native tests \| sort -u` es exactamente esa lista | PASS |
-| 3 | El ayudante de uso de computadora reconoce a Andes: el chequeo de `main.swift` acepta `lat.producthub.andes` y el prefijo `lat.producthub.andes.dev.` | Test del paquete Swift si existe para esa función; si no, `swift build` del paquete en verde y el grep del criterio 2 sobre `native/` | PASS — sin test dedicado a `isTrustedOrcaApplication`; `swift build` en verde (Swift 6.3.3, toolchain de la máquina) |
+| 1 | No queda ninguna aparición de `com.stablyai.orca` en código, scripts, nativo ni tests | `grep -rn 'com\.stablyai\.orca' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=specs --exclude=decisions.md --exclude=ARCHITECTURE.md .` devuelve 0 líneas | PASS — ver decisiones sobre las exclusiones adicionales que necesitó el eval (`evals/`, `.build/`, `.cross-version-checkouts/`, `out/`) |
+| 2 | Los ids nuevos siguen un solo esquema: `build.andes`, `build.andes.helper`, `build.andes.dev`, `build.andes.dev.helper`, `build.andes.local`, `build.andes.local.helper`, `build.andes.computer-use` | `grep -rhoE 'build\.andes[a-z.-]*' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.build src config native tests \| sort -u` es exactamente esa lista | PASS — ver ajuste del 2026-09-02 debajo de la tabla |
+| 3 | El ayudante de uso de computadora reconoce a Andes: el chequeo de `main.swift` acepta `build.andes` y el prefijo `build.andes.dev.` | Test del paquete Swift si existe para esa función; si no, `swift build` del paquete en verde y el grep del criterio 2 sobre `native/` | PASS — sin test dedicado a `isTrustedOrcaApplication`; `swift build` en verde (Swift 6.3.3, toolchain de la máquina) |
 | 4 | Las fórmulas de Homebrew de Orca no viajan en el repo de Andes | `! test -d Casks` | PASS |
 | 5 | El código sigue sano | `pnpm tc` · `pnpm test` · `pnpm run check:code-quality:changed` · `pnpm run verify:macos-entitlements` en verde | PASS |
+| 6 | Ninguna referencia a Product Hub en el repo | `grep -rniE 'producthub|product hub' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.build --exclude-dir=specs --exclude=decisions.md . \| wc -l` = 0 | PASS — el eval agrega `--exclude-dir=evals` (se cita a sí mismo) y `--exclude-dir=out` (build de Electron, gitignoreado); ver `decisions.md` |
+
+Ajuste al criterio 2 el 2026-09-02: DECIDIDO por Peter — Andes es open source y no lleva
+referencias a Product Hub, que es una empresa; el esquema de identificadores pasa del dominio
+invertido de Product Hub (`lat.producthub.andes*`) al dominio invertido de `andes.build`
+(`build.andes*`). Se agrega el criterio 6 (sin referencias a Product Hub en el repo) para cerrar
+el chequeo. 🔍 aplicado por la sesión supervisora sobre el aviso de Peter; ver `decisions.md`.
 
 ## Decisiones
 
 **Cerradas antes de delegar**
 
 - DECIDIDO por Peter (Gate 1, 2026-09-02, spec 001): el `appId` es `lat.producthub.andes`. Esta
-  spec extiende el mismo id a las integraciones del sistema operativo.
+  spec extiende el mismo id a las integraciones del sistema operativo. **Reemplazada el mismo día**
+  (ver el siguiente punto).
+- DECIDIDO por Peter (2026-09-02): Andes es open source y no lleva referencias a Product Hub, que
+  es una empresa; el esquema de identificadores es el dominio invertido de `andes.build`,
+  `build.andes` — reemplaza al `lat.producthub.andes` de arriba. `package.json` `author` pasa de
+  `stablyai` a `Andes contributors` (🔍 propuesta de la sesión supervisora, confirmada por Peter en
+  el Gate 2 de esta spec).
 - DECIDIDO por Peter (2026-09-02): "se borra solo lo que es paquete aparte" — `Casks/` es la
   distribución de Orca por Homebrew, paquete aparte: se borra. Andes tendrá la suya cuando se publique.
 
@@ -85,18 +100,18 @@ en `decisions.md` del repo, resumidas acá):
 - Los queue labels de `DispatchQueue` en Swift (`AuthenticatedConnectionHangupMonitor.swift`,
   `PermissionStatusSnapshot.swift`) y el chequeo `hasPrefix` de `main.swift` no llevan el id nuevo
   como literal completo: lo arman por concatenación en runtime a partir de una sola constante
-  `andesBundleId = "lat.producthub.andes"` (pública, declarada una vez en
+  `andesBundleId = "build.andes"` (pública, declarada una vez en
   `PermissionStatusSnapshot.swift` porque un init `public` no puede usar un símbolo `private` en su
-  valor por defecto). Un literal como `"lat.producthub.andes.dev."` (con el punto final que
-  necesita `hasPrefix` para no confundir `lat.producthub.andes.deviant`) o
-  `"lat.producthub.andes.computer-use-owner-hangup"` agrega un octavo valor a la lista cerrada de 7
+  valor por defecto). Un literal como `"build.andes.dev."` (con el punto final que
+  necesita `hasPrefix` para no confundir `build.andes.deviant`) o
+  `"build.andes.computer-use-owner-hangup"` agrega un octavo valor a la lista cerrada de 7
   que exige el criterio 2 y lo hace fallar aunque el comportamiento sea correcto.
 - Varios tests (`notifications-delivery-gating.test.ts`, `server-endpoint-file-lifecycle.test.ts`,
   `daemon-adoption-telemetry.test.ts`, `daemon-adoption-telemetry-event.test.ts`) usaban un
   literal con forma de bundle id (`com.stablyai.orca.dev.<sufijo arbitrario>`,
   `com.stablyai.orca.ShipIt`) sin verificar el id real de Andes — solo ejercitaban una ruta de
   código con un valor de ejemplo. Se reemplazaron por valores que no empiezan con
-  `lat.producthub.andes` (`andes-dev-fb5a47066f08`, `andes-dev-test123`, `Andes.ShipIt`) en vez de
+  `build.andes` (`andes-dev-fb5a47066f08`, `andes-dev-test123`, `Andes.ShipIt`) en vez de
   por el id canónico con el mismo sufijo, para no ensuciar la lista del criterio 2.
 - El eval del criterio 1 en `evals/run.sh` excluye además `evals/` (el propio archivo, que cita el
   string en su nombre y mensaje de chequeo), `.build/` (artefactos de Swift, `.gitignore`-ados) y

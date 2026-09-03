@@ -238,3 +238,60 @@ lo que lo vuelve no determinístico.
 
 **La invalidaría**: que el mecanismo de cross-version testing deje de clonar checkouts reales de
 Orca, o que ese directorio deje de estar en `.gitignore`.
+
+## 2026-09-02 · [spec 003] El esquema de identificadores es `build.andes`, no `lat.producthub.andes`
+
+**Qué se decide**: Andes es un proyecto open source y no lleva referencias a Product Hub, que es
+una empresa. El `appId` y todo el esquema de bundle ids del sistema operativo pasan de
+`lat.producthub.andes*` al dominio invertido de `andes.build`: `build.andes`, `build.andes.helper`,
+`build.andes.dev`, `build.andes.dev.helper`, `build.andes.local`, `build.andes.local.helper`,
+`build.andes.computer-use`. `package.json` `author` pasa de `stablyai` a `Andes contributors`
+(🔍 propuesta de la sesión supervisora, confirmada por Peter en el Gate 2 de la spec 003).
+
+**Por qué**: Product Hub es la empresa detrás de Andes, no el nombre del producto ni del dominio
+público (`andes.build`); un proyecto open source no lleva la marca de la empresa que lo financia
+en sus identificadores de sistema operativo. El dominio invertido de `andes.build` (el sitio real
+del producto) es la convención estándar que no arrastra ese problema.
+
+**Reemplaza a**: [spec 001] appId de Andes es `lat.producthub.andes`, y por extensión toda mención
+de ese esquema en las decisiones de la spec 003 sobre bundle ids del sistema operativo (los queue
+labels de Swift construidos por concatenación, las fixtures de test fuera de esquema, y las
+exclusiones del grep del criterio 1) — la mecánica de esas decisiones sigue vigente, solo cambia
+el valor del esquema.
+
+**La invalidaría**: que Andes deje de ser open source, o que se registre otro dominio propio.
+
+## 2026-09-02 · [spec 003] El criterio 6 (sin Product Hub) excluye `evals/` y `ARCHITECTURE.md` no puede citar el nombre literal
+
+**Qué se decide**: `spec003_criterio6_sin_referencias_a_product_hub` en `evals/run.sh` agrega
+`--exclude-dir=evals` a las exclusiones que pidió el eval (`node_modules`, `.git`, `.build`,
+`specs`, `decisions.md`); y `ARCHITECTURE.md` explica el esquema descartado y el motivo del cambio
+sin escribir el string "Product Hub" ni "producthub" en ningún lado — remite a `decisions.md` para
+el nombre y el detalle completo.
+
+**Por qué**: el nombre del chequeo y sus mensajes `ok`/`ko` necesitan decir "Product Hub" para ser
+legibles, igual que el criterio 1 necesitó excluirse a sí mismo por la misma razón con
+"com.stablyai.orca". Y como el string descartado `lat.producthub.andes` contiene literalmente
+"producthub", cualquier mención de ese valor en un documento vivo (no excluido, a diferencia de
+`specs/` y `decisions.md`) hace fallar al propio criterio que la explica — `ARCHITECTURE.md` tuvo
+que explicar el cambio en prosa, sin citar ni el nombre de la empresa ni el esquema viejo como
+literal.
+
+**La invalidaría**: que se decida documentar el esquema descartado en un archivo ya excluido del
+criterio 6 en vez de en `ARCHITECTURE.md`.
+
+## 2026-09-02 · [spec 003] `out/` también queda fuera del grep de los criterios 1 y 6
+
+**Qué se decide**: las funciones `spec003_criterio1_sin_com_stablyai_orca` y
+`spec003_criterio6_sin_referencias_a_product_hub` de `evals/run.sh` agregan
+`--exclude-dir=out` a sus exclusiones.
+
+**Por qué**: `out/` es la salida de build de Electron/esbuild (`.gitignore:27`), regenerada por
+`pnpm test`/`pnpm run build` y no versionada. Un bundle generado antes de un cambio de esquema deja
+temporalmente el string viejo horneado en JS minificado hasta la próxima build — se encontró
+`lat.producthub.andes` en `out/orcad/orcad.js` de una build anterior al cambio a `build.andes`
+mientras se verificaba el criterio 6. Igual que `.build/` y `.cross-version-checkouts/`, no es
+código que este repo mantenga como fuente.
+
+**La invalidaría**: que `out/` deje de estar en `.gitignore`, o que el build deje de poder quedar
+desincronizado del código fuente entre una corrida y la siguiente.

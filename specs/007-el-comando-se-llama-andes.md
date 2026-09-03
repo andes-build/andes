@@ -1,6 +1,6 @@
 ---
 status: pendiente
-depends_on: [006]
+depends_on: []
 ---
 
 # 007 · El comando se llama andes
@@ -17,7 +17,7 @@ con quien ya lo instaló.
 
 ## Estado previo
 
-`main` en `d8481c69cc`. Se implementa con la spec 006 ya mergeada (`depends_on: [006]`): esta spec
+`main` en `cf173f4443`. Se implementa con la spec 006 ya mergeada (`depends_on: []`): esta spec
 reescribe las excepciones que aquella declaró. El agente corre `git log d8481c69cc..main --stat` antes de
 empezar.
 

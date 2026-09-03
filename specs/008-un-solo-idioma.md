@@ -1,6 +1,6 @@
 ---
 status: pendiente
-depends_on: [006]
+depends_on: []
 ---
 
 # 008 · Un solo idioma mientras la interfaz cambia
@@ -17,7 +17,7 @@ reescribir.
 
 ## Estado previo
 
-`main` en `af17498375`. Se implementa con la spec 006 mergeada (`depends_on: [006]`), que acaba de tocar
+`main` en `cf173f4443`. Se implementa con la spec 006 mergeada (`depends_on: []`), que acaba de tocar
 los cinco catálogos: esta spec se lleva por delante parte de ese trabajo a propósito, y por eso va
 después y no antes.
 

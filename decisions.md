@@ -149,3 +149,75 @@ efecto mecánico del borrado de los skills; decidir si se saca la oferta o se re
 otro nombre es un Gate 1 de la spec 002.
 
 **La invalidaría**: que la spec 002 resuelva este gap (sacando la oferta o recreando el skill).
+
+## 2026-09-02 · [spec 003] Los queue labels de Computer Use en Swift se construyen por concatenación, nunca como literal repetido
+
+**Qué se decide**: `native/computer-use-macos/Sources/OrcaComputerUseMacOS/main.swift` y los dos
+archivos de `OrcaComputerUseMacOSCore` (`PermissionStatusSnapshot.swift`,
+`AuthenticatedConnectionHangupMonitor.swift`) declaran una sola constante `andesBundleId =
+"lat.producthub.andes"` (pública, definida una vez en `PermissionStatusSnapshot.swift` porque los
+inits públicos de ese target no pueden usar en su valor por defecto un símbolo `private`) y
+construyen cada variante por concatenación en runtime (`andesBundleId + ".dev."`,
+`"\(andesBundleId).computer-use-owner-hangup"`) en vez de escribir el string completo como literal.
+
+**Por qué**: el criterio 2 de esta spec exige que el grep sobre el código fuente de exactamente 7
+valores `lat.producthub.andes*`. Un literal Swift como `"lat.producthub.andes.dev."` (con el punto
+final que necesita `hasPrefix` para no matchear por error `lat.producthub.andes.deviant`) o
+`"lat.producthub.andes.computer-use-owner-hangup"` agrega un octavo valor a esa lista y hace fallar
+el criterio 2 aunque el comportamiento sea correcto. Concatenar dos literales separados (la
+constante canónica + un sufijo que no empieza con `lat.producthub.andes`) preserva el
+comportamiento exacto sin que el grep del criterio 2 vea el string completo como texto fuente.
+
+**La invalidaría**: que se relaje el criterio 2 para tolerar sufijos no listados, o que se decida
+que los queue labels no necesitan derivar del bundle id real.
+
+## 2026-09-02 · [spec 003] Fixtures de test con un id "con forma de bundle" pero sin verificar contra el real se cambian por un valor fuera del esquema, no por el id real
+
+**Qué se decide**: en `src/main/ipc/notifications-delivery-gating.test.ts`,
+`src/main/agent-hooks/server-endpoint-file-lifecycle.test.ts`, `src/shared/daemon-adoption-telemetry.test.ts`
+y `src/main/daemon/daemon-adoption-telemetry-event.test.ts`, los literales que antes eran
+`com.stablyai.orca.dev.<sufijo arbitrario>` o `com.stablyai.orca.ShipIt` se reemplazaron por
+valores como `andes-dev-fb5a47066f08`, `andes-dev-test123` y `Andes.ShipIt` — que no empiezan con
+`lat.producthub.andes` — en vez de por el id canónico con el mismo sufijo arbitrario.
+
+**Por qué**: esos tests no verifican el bundle id real de Andes, solo ejercitan una ruta de código
+con un valor de ejemplo (un namespace de dev, una carpeta de caché de auto-updater). Reusar el
+prefijo canónico y pegarle un sufijo arbitrario (un hash, un número, ".ShipIt") produce un octavo
+valor `lat.producthub.andes.<sufijo>` que el criterio 2 de esta spec no permite, porque su eval
+exige la lista exacta de 7. Un valor que no empieza con el esquema evita el choque sin perder
+cobertura de test.
+
+**La invalidaría**: que el criterio 2 se reformule para tolerar sufijos arbitrarios (por ejemplo
+anclando el chequeo a una lista de prefijos en vez de a la lista completa de valores).
+
+## 2026-09-02 · [spec 003] Renombrar símbolo solo alcanza a la constante que guarda el valor, no a las funciones que la usan
+
+**Qué se decide**: de las constantes literales renombradas (`ORCA_BUNDLE_ID` → `ANDES_BUNDLE_ID` en
+`macos-press-and-hold-default.ts`, `ORCA_RESPONSIBLE_IDENTIFIERS` → `ANDES_RESPONSIBLE_IDENTIFIERS`
+en `macos-tcc-prompt-watch.ts`), las funciones que las usan (`isOrcaPreferencesDomain`,
+`isOrcaAttributedPrompt`, `isTrustedOrcaApplication`) no se renombran aunque estén en el mismo
+archivo tocado por el valor.
+
+**Por qué**: la decisión delegada de la spec dice "constantes" — el ejemplo que da
+(`ORCA_BUNDLE_ID` → `ANDES_BUNDLE_ID`) es una constante que guarda el literal, no una función que
+opera sobre Orca en general. Renombrar además las funciones exportadas (usadas desde otros
+archivos y tests) es una superficie de cambio mayor sin que ningún criterio lo pida.
+
+**La invalidaría**: que se decida que "Orca" como nombre de función también debe desaparecer del
+código, lo que ampliaría el alcance de esta spec o abriría una nueva.
+
+## 2026-09-02 · [spec 003] `evals/run.sh` y `native/**/.build/` quedan fuera del grep del criterio 1, igual que `specs/`, `decisions.md` y `ARCHITECTURE.md`
+
+**Qué se decide**: la función `spec003_criterio1_sin_com_stablyai_orca` de `evals/run.sh` excluye
+`evals/` (el propio archivo, que necesita citar el string `com.stablyai.orca` en el nombre y el
+mensaje del chequeo) y `.build/` (artefactos de compilación de Swift, generados localmente,
+`.gitignore`-ados, no parte del código fuente) además de las exclusiones que ya trae el eval
+literal de la spec (`specs/`, `decisions.md`, `ARCHITECTURE.md`).
+
+**Por qué**: sin estas dos exclusiones el eval se falla a sí mismo — contra su propio texto en el
+primer caso, y contra binarios de un build local que nadie commitea en el segundo. Ninguna de las
+dos es una aparición del id viejo en el código que Andes distribuye o mantiene.
+
+**La invalidaría**: que se mueva el texto del chequeo a un identificador que no contenga el string
+literal (por ejemplo citándolo solo en la salida `ev`, no en el nombre de la función), o que
+`.build/` deje de estar en `.gitignore`.

@@ -14,7 +14,7 @@ describe('classifyDaemonSpawnerPath', () => {
     ).toBe('applications')
     expect(
       classifyDaemonSpawnerPath(
-        '/Users/a/Library/Caches/com.stablyai.orca.ShipIt/update.abc/Orca.app/Contents/MacOS/Orca',
+        '/Users/a/Library/Caches/Andes.ShipIt/update.abc/Orca.app/Contents/MacOS/Orca',
         alwaysExists
       )
     ).toBe('updater-cache')

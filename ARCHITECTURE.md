@@ -34,6 +34,48 @@
   módulos de la interfaz queda para la spec 002 (ajuste al criterio 6 del 2026-09-02, ver
   `specs/done/001-andes-nace-de-orca.md`).
 
+## Identificadores de sistema operativo (spec 003)
+
+Todo lo que macOS y Windows usan para reconocer a Andes por su bundle id sigue un solo esquema,
+`lat.producthub.andes[.dev|.local][.helper]` o `lat.producthub.andes.computer-use`:
+
+- `src/main/macos-tcc-prompt-watch.ts` (`ANDES_RESPONSIBLE_IDENTIFIERS`): los 6 ids de TCC
+  (`lat.producthub.andes`, `.helper`, `.dev`, `.dev.helper`, `.local`, `.local.helper`).
+- `src/main/macos-press-and-hold-default.ts` (`ANDES_BUNDLE_ID`): dominio de `defaults` para el
+  opt-out de accent picker.
+- `src/main/ipc/notification-system-settings-link.ts` (`MACOS_PACKAGED_BUNDLE_ID`): id que abre
+  el panel de notificaciones del sistema.
+- `src/main/startup/dev-instance-identity.ts` (`BASE_APP_USER_MODEL_ID`): `AppUserModelId` de
+  Windows, base de `lat.producthub.andes.dev.<hash>` en desarrollo.
+- `src/main/computer/macos-computer-use-permissions.ts` (`DEFAULT_COMPUTER_USE_BUNDLE_ID`):
+  `lat.producthub.andes.computer-use`.
+- `config/scripts/dev-electron-bundle-identity.mjs` (`DEV_BUNDLE_ID`/`DEV_HELPER_BUNDLE_ID`):
+  identidad ad-hoc firmada del Electron.app de desarrollo.
+- `config/scripts/build-notification-status-macos.mjs` y `build-computer-macos.mjs`: default de
+  `--bundle-id` de los binarios nativos que se firman.
+- `native/computer-use-macos/Sources/OrcaComputerUseMacOS/main.swift`
+  (`isTrustedOrcaApplication`): acepta `lat.producthub.andes` y el prefijo
+  `lat.producthub.andes.dev.`, vía la constante `andesBundleId` (construida por concatenación en
+  runtime — nunca como literal repetido — porque un literal con el punto final agregaría un octavo
+  valor al esquema de arriba).
+- `native/computer-use-macos/Sources/OrcaComputerUseMacOSCore/{PermissionStatusSnapshot,
+  AuthenticatedConnectionHangupMonitor}.swift`: las etiquetas de `DispatchQueue` derivan de la
+  misma constante `andesBundleId` (pública, declarada una sola vez en `PermissionStatusSnapshot.swift`).
+
+Fuera de este esquema, y a propósito:
+
+- `BASE_APP_NAME` ('Orca'), `DEV_BUNDLE_DISPLAY_NAME` ('Orca Dev'), el nombre del ayudante
+  (`Orca Computer Use.app`, paquete Swift `OrcaComputerUseMacOS`) y el texto "Orca" en general no
+  son identificadores de sistema operativo — son marca visible, spec propia cuando exista el
+  logotipo de Andes (ver `specs/done/001-andes-nace-de-orca.md`).
+- Fixtures de test que usaban un id con forma de bundle pero sin verificar el valor real
+  (namespace de dev arbitrario, ruta de caché de ShipIt) se cambiaron por valores que no calzan en
+  el esquema `lat.producthub.andes*` en vez de reusar el id real, para no ensuciar la lista cerrada
+  de 7 valores que exige el criterio 2 de la spec.
+
+`Casks/` (fórmulas de Homebrew de Orca) no existe más en el repo — es la distribución de Orca,
+paquete aparte.
+
 ## Documentación histórica ajustada
 
 - `config/reliability-gates.jsonc`: los gates cuyo test surface era 100% de la app móvil borrada

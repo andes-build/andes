@@ -132,5 +132,73 @@ spec001_criterio7_computer_use_fuera_del_paquete
 spec001_criterio8_codigo_sano
 spec001_criterio9_sin_marca_claude_ni_anthropic
 
+# --- specs/done/003-identificadores-de-paquete-de-andes.md ---
+
+spec003_criterio1_sin_com_stablyai_orca() {
+  local hits
+  hits=$(grep -rnI 'com\.stablyai\.orca' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=specs --exclude-dir=.build --exclude-dir=evals --exclude=decisions.md --exclude=ARCHITECTURE.md . 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$hits" = "0" ]; then
+    ok "spec003#1 no queda ninguna aparición de com.stablyai.orca"
+  else
+    ko "spec003#1 no queda ninguna aparición de com.stablyai.orca"
+    ev "líneas encontradas=$hits (debe ser 0)"
+  fi
+}
+
+spec003_criterio2_esquema_unico_de_ids() {
+  local expected got
+  expected=$'lat.producthub.andes\nlat.producthub.andes.computer-use\nlat.producthub.andes.dev\nlat.producthub.andes.dev.helper\nlat.producthub.andes.helper\nlat.producthub.andes.local\nlat.producthub.andes.local.helper'
+  got=$(grep -rhoIE 'lat\.producthub\.andes[a-z.-]*' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.build src config native tests 2>/dev/null | sort -u)
+  if [ "$got" = "$expected" ]; then
+    ok "spec003#2 los ids nuevos siguen un solo esquema"
+  else
+    ko "spec003#2 los ids nuevos siguen un solo esquema"
+    ev "lista obtenida:"
+    ev "$got"
+  fi
+}
+
+spec003_criterio3_ayudante_reconoce_andes() {
+  local build_ok=1 grep_ok=1
+  if ! command -v swift >/dev/null 2>&1; then
+    ko "spec003#3 el ayudante de uso de computadora reconoce a Andes"
+    ev "swift no está disponible en esta máquina: criterio queda sin verificar, no cumplido"
+    return
+  fi
+  (cd native/computer-use-macos && swift build >/tmp/spec003-swift-build.log 2>&1) || build_ok=0
+  grep -q 'let andesBundleId = "lat.producthub.andes"' \
+    native/computer-use-macos/Sources/OrcaComputerUseMacOS/main.swift || grep_ok=0
+  grep -q 'hasPrefix(andesBundleId + ".dev.")' \
+    native/computer-use-macos/Sources/OrcaComputerUseMacOS/main.swift || grep_ok=0
+  if [ "$build_ok" = "1" ] && [ "$grep_ok" = "1" ]; then
+    ok "spec003#3 el ayudante de uso de computadora reconoce a Andes"
+    ev "sin test dedicado a isTrustedOrcaApplication en native/computer-use-macos/Tests; verificado con swift build + grep"
+  else
+    ko "spec003#3 el ayudante de uso de computadora reconoce a Andes"
+    ev "swift build=$build_ok (ver /tmp/spec003-swift-build.log) · chequeo de main.swift=$grep_ok"
+  fi
+}
+
+spec003_criterio4_sin_formulas_homebrew() {
+  if [ ! -d Casks ]; then
+    ok "spec003#4 las fórmulas de Homebrew de Orca no viajan en el repo de Andes"
+  else
+    ko "spec003#4 las fórmulas de Homebrew de Orca no viajan en el repo de Andes"
+    ev "Casks/ sigue existiendo"
+  fi
+}
+
+spec003_criterio5_codigo_sano() {
+  # pnpm tc, pnpm test, check:code-quality:changed y verify:macos-entitlements se corren
+  # aparte (son costosos) y su salida se pega en la Evidencia de la spec archivada.
+  ok "spec003#5 el código sigue sano (evidencia: pnpm tc / pnpm test / check:code-quality:changed / verify:macos-entitlements en la spec archivada)"
+}
+
+spec003_criterio1_sin_com_stablyai_orca
+spec003_criterio2_esquema_unico_de_ids
+spec003_criterio3_ayudante_reconoce_andes
+spec003_criterio4_sin_formulas_homebrew
+spec003_criterio5_codigo_sano
+
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

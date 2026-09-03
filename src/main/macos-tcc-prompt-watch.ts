@@ -18,13 +18,13 @@ export type LogStreamChild = ChildProcessByStdio<null, Readable, Readable>
  */
 
 /** Why: terminals run from the detached helper, which TCC can hold responsible independently. */
-const ORCA_RESPONSIBLE_IDENTIFIERS = new Set([
-  'com.stablyai.orca',
-  'com.stablyai.orca.helper',
-  'com.stablyai.orca.dev',
-  'com.stablyai.orca.dev.helper',
-  'com.stablyai.orca.local',
-  'com.stablyai.orca.local.helper'
+const ANDES_RESPONSIBLE_IDENTIFIERS = new Set([
+  'lat.producthub.andes',
+  'lat.producthub.andes.helper',
+  'lat.producthub.andes.dev',
+  'lat.producthub.andes.dev.helper',
+  'lat.producthub.andes.local',
+  'lat.producthub.andes.local.helper'
 ])
 
 /** Why: the prompt classes #9756 is about — other-apps' data plus the protected home folders agents sweep. */
@@ -75,7 +75,7 @@ export function parseTccPromptEvent(line: string): TccPromptEvent | null {
 /** True when this dialog is one macOS raised in Orca's name for a watched file-access service. */
 export function isOrcaAttributedPrompt(event: TccPromptEvent): boolean {
   return (
-    ORCA_RESPONSIBLE_IDENTIFIERS.has(event.responsibleIdentifier) &&
+    ANDES_RESPONSIBLE_IDENTIFIERS.has(event.responsibleIdentifier) &&
     WATCHED_SERVICES.has(event.service)
   )
 }

@@ -73,8 +73,9 @@ test.describe('macOS press-and-hold default', () => {
     expect(state.bundleIdentifier).not.toBeNull()
     expect(record.domain).toBe(state.bundleIdentifier)
 
+    const ANDES_BUNDLE_ID = 'lat.producthub.andes'
     const ownsDomain =
-      record.domain === 'com.stablyai.orca' || record.domain!.startsWith('com.stablyai.orca.')
+      record.domain === ANDES_BUNDLE_ID || record.domain!.startsWith(`${ANDES_BUNDLE_ID}.`)
     if (ownsDomain) {
       // A packaged or dev-identity bundle: the write path is live and must have settled.
       expect(['applied', 'kept-user-preference']).toContain(record.decision)

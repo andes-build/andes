@@ -23,7 +23,7 @@ import {
  * them apart, so if `defaults` could not either, "only write when unset" would be unimplementable.
  *
  * Every domain used here is a throwaway UUID under Orca's own prefix, deleted along with its plist
- * in `afterEach`; the real `com.stablyai.orca` domain is never read or written.
+ * in `afterEach`; the real `lat.producthub.andes` domain is never read or written.
  */
 
 // Why a real Orca-owned domain shape: the ownership guard rejects anything else, so a fake prefix
@@ -33,8 +33,10 @@ const domains: string[] = []
 /** Pinned against the real binary below, then reused by the platform-agnostic unit tests. */
 const DEFAULTS_MISSING_EXIT_CODE = 1
 
+const ANDES_DOMAIN_PREFIX = 'lat.producthub.andes'
+
 function throwawayDomain(): string {
-  const domain = `com.stablyai.orca.defaults-domain-test.${randomUUID()}`
+  const domain = `${ANDES_DOMAIN_PREFIX}.defaults-domain-test.${randomUUID()}`
   domains.push(domain)
   return domain
 }

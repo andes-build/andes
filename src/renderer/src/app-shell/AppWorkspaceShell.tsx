@@ -11,8 +11,14 @@ import { TitlebarLeftControls } from './TitlebarLeftControls'
 import { RightSidebarToggle, TitlebarMainStrip } from './TitlebarMainStrip'
 import type { AppChromeLayout } from './use-app-chrome-layout'
 import type { FloatingWorkspacePanelState } from './use-floating-workspace-panel'
+import { useCommandCenterGate, type CommandCenterGate } from './use-command-center-gate'
 
 const Landing = lazy(() => import('../components/Landing'))
+const CommandCenter = lazy(() =>
+  import('../components/command-center/CommandCenter').then((mod) => ({
+    default: mod.CommandCenter
+  }))
+)
 const WorktreeCreationPanel = lazy(
   () => import('../components/worktree-creation/WorktreeCreationPanel')
 )
@@ -63,7 +69,13 @@ function WorktreeSidebar({
   )
 }
 
-function ActivePage({ layout }: { layout: AppChromeLayout }): React.JSX.Element {
+function ActivePage({
+  layout,
+  commandCenterGate
+}: {
+  layout: AppChromeLayout
+  commandCenterGate: CommandCenterGate
+}): React.JSX.Element {
   const { activeView, activeWorktreeId, activePendingCreationId, creationLayoutActive } = layout
   return (
     <>
@@ -78,6 +90,16 @@ function ActivePage({ layout }: { layout: AppChromeLayout }): React.JSX.Element 
         <WorktreeCreationPanel
           creationId={activePendingCreationId}
           reserveCollapsedSidebarHeaderSpace={layout.leftTitlebarChromeLayout.isFloating}
+        />
+      ) : null}
+      {activeView === 'terminal' &&
+      !creationLayoutActive &&
+      commandCenterGate.active &&
+      commandCenterGate.brainPath &&
+      commandCenterGate.worktreeId ? (
+        <CommandCenter
+          brainPath={commandCenterGate.brainPath}
+          worktreeId={commandCenterGate.worktreeId}
         />
       ) : null}
       {activeView === 'terminal' && !activeWorktreeId && !creationLayoutActive ? <Landing /> : null}
@@ -97,6 +119,13 @@ export function AppWorkspaceShell(props: {
   const scrollOffsetRef = useRef(0)
   const scrollAnchorRef = useRef<VirtualizedScrollAnchor>(null)
   const sidebarScrollRefs = { scrollOffsetRef, scrollAnchorRef }
+  // Why: simple mode's home screen (spec 009) replaces the plain terminal
+  // workbench for a workspace with no agent thread open yet — computed once
+  // here so it can also hide the workbench itself, not just ActivePage's
+  // branch (else the pre-existing default terminal tab would render behind
+  // the Command Center's own scrollable page).
+  const commandCenterGate = useCommandCenterGate(layout.activeWorktreeId)
+  const terminalWorkbenchVisible = layout.terminalWorkbenchVisible && !commandCenterGate.active
 
   return (
     // Why: workspace activation is a hot path; activeWorktreeId in reset keys would remount whole surfaces during wake.
@@ -177,7 +206,7 @@ export function AppWorkspaceShell(props: {
                 )}
                 <div className="flex flex-1 min-w-0 min-h-0 flex-col">
                   {layout.shouldMountTerminalWorkbench ? (
-                    <TerminalWorkbenchContainer isVisible={layout.terminalWorkbenchVisible}>
+                    <TerminalWorkbenchContainer isVisible={terminalWorkbenchVisible}>
                       <Suspense fallback={null}>
                         <RecoverableRenderErrorBoundary
                           boundaryId="terminal.workbench"
@@ -208,7 +237,7 @@ export function AppWorkspaceShell(props: {
                         'Retry the page or navigate to another Andes surface.'
                       )}
                     >
-                      <ActivePage layout={layout} />
+                      <ActivePage layout={layout} commandCenterGate={commandCenterGate} />
                     </RecoverableRenderErrorBoundary>
                   </Suspense>
                 </div>

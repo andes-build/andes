@@ -46,6 +46,7 @@ import { preflightApi } from './api/preflight-bridge'
 import { notificationsApi } from './api/notifications-bridge'
 import { onboardingApi } from './api/onboarding-bridge'
 import { onboardingBrainApi } from './api/onboarding-brain-bridge'
+import { commandCenterApi } from './api/command-center-bridge'
 import { dashboardApi } from './api/dashboard-bridge'
 import { terminalPreviewApi } from './api/terminal-preview-bridge'
 import { macosTccPromptsApi } from './api/macos-tcc-prompts-bridge'
@@ -145,6 +146,7 @@ const api = {
   notifications: notificationsApi,
   onboarding: onboardingApi,
   onboardingBrain: onboardingBrainApi,
+  commandCenter: commandCenterApi,
   dashboard: dashboardApi,
   terminalPreview: terminalPreviewApi,
   macosTccPrompts: macosTccPromptsApi,

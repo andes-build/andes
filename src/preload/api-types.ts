@@ -38,6 +38,7 @@ import type { MobileApi } from './api/mobile-api'
 import type { NativeChatApi } from './api/native-chat-api'
 import type { OnboardingApi, StarNagApi } from './api/onboarding-api'
 import type { OnboardingBrainApi } from './api/onboarding-brain-api'
+import type { CommandCenterApi } from './api/command-center-api'
 import type { OrcaProfileApi } from './api/orca-profile-api'
 import type {
   ComputerUsePermissionsApi,
@@ -110,6 +111,7 @@ export type PreloadApi = {
   notifications: NotificationsApi
   onboarding: OnboardingApi
   onboardingBrain: OnboardingBrainApi
+  commandCenter: CommandCenterApi
   dashboard: DashboardApi
   terminalPreview: TerminalPreviewApi
   macosTccPrompts: MacosTccPromptsApi

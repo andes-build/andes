@@ -113,6 +113,8 @@ export type UiViewHistory =
   | 'skills'
   | 'artifacts'
   | 'mobile'
+  | 'files'
+  | 'command-center'
 
 export type UISliceCore = {
   sidebarOpen: boolean
@@ -148,6 +150,8 @@ export type UISliceCore = {
   previousViewBeforeSkills: Exclude<UiViewHistory, 'skills'>
   previousViewBeforeMobile: Exclude<UiViewHistory, 'mobile'>
   previousViewBeforeArtifacts: Exclude<UiViewHistory, 'artifacts'>
+  previousViewBeforeFiles: Exclude<UiViewHistory, 'files'>
+  previousViewBeforeCommandCenter: Exclude<UiViewHistory, 'command-center'>
   setActiveView: (view: UISliceCore['activeView']) => void
   taskPageData: TaskPageData
   taskResumeState: TaskResumeState | undefined
@@ -189,6 +193,10 @@ export type UISliceCore = {
   clearPendingSkillsSharedView: () => void
   openArtifactsPage: () => void
   closeArtifactsPage: () => void
+  openFilesPage: () => void
+  closeFilesPage: () => void
+  openCommandCenterPage: () => void
+  closeCommandCenterPage: () => void
   openMobilePage: () => void
   closeMobilePage: () => void
   setNewWorkspaceDraft: (draft: NonNullable<UISliceCore['newWorkspaceDraft']>) => void

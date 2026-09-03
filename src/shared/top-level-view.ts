@@ -11,7 +11,9 @@ const TOP_LEVEL_VIEW_LOOKUP: Record<TopLevelView, true> = {
   space: true,
   skills: true,
   artifacts: true,
-  mobile: true
+  mobile: true,
+  files: true,
+  'command-center': true
 }
 
 export function isTopLevelView(value: unknown): value is TopLevelView {

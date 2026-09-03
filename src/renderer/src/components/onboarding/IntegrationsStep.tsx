@@ -73,7 +73,7 @@ export function GitHubRow(props: { compact?: boolean } = {}): React.JSX.Element 
             <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
               {translate(
                 'auto.components.onboarding.IntegrationsStep.50db38cf4b',
-                'Pull requests, issues, and check status.'
+                'Issues and check status.'
               )}
             </p>
           </div>
@@ -218,10 +218,10 @@ export function LinearRow(props: { compact?: boolean } = {}): React.JSX.Element 
 }
 
 const CAPABILITIES = [
-  'Start a workspace from any GitHub issue or pull request, prefilled with its title and context',
-  'Browse GitHub issues and pull requests in the Tasks view without leaving Orca',
-  'See issue state, review status, and CI checks on every worktree',
-  'Read, comment on, and merge pull requests without leaving Orca'
+  'Start a workspace from any GitHub issue, prefilled with its title and context',
+  'Browse GitHub issues in the Tasks view without leaving Orca',
+  'See issue state, review status, and CI checks on every workspace',
+  'Read and comment on reviews without leaving Orca'
 ] as const
 
 export function IntegrationsStep(): React.JSX.Element {

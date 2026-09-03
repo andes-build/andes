@@ -177,6 +177,10 @@ export function createRestartSession(
     const app = await electron.launch({
       args: getOrcaElectronLaunchArgs(mainPath, headful),
       env: {
+        // Spec 002, criterion 7: keep this restart fixture in developer mode
+        // like the main orca-app.ts fixture, so a relaunch doesn't drop back
+        // to the simple-mode default mid-test.
+        ANDES_INTERFACE_MODE: 'developer',
         ...homeIsolation.env,
         ...options?.extraEnv,
         ORCA_E2E_RUNTIME_WS_PORT: String(runtimeWsPort)

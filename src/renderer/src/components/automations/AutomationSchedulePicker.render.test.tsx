@@ -101,6 +101,52 @@ function renderedCronFieldChips(): { text: string; title: string }[] {
   }))
 }
 
+// Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md), so
+// a synthetic resource bundle stands in for a real second-locale catalog. 'ru' is
+// a real BCP-47 tag (not an arbitrary code) so getUiWeekdayNames() still resolves
+// a non-English day name through Intl.
+const SYNTHETIC_LOCALE = 'ru'
+
+function registerSyntheticBundle(): void {
+  i18n.addResourceBundle(
+    SYNTHETIC_LOCALE,
+    'translation',
+    {
+      auto: {
+        components: {
+          automations: {
+            AutomationSchedulePicker: {
+              '55b2ef82a4': 'Cada hora',
+              f0202f3a89: 'Diario',
+              '57e83307d0': 'Días laborables',
+              '837d902bba': 'Semanal',
+              ddba78647e: 'Cron personalizado'
+            },
+            automation: {
+              schedule: {
+                label: {
+                  cc71e252ba: 'Cada {{day}} a las {{time}}',
+                  '3f1422adc1': 'Días laborables a las {{time}}'
+                }
+              }
+            },
+            AutomationCustomCronPanel: {
+              f6ca30da23: 'Cron personalizado válido',
+              a226dbdd40: 'Minuto',
+              ec9c1e35df: 'Hora',
+              '2d82246d23': 'Día',
+              '0e1de0358b': 'Mes',
+              '77e96bded6': 'Día de la semana'
+            }
+          }
+        }
+      }
+    },
+    true,
+    true
+  )
+}
+
 describe('AutomationSchedulePicker rendered DOM (#14404)', () => {
   it.each([
     ['zh', ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']],
@@ -156,30 +202,30 @@ describe('AutomationSchedulePicker rendered DOM (#14404)', () => {
   })
 
   it('renders the weekly cron status row localized, with no English plural (#14404)', async () => {
-    await i18n.changeLanguage('zh')
+    registerSyntheticBundle()
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
     renderPicker({ preset: 'custom', customSchedule: '0 9 * * 5' })
 
-    expect(container.textContent).toContain('每星期五')
+    expect(container.textContent).toContain('Cada ')
+    expect(container.textContent).toContain(' a las ')
     expect(container.textContent).not.toContain('Friday')
     expect(container.textContent).not.toMatch(/s at /)
   })
 
   it('renders the valid-custom-cron status row localized (#14404)', async () => {
-    await i18n.changeLanguage('zh')
+    registerSyntheticBundle()
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
     renderPicker({ preset: 'custom', customSchedule: '*/30 9-17 * * 1-5' })
 
-    expect(container.textContent).toContain('有效的自定义 cron')
+    expect(container.textContent).toContain('Cron personalizado válido')
   })
 
-  it.each([
-    ['zh', ['分钟', '小时', '日', '月', '星期']],
-    ['ja', ['分', '時間', '日', '月', '曜日']],
-    ['ko', ['분', '시간', '일', '월', '요일']],
-    ['es', ['Minuto', 'Hora', 'Día', 'Mes', 'Día de la semana']]
-  ])('renders the custom-cron field chips in %s (#14404)', async (locale, expectedLabels) => {
-    await i18n.changeLanguage(locale)
+  it('renders the custom-cron field chips in a non-English locale (#14404)', async () => {
+    registerSyntheticBundle()
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
     renderPicker({ preset: 'custom', customSchedule: '0 9 * * 1-5' })
 
+    const expectedLabels = ['Minuto', 'Hora', 'Día', 'Mes', 'Día de la semana']
     const chips = renderedCronFieldChips()
     expect(chips.map((chip) => chip.text)).toEqual(expectedLabels)
     // The chip is `truncate`d, so the full header has to stay reachable on hover.

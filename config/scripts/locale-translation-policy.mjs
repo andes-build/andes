@@ -1,4 +1,3 @@
-import { CJK_LATIN_SPACED_TERMS } from './locale-cjk-latin-spaced-terms.mjs'
 import {
   isCanonicalGenericRendering,
   overlapsCanonicalRendering
@@ -6,16 +5,10 @@ import {
 import { isScreenCursorContext } from './locale-screen-cursor-exemptions.mjs'
 import { BRAND_MISTRANSLATIONS } from './locale-brand-mistranslations.mjs'
 import { isStyleValue } from './locale-style-values.mjs'
-import { LOCALE_KEY_OVERRIDES } from './locale-key-overrides.mjs'
-import { LOCALE_PHRASE_FIXES } from './locale-phrase-fixes.mjs'
 import { SEARCH_KEYWORD_OVERRIDES } from './locale-search-keyword-overrides.mjs'
-import { LOCALE_VALUE_OVERRIDES } from './locale-value-overrides.mjs'
 
 export { BRAND_MISTRANSLATIONS } from './locale-brand-mistranslations.mjs'
-export { LOCALE_KEY_OVERRIDES } from './locale-key-overrides.mjs'
-export { LOCALE_PHRASE_FIXES } from './locale-phrase-fixes.mjs'
 export { SEARCH_KEYWORD_OVERRIDES } from './locale-search-keyword-overrides.mjs'
-export { LOCALE_VALUE_OVERRIDES } from './locale-value-overrides.mjs'
 
 const AGENT_CATALOG_PREFIX = 'auto.lib.agent.catalog.'
 const OPEN_IN_APP_CATALOG_PREFIX = 'auto.lib.open.in.app.catalog.'
@@ -216,15 +209,6 @@ export const NEVER_TRANSLATE_VALUES = new Set([
   'orca · zsh'
 ])
 
-export const NATIVE_PICKER_LABELS = {
-  zh: { chinese: '中文（简体）', korean: '한국어', japanese: '日本語', spanish: 'Español' },
-  ko: { chinese: '中文（简体）', korean: '한국어', japanese: '日本語', spanish: 'Español' },
-  ja: { chinese: '中文（简体）', korean: '한국어', japanese: '日本語', spanish: 'Español' },
-  es: { chinese: '中文（简体）', korean: '한국어', japanese: '日本語', spanish: 'Español' }
-}
-
-const CJK_LATIN_SPACED_TERM_PATTERN = CJK_LATIN_SPACED_TERMS.join('|')
-
 export function isEnglishOnlyKey(key) {
   return ENGLISH_ONLY_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))
 }
@@ -306,87 +290,10 @@ function applyBrandMistranslationFixes(enValue, localeValue, locale, key = '') {
   return result
 }
 
-function applyCjkLatinTermSpacing(localeValue, locale) {
-  // Why: CJK UI copy should keep protected Latin workflow terms readable when MT glues them to native text.
-  let result = localeValue
-    .replace(
-      new RegExp(
-        `(${CJK_LATIN_SPACED_TERM_PATTERN})([\\u3040-\\u30ff\\u3400-\\u9fff\\uac00-\\ud7af])`,
-        'g'
-      ),
-      '$1 $2'
-    )
-    .replace(
-      new RegExp(
-        `([\\u3040-\\u30ff\\u3400-\\u9fff\\uac00-\\ud7af])(${CJK_LATIN_SPACED_TERM_PATTERN})`,
-        'g'
-      ),
-      '$1 $2'
-    )
-    .replace(
-      new RegExp(`(${CJK_LATIN_SPACED_TERM_PATTERN})(${CJK_LATIN_SPACED_TERM_PATTERN})`, 'g'),
-      '$1 $2'
-    )
-  if (locale === 'ko') {
-    // Korean particles attach to the noun (no space) only when the particle is a complete token at a
-    // boundary — re-glue "Orca 에"/"PR 을"/"에서는" but keep "Jira 이슈"/"Orca 로고"/"agent 에뮬레이터".
-    result = result.replace(
-      new RegExp(
-        `(${CJK_LATIN_SPACED_TERM_PATTERN}) ((?:에서|에게|에는|에선|으로|로서|로써|부터|까지|보다|처럼|은|는|이|가|을|를|와|과|의|에|로|도|만)+)(?=$|[\\s.,!?…·:;)\\]}"'」』])`,
-        'g'
-      ),
-      '$1$2'
-    )
-  }
-  return result
-}
-
-function phraseFixMatchesEnglish(enValue, fix) {
-  // Why: `whenEnMatches` (a RegExp) lets a rule guard on a real token (e.g. /\bPRs?\b/)
-  // instead of the looser case-insensitive `whenEnIncludes` substring, so a phrase fix can
-  // avoid firing on unrelated English that merely contains the substring (approve, preview).
-  if (fix.whenEnMatches) {
-    return fix.whenEnMatches.test(enValue)
-  }
-  return enValue.toLowerCase().includes(fix.whenEnIncludes.toLowerCase())
-}
-
-function applyPhraseFixes(enValue, localeValue, locale, key = '') {
-  let result = localeValue
-  for (const fix of LOCALE_PHRASE_FIXES[locale] ?? []) {
-    if (!phraseFixMatchesEnglish(enValue, fix)) {
-      continue
-    }
-    if (fix.skipKeyPrefixes?.some((prefix) => key.startsWith(prefix))) {
-      continue
-    }
-    result = result.replace(fix.pattern, fix.replacement)
-  }
-  return result
-}
-
+// Why: kept generic (not indexed by a fixed locale list) so a future
+// translation pass can repair whatever locale it targets, plugin catalogs
+// included — see specs/done/008-un-solo-idioma.md.
 export function repairTranslatedValue({ key, enValue, localeValue, locale }) {
-  const keyOverride = LOCALE_KEY_OVERRIDES[key]?.[locale]
-  if (keyOverride) {
-    // Why: exact key overrides can still carry stale MT output, so glossary repairs remain the final gate.
-    let result = applyBrandMistranslationFixes(enValue, keyOverride, locale, key)
-    result = applyPhraseFixes(enValue, result, locale, key)
-    if (['zh', 'ja', 'ko'].includes(locale)) {
-      result = applyCjkLatinTermSpacing(result, locale)
-    }
-    return result
-  }
-
-  const valueOverride = LOCALE_VALUE_OVERRIDES[locale]?.[enValue]
-  if (valueOverride) {
-    let result = applyBrandMistranslationFixes(enValue, valueOverride, locale, key)
-    result = applyPhraseFixes(enValue, result, locale, key)
-    if (['zh', 'ja', 'ko'].includes(locale)) {
-      result = applyCjkLatinTermSpacing(result, locale)
-    }
-    return result
-  }
-
   if (shouldPreserveEnglishValue(enValue, key)) {
     return enValue
   }
@@ -401,25 +308,6 @@ export function repairTranslatedValue({ key, enValue, localeValue, locale }) {
   }
 
   result = applyBrandMistranslationFixes(enValue, result, locale, key)
-  result = applyPhraseFixes(enValue, result, locale, key)
-  if (['zh', 'ja', 'ko'].includes(locale)) {
-    result = applyCjkLatinTermSpacing(result, locale)
-  }
-
-  if (enValue.includes('orca://')) {
-    result = result.replace(/虎鲸:\/\//g, 'orca://')
-  }
-
-  if (enValue === 'Orca' || enValue.startsWith('Orca ')) {
-    result = result
-      .replaceAll('虎鲸', 'Orca')
-      .replaceAll('逆戟鲸', 'Orca')
-      .replaceAll('シャチ', 'Orca')
-  }
-
-  if (enValue.includes('orca://')) {
-    result = result.replace(/シャチ:\/\//g, 'orca://')
-  }
 
   return result
 }
@@ -467,38 +355,6 @@ export function repairCatalog(enCatalog, localeCatalog, locale) {
     if (next !== current) {
       setLeaf(localeCatalog, leaf.key, next)
       repaired += 1
-    }
-  }
-
-  if (localeCatalog.settings?.appearance?.language) {
-    for (const [labelKey, label] of Object.entries(NATIVE_PICKER_LABELS[locale] ?? {})) {
-      if (localeCatalog.settings.appearance.language[labelKey] !== label) {
-        localeCatalog.settings.appearance.language[labelKey] = label
-        repaired += 1
-      }
-    }
-  }
-
-  if (localeCatalog.menu) {
-    if (locale === 'zh') {
-      if (localeCatalog.menu.exploreOrca !== '探索 Orca') {
-        localeCatalog.menu.exploreOrca = '探索 Orca'
-        repaired += 1
-      }
-      if (localeCatalog.menu.gettingStarted !== 'Orca 入门') {
-        localeCatalog.menu.gettingStarted = 'Orca 入门'
-        repaired += 1
-      }
-    }
-    if (locale === 'ko') {
-      if (localeCatalog.menu.exploreOrca !== 'Orca 둘러보기') {
-        localeCatalog.menu.exploreOrca = 'Orca 둘러보기'
-        repaired += 1
-      }
-      if (localeCatalog.menu.gettingStarted !== 'Orca 시작하기') {
-        localeCatalog.menu.gettingStarted = 'Orca 시작하기'
-        repaired += 1
-      }
     }
   }
 

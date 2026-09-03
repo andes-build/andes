@@ -33,8 +33,9 @@ import { AppIconSelector } from './AppIconSelector'
 import { normalizeAppIconId } from '../../../../shared/app-icon'
 import { getRendererAppPlatform } from '@/lib/renderer-app-platform'
 import { isWebClientLocation } from '@/lib/web-client-location'
-import { SHOW_UI_LANGUAGE_SETTING } from '@/i18n/supported-languages'
+import { shouldShowUiLanguageSetting } from '@/i18n/supported-languages'
 import { translate } from '@/i18n/i18n'
+import { usePluginLanguagePacks } from '@/store/plugin-language-packs'
 import {
   getLeftSidebarAppearanceEntry,
   getWorkspaceCardLayoutEntry
@@ -84,6 +85,8 @@ export function AppearancePane({
   // browser web client has no local tray to control.
   const isDesktopWindows = getRendererAppPlatform() === 'win32' && !isWebClient
   const isDesktopMac = getRendererAppPlatform() === 'darwin' && !isWebClient
+  const pluginLanguagePacks = usePluginLanguagePacks()
+  const showUiLanguageSetting = shouldShowUiLanguageSetting(pluginLanguagePacks.length)
 
   // Why: Terminal / Window settings were too easy to miss when only Interface
   // started open; keep sections independently collapsible but expanded by default.
@@ -140,7 +143,7 @@ export function AppearancePane({
     ...getThemeEntries(),
     ...getZoomEntries(),
     ...getTypographyEntries(),
-    ...(SHOW_UI_LANGUAGE_SETTING ? getLanguageEntries() : []),
+    ...(showUiLanguageSetting ? getLanguageEntries() : []),
     ...getTitlebarEntries(),
     ...getSystemTrayEntries({ showSystemTray: isDesktopWindows }),
     ...getMenuBarIconEntries({ showMenuBarIcon: isDesktopMac })
@@ -198,7 +201,7 @@ export function AppearancePane({
     })
   }
 
-  const interfaceSummary = resolveInterfaceSectionSummary(settings)
+  const interfaceSummary = resolveInterfaceSectionSummary(settings, pluginLanguagePacks.length)
   const terminalSummary = `${
     settings.terminalFontFamily ||
     translate('auto.components.settings.AppearancePane.terminalDefaultFont', 'Default font')

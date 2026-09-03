@@ -4,7 +4,6 @@ import { getLeftSidebarAppearanceEntry, getSidebarEntries } from './appearance-s
 import { createLocalizedCatalog } from '@/i18n/localized-catalog'
 import { translate } from '@/i18n/i18n'
 import { translateSearchKeyword } from './settings-search-keywords'
-import { SHOW_UI_LANGUAGE_SETTING } from '@/i18n/supported-languages'
 import { getStatusBarToggles } from './appearance-status-bar-search'
 import { getUsagePercentageDisplayEntry } from './appearance-usage-percentage-search'
 import { getMenuBarIconEntries, getSystemTrayEntries } from './appearance-system-presence-search'
@@ -224,6 +223,12 @@ type AppearancePaneSearchOptions = {
   showWarpImport?: boolean
   showSystemTray?: boolean
   showMenuBarIcon?: boolean
+  // Why: only English ships while the interface keeps changing
+  // (specs/done/008-un-solo-idioma.md) — false unless a caller with live
+  // plugin-language-pack state opts back in. Defaulting to false here (rather
+  // than threading the plugin pack count through the settings-navigation
+  // builders) keeps the Cmd+J search index a pure, non-reactive function.
+  showUiLanguageSetting?: boolean
 }
 
 function buildAppearancePaneSearchEntries(
@@ -232,7 +237,7 @@ function buildAppearancePaneSearchEntries(
   return [
     ...getAppearanceSectionEntries(),
     ...getThemeEntries(),
-    ...(SHOW_UI_LANGUAGE_SETTING ? getLanguageEntries() : []),
+    ...(options.showUiLanguageSetting ? getLanguageEntries() : []),
     ...getTypographyEntries(),
     ...getZoomEntries(),
     ...getTerminalAppearanceSearchEntries(options),
@@ -252,6 +257,7 @@ export function getAppearancePaneSearchEntries(
   return buildAppearancePaneSearchEntries({
     showWarpImport: options.showWarpImport ?? true,
     showSystemTray: options.showSystemTray,
-    showMenuBarIcon: options.showMenuBarIcon
+    showMenuBarIcon: options.showMenuBarIcon,
+    showUiLanguageSetting: options.showUiLanguageSetting ?? false
   })
 }

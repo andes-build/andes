@@ -3,14 +3,36 @@
 import type { ReactElement, RefObject } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { setRendererUiLanguage } from '@/i18n/i18n'
+import { setRendererPluginLanguagePacks, setRendererUiLanguage } from '@/i18n/i18n'
+import { pluginLanguageResourceId } from '../../../../shared/plugins/plugin-language-pack-artifact'
 import {
   ContextualTourOverlaySurface,
   handleContextualTourOverlayKeyDown,
   type ActiveTourRenderState
 } from './ContextualTourOverlaySurface'
 
+// Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md), so
+// this exercises the same translate()-keyed lookup through a plugin language
+// pack instead of a built-in Korean catalog that no longer ships.
+const KOREAN_PACK_ID = 'plugin:orca-samples.korean/ko' as const
+const KOREAN_RESOURCE_LANGUAGE = pluginLanguageResourceId(KOREAN_PACK_ID)
+const KOREAN_CATALOG = {
+  auto: {
+    components: {
+      contextual: {
+        tours: {
+          ContextualTourOverlaySurface: { complete: '완료' },
+          contextual: {
+            tour: { overlay: { measurement: { '38b3155418': '다음' } } }
+          }
+        }
+      }
+    }
+  }
+}
+
 afterEach(async () => {
+  setRendererPluginLanguagePacks([])
   await setRendererUiLanguage('en')
 })
 
@@ -43,7 +65,16 @@ function renderSurface(isLastStep: boolean): ReactElement {
 
 describe('ContextualTourOverlaySurface localization', () => {
   it('renders default tour actions in Korean when the UI locale is Korean', async () => {
-    await setRendererUiLanguage('ko')
+    setRendererPluginLanguagePacks([
+      {
+        id: KOREAN_PACK_ID,
+        resourceLanguage: KOREAN_RESOURCE_LANGUAGE,
+        pluginKey: 'orca-samples.korean',
+        locale: 'ko',
+        catalog: KOREAN_CATALOG
+      }
+    ])
+    await setRendererUiLanguage(KOREAN_PACK_ID)
 
     const firstStep = renderToStaticMarkup(renderSurface(false))
     const finalStep = renderToStaticMarkup(renderSurface(true))

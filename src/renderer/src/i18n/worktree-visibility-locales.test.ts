@@ -1,15 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import en from './locales/en.json'
-import es from './locales/es.json'
 
 describe('worktree visibility locales', () => {
-  it('uses number-neutral Spanish source counts', () => {
-    const found = es.auto.components.sidebar.WorktreeVisibilitySourceList.found
-
-    expect(found.replace('{{value0}}', '1')).toBe('Encontrados: 1')
-    expect(found.replace('{{value0}}', '2')).toBe('Encontrados: 2')
-  })
-
   it('keeps current fallback-derived keys in the English catalog', () => {
     expect(en.auto.components.sidebar.NewExternalWorktreesInboxLine).toMatchObject({
       '6c07f3a91e': '{{value0}} on {{value1}}'

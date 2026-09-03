@@ -5,10 +5,33 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getDefaultSettings } from '../../../shared/constants'
-import { UI_LANGUAGE_ENGLISH, UI_LANGUAGE_SPANISH } from '../../../shared/ui-language'
+import { UI_LANGUAGE_ENGLISH } from '../../../shared/ui-language'
+import { pluginLanguageResourceId } from '../../../shared/plugins/plugin-language-pack-artifact'
 import { useAppStore } from '@/store'
+import { usePluginLanguagePackStore } from '@/store/plugin-language-packs'
 import { i18n } from './i18n'
 import { I18nProvider } from './I18nProvider'
+
+// Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md),
+// so a plugin language pack stands in for a real second-locale selection here.
+const PLUGIN_ID = 'plugin:orca-samples.portuguese/pt-BR' as const
+const PLUGIN_RESOURCE_LANGUAGE = pluginLanguageResourceId(PLUGIN_ID)
+const initialPluginLanguagePackState = usePluginLanguagePackStore.getInitialState()
+
+function registerPluginPack(): void {
+  usePluginLanguagePackStore.setState({
+    packs: [
+      {
+        id: PLUGIN_ID,
+        resourceLanguage: PLUGIN_RESOURCE_LANGUAGE,
+        pluginKey: 'orca-samples.portuguese',
+        locale: 'pt-BR',
+        catalog: { menu: { file: 'Arquivo' } }
+      }
+    ],
+    loaded: true
+  })
+}
 
 // Why: settings arrive async over IPC after first render. The provider used to
 // fall back to the 'system' language while settings were null, kicking off an
@@ -38,6 +61,7 @@ async function renderProvider(): Promise<void> {
 
 beforeEach(() => {
   useAppStore.setState(initialAppState, true)
+  usePluginLanguagePackStore.setState(initialPluginLanguagePackState, true)
 })
 
 afterEach(async () => {
@@ -48,6 +72,7 @@ afterEach(async () => {
   }
   roots.length = 0
   useAppStore.setState(initialAppState, true)
+  usePluginLanguagePackStore.setState(initialPluginLanguagePackState, true)
   stubSystemLocale(ORIGINAL_SYSTEM_LOCALE)
   vi.restoreAllMocks()
 })
@@ -62,16 +87,17 @@ describe('I18nProvider startup language', () => {
   })
 
   it('applies the persisted language once settings load', async () => {
+    registerPluginPack()
     const changeLanguage = vi.spyOn(i18n, 'changeLanguage')
 
     await renderProvider()
     await act(async () => {
       useAppStore.setState({
-        settings: { ...getDefaultSettings('/tmp'), uiLanguage: UI_LANGUAGE_SPANISH }
+        settings: { ...getDefaultSettings('/tmp'), uiLanguage: PLUGIN_ID }
       })
     })
 
-    expect(changeLanguage).toHaveBeenCalledWith('es')
+    expect(changeLanguage).toHaveBeenCalledWith(PLUGIN_RESOURCE_LANGUAGE)
   })
 
   it('applies persisted English even if i18n reports it as already active', async () => {
@@ -113,6 +139,7 @@ describe('I18nProvider startup language', () => {
   })
 
   it('switches language when the setting changes after startup', async () => {
+    registerPluginPack()
     const changeLanguage = vi.spyOn(i18n, 'changeLanguage')
 
     await renderProvider()
@@ -123,10 +150,10 @@ describe('I18nProvider startup language', () => {
     })
     await act(async () => {
       useAppStore.setState({
-        settings: { ...getDefaultSettings('/tmp'), uiLanguage: UI_LANGUAGE_SPANISH }
+        settings: { ...getDefaultSettings('/tmp'), uiLanguage: PLUGIN_ID }
       })
     })
 
-    expect(changeLanguage).toHaveBeenLastCalledWith('es')
+    expect(changeLanguage).toHaveBeenLastCalledWith(PLUGIN_RESOURCE_LANGUAGE)
   })
 })

@@ -242,76 +242,33 @@ describe('AppearancePane', () => {
     delete (window as unknown as { api?: unknown }).api
   })
 
-  it('shows language as a primary interface control without opening Advanced', async () => {
+  // Why: only English ships while the interface keeps changing
+  // (specs/done/008-un-solo-idioma.md) — the selector stays out of Settings
+  // entirely (SHOW_UI_LANGUAGE_SETTING is false) instead of offering one option.
+  it('does not show a language control while only English ships', async () => {
     mocks.state.settingsSearchQuery = ''
     const container = await renderAppearancePane(getDefaultSettings('/tmp'))
     const languageTrigger = container.querySelector<HTMLButtonElement>(
       '[data-slot="select-trigger"][aria-label="Language"]'
     )
-    const advancedTrigger = Array.from(
-      container.querySelectorAll<HTMLButtonElement>('button[aria-expanded]')
-    ).find((button) => button.textContent?.includes('Advanced'))
 
-    expect(languageTrigger).not.toBeNull()
-    expect(advancedTrigger).toBeDefined()
-    expect(advancedTrigger?.getAttribute('aria-expanded')).toBe('false')
-    expect(
-      container.querySelector('button[role="switch"][aria-label="Titlebar App Name"]')
-    ).toBeNull()
+    expect(languageTrigger).toBeNull()
   })
 
-  it('keeps Advanced closed when searching for language', async () => {
+  it('finds no language setting when searching for it', async () => {
     mocks.state.settingsSearchQuery = 'language'
     const container = await renderAppearancePane(getDefaultSettings('/tmp'))
     const languageTrigger = container.querySelector<HTMLButtonElement>(
       '[data-slot="select-trigger"][aria-label="Language"]'
     )
 
-    expect(languageTrigger).not.toBeNull()
-    expect(container.textContent).not.toContain('Advanced')
-    expect(
-      container.querySelector('button[role="switch"][aria-label="Titlebar App Name"]')
-    ).toBeNull()
+    expect(languageTrigger).toBeNull()
   })
 
-  it('renders the language dropdown with system, english, chinese, korean, japanese, and spanish options', async () => {
-    mocks.state.settingsSearchQuery = 'language'
-    const updateSettings = vi.fn()
-    const settings = {
-      ...getDefaultSettings('/tmp'),
-      uiLanguage: 'system' as const
-    }
-
-    const container = await renderAppearancePane(settings, updateSettings)
-    const languageTrigger = container.querySelector<HTMLButtonElement>(
-      '[data-slot="select-trigger"][aria-label="Language"]'
-    )
-    const chineseOption = container.querySelector<HTMLButtonElement>(
-      '[data-slot="select-item"][data-value="zh"]'
-    )
-
-    expect(languageTrigger).not.toBeNull()
-    expect(chineseOption).not.toBeNull()
-    expect(container.textContent).not.toContain('Advanced')
-    expect(container.textContent).toContain('System')
-    expect(container.textContent).toContain('English')
-    expect(container.textContent).toContain('中文（简体）')
-    expect(container.textContent).toContain('한국어')
-    expect(container.textContent).toContain('日本語')
-    expect(container.textContent).toContain('Español')
-
-    await act(async () => {
-      chineseOption?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-    })
-
-    expect(updateSettings).toHaveBeenCalledWith({ uiLanguage: 'zh' })
-  })
-
-  it('includes the selected language in the collapsed Interface summary', async () => {
+  it('leaves the language out of the collapsed Interface summary', async () => {
     mocks.state.settingsSearchQuery = ''
     const settings = {
       ...getDefaultSettings('/tmp'),
-      uiLanguage: 'zh' as const,
       theme: 'dark' as const,
       appFontFamily: 'Inter'
     }
@@ -328,7 +285,7 @@ describe('AppearancePane', () => {
 
     expect(interfaceToggle?.getAttribute('aria-expanded')).toBe('false')
     // Summary is only rendered on the collapsed toggle (children stay mounted but hidden).
-    expect(interfaceToggle?.textContent).toContain('Dark · 中文（简体） · Inter')
+    expect(interfaceToggle?.textContent).toContain('Dark · Inter')
   })
 
   it('updates the left sidebar appearance from sidebar settings', async () => {

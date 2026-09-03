@@ -26,7 +26,7 @@ import {
 } from './appearance-search'
 import {
   getUiLanguageChoiceLabel,
-  SHOW_UI_LANGUAGE_SETTING,
+  shouldShowUiLanguageSetting,
   UI_LANGUAGE_CHOICES
 } from '@/i18n/supported-languages'
 import { translate } from '@/i18n/i18n'
@@ -57,6 +57,7 @@ export function AppearanceInterfaceSection({
 }: AppearanceInterfaceSectionProps): React.JSX.Element {
   const searchQuery = useAppStore((state) => state.settingsSearchQuery)
   const pluginLanguagePacks = usePluginLanguagePacks()
+  const showUiLanguageSetting = shouldShowUiLanguageSetting(pluginLanguagePacks.length)
   const isSearching = normalizeSettingsSearchQuery(searchQuery).length > 0
   const zoomInKeyCombos = useShortcutKeyComboDetails('zoom.in')
   const zoomOutKeyCombos = useShortcutKeyComboDetails('zoom.out')
@@ -113,7 +114,7 @@ export function AppearanceInterfaceSection({
         />
       </SearchableSetting>
 
-      {SHOW_UI_LANGUAGE_SETTING ? (
+      {showUiLanguageSetting ? (
         <SearchableSetting
           title={languageTitle}
           description={languageEntry?.description}

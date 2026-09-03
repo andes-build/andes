@@ -90,8 +90,32 @@ describe('AccountsPane', () => {
     expect(markup).not.toContain('forThis device')
   })
 
+  // Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md),
+  // so a synthetic resource bundle stands in for a real second-locale catalog —
+  // this exercises interpolation order (label localized before the sentence),
+  // not Spanish specifically.
   it('localizes the runtime label before interpolating account copy', async () => {
-    await i18n.changeLanguage('es')
+    const SYNTHETIC_LOCALE = 'zz'
+    i18n.addResourceBundle(
+      SYNTHETIC_LOCALE,
+      'translation',
+      {
+        auto: {
+          components: {
+            settings: {
+              AccountsPane: {
+                c0a52abfc5:
+                  'Mostrando cuentas para {{value0}}. Las nuevas cuentas se agregan allí.',
+                '9baf45d071': 'Este dispositivo'
+              }
+            }
+          }
+        }
+      },
+      true,
+      true
+    )
+    await i18n.changeLanguage(SYNTHETIC_LOCALE)
 
     const markup = renderPane(getDefaultSettings('/tmp'))
 

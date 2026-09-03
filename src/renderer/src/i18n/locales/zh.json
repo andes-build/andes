@@ -642,25 +642,6 @@
         }
       },
       "linear": {
-        "usage": {
-          "examples": {
-            "readTicket": "阅读关联的议题",
-            "postUpdate": "发布进度更新",
-            "moveState": "推进议题",
-            "attachPr": "附加评审链接",
-            "triageFollowups": "分类处理并创建跟进项",
-            "readTicketSummary": "开始工作前，获取关联 Linear 议题的完整上下文。",
-            "readTicketPrompt": "使用 {{value0}} 读取此工作树关联的 Linear 议题，然后在开始前总结目标和验收标准。",
-            "postUpdateSummary": "将进度或完成情况总结评论回 Linear 议题。",
-            "postUpdatePrompt": "使用 {{value0}} 在关联的 Linear 议题上发布完成更新，说明变更内容及验证方式。",
-            "moveStateSummary": "随着工作进展推进 Linear 工作流状态。",
-            "moveStatePrompt": "变更已就绪后，使用 {{value0}} 将关联的 Linear 议题移至 In Review。",
-            "attachPrSummary": "创建拉取或合并请求时，将其关联到 Linear 议题。",
-            "attachPrPrompt": "使用 {{value0}} 将此拉取或合并请求附加到关联的 Linear 议题。",
-            "triageFollowupsSummary": "设置负责人、优先级或预估工时，并创建带父级关联的后续议题。",
-            "triageFollowupsPrompt": "使用 {{value0}} 对关联的 Linear 议题进行分类处理 — 设置优先级和预估工时 — 并为延后清理创建带父级关联的后续议题。"
-          }
-        },
         "issue": {
           "workspace": {
             "open": {
@@ -827,8 +808,6 @@
         "devSearchKeywordError": "error",
         "devSearchKeywordNotification": "notification",
         "projectHostsSummary": "{{value0}} 个主机",
-        "linearTitle": "Linear",
-        "linearDescription": "Linear 在 Orca 中的工作方式、设置清单、智能体技能和提示词示例。",
         "pluginsTitle": "插件",
         "pluginsDescription": "安装和管理实验性 Orca 插件。",
         "tasksDescription": "连接提供商、安装 Linear 技能并选择要在任务中显示的内容。"
@@ -5082,41 +5061,9 @@
           }
         },
         "LinearAgentSkillSetupPrompt": {
-          "missingCliAndSkill": "缺少 Orca CLI 和 Linear 智能体技能。",
-          "modalTitle": "启用 Linear ticket 访问",
-          "modalDescription": "从终端安装 Linear 技能。",
-          "modalPrompt": "允许智能体读取和编辑已附加的 Linear ticket。",
-          "dontShowAgain": "不再显示",
           "missingBoth": "缺少 Orca CLI 和 Linear 智能体技能。",
-          "missingCli": "缺少 Orca CLI。",
-          "missingSkill": "缺少 Linear 智能体技能。",
-          "title": "设置 Linear 智能体技能",
-          "remoteCopy": "这会安装主机设置；远程智能体环境可能需要单独设置。",
-          "hostCopy": "为已链接 Linear 工作的主机智能体交接安装此项。",
-          "dismiss": "关闭 Linear 智能体技能设置",
-          "setup": "设置",
-          "recheck": "重新检查",
           "panelTitle": "Linear 智能体技能",
-          "panelDescription": "安装主机智能体技能，用于已链接 Linear 任务交接。",
-          "terminalTitle": "安装 Linear 智能体技能",
-          "terminalAria": "Linear 智能体技能安装终端",
-          "install": "安装 CLI 和技能",
-          "successTitle": "Linear 议题访问已就绪",
-          "successDescription": "智能体现在可以从此工作区读取和更新已链接的 Linear 议题。",
-          "successDescriptionWsl": "WSL 智能体现在可以从此工作区使用已链接的 Linear 议题。",
-          "successDescriptionRemote": "主机智能体现在可以使用已链接的 Linear 议题。远程智能体环境可能仍需要单独设置。",
-          "successStatus": "Linear 议题访问已就绪",
-          "done": "完成",
-          "wslCopy": "为已链接 Linear 工作的 WSL 智能体交接安装此项。",
-          "wslLabel": "WSL 默认值",
-          "toastMissingCliAndSkill": "缺少 Orca CLI 和 Linear 技能",
-          "toastMissingCli": "缺少 Orca CLI",
-          "toastMissingSkill": "缺少 Linear 技能",
-          "toastInstallCliAndSkillDescription": "安装 Orca CLI 和 Linear 技能，让智能体可以读取并编辑 Linear 任务。",
-          "toastInstallCliDescription": "安装 Orca CLI，让智能体可以读取并编辑 Linear 任务。",
-          "toastInstallSkillDescription": "安装 Linear 技能，让智能体可以通过 Orca CLI 读取并编辑 Linear 任务。",
-          "toastRemoteDescription": "{{value0}} 远程智能体环境可能仍需要自己的设置。",
-          "toastWslDescription": "{{value0}} 此设置会在所选 WSL 智能体运行时中执行。"
+          "panelDescription": "安装主机智能体技能，用于已链接 Linear 任务交接。"
         },
         "FolderWorkspaceComposerDialog": {
           "connectFailed": "无法连接到项目。",
@@ -7099,8 +7046,6 @@
           "65358016ea": "放弃",
           "dev": "开发工具",
           "devDescription": "仅用于调试 UI 状态的开发工具。",
-          "linearTitle": "Linear",
-          "linearDescription": "Linear 在 Orca 中的工作方式、设置清单、智能体技能和提示词示例。",
           "tasksDescription": "连接提供商、安装 Linear 技能并选择要在任务中显示的内容。"
         },
         "SettingsFormControls": {
@@ -7337,7 +7282,6 @@
         "TasksPane": {
           "f71d8a9dd3": "任务提供者",
           "6b23a34f6d": "Jira",
-          "09ae2d7c51": "Linear",
           "7c5d7fdc20": "GitLab",
           "e14063e727": "GitHub",
           "connectProviderTitle": "连接 {{provider}}",
@@ -7360,9 +7304,7 @@
           "incompleteBannerBody": "隐藏不使用的提供商，或展开卡片并完成其中的步骤。",
           "providersDescription": "每张卡片都会引导你完成连接、任务显示设置；Linear 还包括技能设置。",
           "integrationsHint": "所有提供商的凭据也可在此管理：",
-          "integrationsLink": "集成",
-          "skillHint": "。连接 Linear 后，可在设置 → Linear 中查看使用示例。",
-          "incompleteBannerBodyWithLinear": "隐藏不使用的提供商，或展开卡片并完成其中的步骤。Linear 需要 API 访问权限、智能体技能以及在任务中显示。"
+          "integrationsLink": "集成"
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "窗格分隔线的厚度。",
@@ -8518,11 +8460,7 @@
           "search": {
             "a626990bd2": "断开",
             "3c3d3d8ffa": "连接",
-            "faa0b5a0d9": "API密钥",
             "c450244ad7": "集成",
-            "7319e3015b": "Linear",
-            "16a486a49d": "连接 Linear 以浏览和链接议题。",
-            "b027b4b318": "Linear 集成",
             "20540996ef": "凭据",
             "2ec2bd328c": "API token",
             "7345b7c3e6": "Atlassian",
@@ -9001,7 +8939,6 @@
             "44083ae418": "展示",
             "604d8e4089": "阿特拉斯语",
             "5430396e11": "Jira",
-            "412ec3c702": "Linear",
             "11f001cdd4": "GitLab",
             "c10ac2125e": "GitHub",
             "3d81c26d78": "来源",
@@ -9783,30 +9720,6 @@
           "singular": "全局保存不会更改 1 个拥有自己配置的仓库。",
           "tooltipTitle": "仓库覆盖"
         },
-        "linear": {
-          "agent": {
-            "skill": {
-              "install": {
-                "cta": {
-                  "copiedCommand": "命令已复制。",
-                  "copyFailed": "复制命令失败。",
-                  "skillLabel": "智能体技能：",
-                  "checking": "检查中...",
-                  "installed": "已安装",
-                  "notInstalled": "未安装",
-                  "recheck": "重新检查",
-                  "installedDescription": "智能体技能已安装。要更新，请运行：",
-                  "description": "让智能体读取和编辑 Linear 任务。完整引导设置（连接 + 技能 + 可见性）位于设置 → 任务来源。",
-                  "copyCommand": "复制命令"
-                }
-              },
-              "search": {
-                "title": "Linear",
-                "description": "Linear 技能状态、使用示例和任务来源设置链接。"
-              }
-            }
-          }
-        },
         "GrokAccountsSection": {
           "a1b2c3d4e5": "Grok (xAI)",
           "f6e5d4c3b2": "显示来自 Grok CLI 登录的每周额度使用量（会话文件 ~/.grok/auth.json）。",
@@ -9889,17 +9802,6 @@
           "copyExampleAria": "复制 {{value0}} 示例提示",
           "done": "完成",
           "copyPrompt": "复制提示"
-        },
-        "LinearAgentSkillPane": {
-          "title": "Linear",
-          "description": "在 Orca 中浏览 Linear 议题、启动关联工作区，并让智能体通过 /orca-linear 更新议题。",
-          "skillTitle": "Linear 技能",
-          "howToUse": "提示词示例",
-          "howToUseDescription": "点击卡片即可复制提示词。安装技能后，请在关联 Linear 的工作区中使用。",
-          "terminalTitle": "Linear 技能设置",
-          "terminalAriaLabel": "Linear 技能安装终端",
-          "manageConnectionHint": "可在此查看已连接的 Linear 工作区和 API 密钥：",
-          "manageConnectionLink": "集成"
         },
         "MobileRelayBetaNotice": {
           "notice": "Orca Relay 目前处于测试阶段。"
@@ -10219,47 +10121,6 @@
             "logs": "插件日志",
             "development": "开发插件"
           }
-        },
-        "LinearAgentSkillGuide": {
-          "setupConnectTitle": "1. 连接 Linear",
-          "setupConnectBody": "用于让 Orca 列出议题并打开关联工作区的个人 API 密钥。",
-          "manageKeys": "管理密钥",
-          "addAccess": "添加访问权限",
-          "setupSkillTitle": "2. 安装智能体技能",
-          "setupSkillBody": "让智能体使用 /orca-linear 读取、更新、分类议题并附加拉取或合并请求。",
-          "setupVisibleTitle": "3. 在任务中显示 Linear",
-          "setupVisibleBody": "在任务来源选择器和侧边栏快捷方式中保留 Linear。",
-          "openTaskSources": "任务来源",
-          "setupTitle": "设置清单",
-          "setupBody": "完整的任务与智能体流程需要完成全部三个步骤。首次设置也可在任务来源中进行。",
-          "setupReady": "全部就绪",
-          "setupProgress": "已完成 {{done}}/{{total}}",
-          "notesTitle": "使用须知",
-          "notesIntro": "连接 Linear 并安装技能后的一些快速提示。",
-          "noteLinkedTitle": "从 Linear 议题开始",
-          "noteLinkedBody": "从任务创建的工作区会将议题保留为关联上下文，因此议题操作最顺畅。",
-          "noteSlashTitle": "提及 /orca-linear",
-          "noteSlashBody": "在聊天中使用 /orca-linear（或用自然语言提出请求），智能体会在该轮加载此技能。",
-          "noteKeysTitle": "密钥按运行环境保存",
-          "noteKeysBody": "API 密钥和工作区存储在当前运行环境中。",
-          "noteVisibilityTitle": "隐藏不等于断开连接",
-          "noteVisibilityBody": "在任务来源中隐藏 Linear 只会将其从选择器中移除，不会删除密钥或技能。",
-          "setupChecking": "检查中…"
-        },
-        "TaskSourceLinearSetup": {
-          "connectTitle": "连接 Linear",
-          "connectDescription": "添加个人 API 密钥，让 Orca 能够浏览议题并使用议题上下文打开工作区。",
-          "manageAccess": "管理密钥",
-          "addAccess": "添加 Linear 访问权限",
-          "connectedHint": "工作区和密钥存储在当前运行环境中。你可以随时添加更多访问权限。",
-          "recheck": "重新检查连接",
-          "skillTitle": "安装 Linear 智能体技能",
-          "skillDescription": "让智能体使用 /orca-linear 读取议题、发布更新、更改状态并附加拉取或合并请求。",
-          "skillBlocked": "请先连接 Linear，然后为智能体安装技能。",
-          "skillPanelTitle": "Linear 技能",
-          "terminalTitle": "Linear 技能设置",
-          "terminalAriaLabel": "Linear 技能安装终端",
-          "showDescription": "在任务来源选择器和侧边栏快捷方式中显示 Linear。"
         },
         "TaskSourceProviderCard": {
           "statusChecking": "检查中…",

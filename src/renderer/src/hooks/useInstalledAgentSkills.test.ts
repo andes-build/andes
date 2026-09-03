@@ -123,8 +123,8 @@ describe('hasInstalledAgentSkill', () => {
   it('matches installed skills by any accepted name', () => {
     expect(
       hasInstalledAgentSkillNamed(
-        [skill({ name: 'linear-tickets' })],
-        ['orca-linear', 'linear-tickets']
+        [skill({ name: 'sample-skill-legacy' })],
+        ['sample-skill', 'sample-skill-legacy']
       )
     ).toBe(true)
   })
@@ -134,11 +134,11 @@ describe('hasInstalledAgentSkill', () => {
       hasInstalledAgentSkillNamed(
         [
           skill({
-            name: 'Linear Tickets',
-            directoryPath: '/Users/test/.agents/skills/linear-tickets'
+            name: 'Sample Skill',
+            directoryPath: '/Users/test/.agents/skills/sample-skill-legacy'
           })
         ],
-        ['orca-linear', 'linear-tickets']
+        ['sample-skill', 'sample-skill-legacy']
       )
     ).toBe(true)
   })
@@ -148,17 +148,19 @@ describe('hasInstalledAgentSkill', () => {
       hasInstalledAgentSkillNamed(
         [
           skill({
-            name: 'Linear Tickets',
-            directoryPath: 'C:\\Users\\test\\.agents\\skills\\orca-linear'
+            name: 'Sample Skill',
+            directoryPath: 'C:\\Users\\test\\.agents\\skills\\sample-skill'
           })
         ],
-        ['orca-linear', 'linear-tickets']
+        ['sample-skill', 'sample-skill-legacy']
       )
     ).toBe(true)
   })
 
   it('keeps aliases opt-in for unrelated single-name checks', () => {
-    expect(hasInstalledAgentSkill([skill({ name: 'linear-tickets' })], 'orca-linear')).toBe(false)
+    expect(hasInstalledAgentSkill([skill({ name: 'sample-skill-legacy' })], 'sample-skill')).toBe(
+      false
+    )
   })
 })
 
@@ -269,7 +271,7 @@ describe('discoverInstalledAgentSkills', () => {
   it('lets completed-scan broadcasts reuse the cached result', async () => {
     const discover = vi
       .fn<() => Promise<SkillDiscoveryResult>>()
-      .mockResolvedValue(discoveryResult([skill({ name: 'orca-linear' })]))
+      .mockResolvedValue(discoveryResult([skill({ name: 'sample-skill' })]))
     vi.stubGlobal('window', {
       api: { skills: { discover } },
       dispatchEvent: vi.fn(),
@@ -285,7 +287,7 @@ describe('discoverInstalledAgentSkills', () => {
     expect(discover).toHaveBeenCalledTimes(1)
     for (const pending of fromSubscribers) {
       await expect(pending).resolves.toMatchObject({
-        skills: [expect.objectContaining({ name: 'orca-linear' })]
+        skills: [expect.objectContaining({ name: 'sample-skill' })]
       })
     }
     expect(discover).toHaveBeenCalledTimes(1)

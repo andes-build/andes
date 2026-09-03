@@ -863,25 +863,6 @@
         }
       },
       "linear": {
-        "usage": {
-          "examples": {
-            "readTicket": "Read the linked ticket",
-            "postUpdate": "Post a progress update",
-            "moveState": "Move the ticket forward",
-            "attachPr": "Attach the review link",
-            "triageFollowups": "Triage and create follow-ups",
-            "readTicketSummary": "Pull the linked Linear issue's full context before starting work.",
-            "readTicketPrompt": "Use {{value0}} to read the linked Linear issue for this worktree, then summarize the goal and acceptance criteria before you start.",
-            "postUpdateSummary": "Comment progress or a completion summary back to the Linear issue.",
-            "postUpdatePrompt": "Use {{value0}} to post a completion update on the linked Linear issue with what changed and how it was verified.",
-            "moveStateSummary": "Advance the Linear workflow state as the work progresses.",
-            "moveStatePrompt": "Use {{value0}} to move the linked Linear issue to In Review now that the change is ready.",
-            "attachPrSummary": "Link the pull or merge request to the Linear issue when you open it.",
-            "attachPrPrompt": "Use {{value0}} to attach this pull or merge request to the linked Linear issue.",
-            "triageFollowupsSummary": "Set assignee, priority, or estimate, and file parented follow-up tickets.",
-            "triageFollowupsPrompt": "Use {{value0}} to triage the linked Linear issue — set priority and estimate — and create a parented follow-up ticket for the deferred cleanup."
-          }
-        },
         "issue": {
           "workspace": {
             "open": {
@@ -1077,8 +1058,6 @@
         "devSearchKeywordError": "error",
         "devSearchKeywordNotification": "notification",
         "projectHostsSummary": "{{value0}} hosts",
-        "linearTitle": "Linear",
-        "linearDescription": "How Linear works in Orca, setup checklist, agent skill, and example prompts.",
         "pluginsTitle": "Plugins",
         "pluginsDescription": "Install and manage experimental Orca plugins.",
         "tasksDescription": "Connect providers, install the Linear skill, and choose what appears in Tasks.",
@@ -5908,41 +5887,9 @@
           "6e7f8a9b0c": "Remove host…"
         },
         "LinearAgentSkillSetupPrompt": {
-          "missingCliAndSkill": "Orca CLI and Linear agent skill are missing.",
-          "modalTitle": "Enable Linear ticket access",
-          "modalDescription": "Install the Linear skill from a terminal.",
-          "modalPrompt": "Enable agents to read and edit the attached Linear ticket.",
-          "dontShowAgain": "Don't show again",
           "missingBoth": "Orca CLI and Linear agent skill are missing.",
-          "missingCli": "Orca CLI is missing.",
-          "missingSkill": "Linear agent skill is missing.",
-          "title": "Set up Linear agent skill",
-          "remoteCopy": "This installs host setup; remote agent environments may need separate setup.",
-          "hostCopy": "Install it for host agent handoffs from linked Linear work.",
-          "dismiss": "Dismiss Linear agent skill setup",
-          "setup": "Set up",
-          "recheck": "Re-check",
           "panelTitle": "Linear agent skill",
-          "panelDescription": "Install the host agent skill for linked Linear task handoffs.",
-          "terminalTitle": "Install Linear agent skill",
-          "terminalAria": "Linear agent skill installer terminal",
-          "install": "Install CLI & Skill",
-          "successTitle": "Linear ticket access is ready",
-          "successDescription": "Agents can now read and update linked Linear tickets from this workspace.",
-          "successDescriptionWsl": "WSL agents can now use linked Linear tickets from this workspace.",
-          "successDescriptionRemote": "Host agents can now use linked Linear tickets. Remote agent environments may still need their own setup.",
-          "successStatus": "Linear ticket access ready",
-          "done": "Done",
-          "wslCopy": "Install it for WSL agent handoffs from linked Linear work.",
-          "wslLabel": "WSL default",
-          "toastMissingCliAndSkill": "Orca CLI and Linear skill are missing",
-          "toastMissingCli": "Orca CLI is missing",
-          "toastMissingSkill": "Linear skill is missing",
-          "toastInstallCliAndSkillDescription": "Install the Orca CLI and the Linear skill to enable your agents to read and edit Linear tasks.",
-          "toastInstallCliDescription": "Install the Orca CLI to enable your agents to read and edit Linear tasks.",
-          "toastInstallSkillDescription": "Install the Linear skill to enable your agents to read and edit Linear tasks through the Orca CLI.",
-          "toastRemoteDescription": "{{value0}} Remote agent environments may need their own setup.",
-          "toastWslDescription": "{{value0}} This setup runs in the selected WSL agent runtime."
+          "panelDescription": "Install the host agent skill for linked Linear task handoffs."
         },
         "FolderWorkspaceComposerDialog": {
           "connectFailed": "Failed to connect to project.",
@@ -8128,8 +8075,6 @@
           "65358016ea": "Discard",
           "dev": "Dev Tools",
           "devDescription": "Dev-only tools for exercising UI states.",
-          "linearTitle": "Linear",
-          "linearDescription": "How Linear works in Orca, setup checklist, agent skill, and example prompts.",
           "tasksDescription": "Connect providers, install the Linear skill, and choose what appears in Tasks."
         },
         "SettingsFormControls": {
@@ -8371,7 +8316,6 @@
         "TasksPane": {
           "f71d8a9dd3": "Task Providers",
           "6b23a34f6d": "Jira",
-          "09ae2d7c51": "Linear",
           "7c5d7fdc20": "GitLab",
           "e14063e727": "GitHub",
           "connectProviderTitle": "Connect {{provider}}",
@@ -8389,14 +8333,12 @@
           "linearDescription": "Connect Linear, install the agent skill, and show it in Tasks.",
           "jiraDescription": "Connect Jira Cloud or self-hosted Jira and show it in Tasks.",
           "setupTitle": "Task management setup",
-          "setupDescription": "Finish connect + visibility for each provider in one place. Linear also needs the agent skill so coding agents can read and update tickets. At least one provider must stay visible.",
+          "setupDescription": "Finish connect + visibility for each provider in one place. At least one provider must stay visible.",
           "incompleteBannerTitle": "Some visible providers still need setup",
           "incompleteBannerBody": "Hide providers you do not use, or expand a card and finish its steps.",
-          "providersDescription": "Each card walks through connection (and skill, for Linear) plus whether it appears in Tasks.",
+          "providersDescription": "Each card walks through connection plus whether it appears in Tasks.",
           "integrationsHint": "Credentials for all providers also live under",
-          "integrationsLink": "Integrations",
-          "skillHint": ". After Linear is connected, usage examples stay under Settings → Linear.",
-          "incompleteBannerBodyWithLinear": "Hide providers you do not use, or expand a card and finish its steps. For Linear: API access, the agent skill, and Show in Tasks."
+          "integrationsLink": "Integrations"
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "Thickness of the pane divider line.",
@@ -9564,11 +9506,7 @@
           "search": {
             "a626990bd2": "disconnect",
             "3c3d3d8ffa": "connect",
-            "faa0b5a0d9": "api key",
             "c450244ad7": "integration",
-            "7319e3015b": "linear",
-            "16a486a49d": "Connect Linear to browse and link issues.",
-            "b027b4b318": "Linear Integration",
             "20540996ef": "credentials",
             "2ec2bd328c": "api token",
             "7345b7c3e6": "atlassian",
@@ -10049,14 +9987,13 @@
             "44083ae418": "display",
             "604d8e4089": "atlassian",
             "5430396e11": "jira",
-            "412ec3c702": "linear",
             "11f001cdd4": "gitlab",
             "c10ac2125e": "github",
             "3d81c26d78": "source",
             "cf0e3e0c2f": "provider",
             "2ec54bee51": "tasks",
             "5b8e4aace5": "Task Providers",
-            "providersDescription": "Connect task providers, install the Linear agent skill, and choose what appears in Tasks.",
+            "providersDescription": "Connect task providers and choose what appears in Tasks.",
             "setup": "setup",
             "apiKey": "api key",
             "skill": "skill",
@@ -10800,30 +10737,6 @@
           "singular": "Global saves won't change 1 repository with its own recipe.",
           "tooltipTitle": "Repository overrides"
         },
-        "linear": {
-          "agent": {
-            "skill": {
-              "install": {
-                "cta": {
-                  "copiedCommand": "Copied command.",
-                  "copyFailed": "Failed to copy command.",
-                  "skillLabel": "Agent skill:",
-                  "checking": "Checking...",
-                  "installed": "Installed",
-                  "notInstalled": "Not installed",
-                  "recheck": "Re-check",
-                  "installedDescription": "Agent skill installed. To update it, run:",
-                  "description": "Let agents read and edit Linear tasks. Full guided setup (connect + skill + visibility) is under Settings → Task Sources.",
-                  "copyCommand": "Copy command"
-                }
-              },
-              "search": {
-                "title": "Linear",
-                "description": "Linear skill status, usage examples, and links to Task Sources setup."
-              }
-            }
-          }
-        },
         "GrokAccountsSection": {
           "a1b2c3d4e5": "Grok (xAI)",
           "f6e5d4c3b2": "Shows weekly credit usage from your Grok CLI sign-in (session file ~/.grok/auth.json).",
@@ -10907,17 +10820,6 @@
           "copyExampleAria": "Copy {{value0}} example prompt",
           "done": "Done",
           "copyPrompt": "Copy prompt"
-        },
-        "LinearAgentSkillPane": {
-          "title": "Linear",
-          "description": "How Linear works in Orca: browse issues, start linked workspaces, and let agents update tickets with /orca-linear.",
-          "skillTitle": "Linear skill",
-          "howToUse": "Example prompts",
-          "howToUseDescription": "Click a card to copy a prompt. Use these in a Linear-linked worktree after the skill is installed.",
-          "terminalTitle": "Linear skill setup",
-          "terminalAriaLabel": "Linear skill install terminal",
-          "manageConnectionHint": "Review connected Linear workspaces and API keys in",
-          "manageConnectionLink": "Integrations"
         },
         "MobileRelayBetaNotice": {
           "notice": "Orca Relay is in beta."
@@ -11241,47 +11143,6 @@
             "logs": "plugin logs",
             "development": "development plugins"
           }
-        },
-        "LinearAgentSkillGuide": {
-          "setupConnectTitle": "1. Connect Linear",
-          "setupConnectBody": "Personal API key so Orca can list issues and open linked workspaces.",
-          "manageKeys": "Manage keys",
-          "addAccess": "Add access",
-          "setupSkillTitle": "2. Install the agent skill",
-          "setupSkillBody": "Gives coding agents /orca-linear for reading, updates, triage, and attaching pull or merge requests.",
-          "setupVisibleTitle": "3. Show Linear in Tasks",
-          "setupVisibleBody": "Keeps Linear in the Tasks source picker and sidebar shortcuts.",
-          "openTaskSources": "Task Sources",
-          "setupTitle": "Setup checklist",
-          "setupBody": "All three are required for the full Tasks + agent loop. First-time path is also under Task Sources.",
-          "setupReady": "All set",
-          "setupProgress": "{{done}} of {{total}} ready",
-          "notesTitle": "Good to know",
-          "notesIntro": "Quick reminders once Linear is connected and the skill is installed.",
-          "noteLinkedTitle": "Start from a Linear issue",
-          "noteLinkedBody": "Ticket actions work best in a worktree created from Tasks so the issue stays linked as context.",
-          "noteSlashTitle": "Mention /orca-linear",
-          "noteSlashBody": "In chat, use /orca-linear (or ask in plain language) so the agent loads the skill for that turn.",
-          "noteKeysTitle": "Keys follow the runtime",
-          "noteKeysBody": "API keys and workspaces are stored for the active runtime.",
-          "noteVisibilityTitle": "Hiding ≠ disconnect",
-          "noteVisibilityBody": "Hiding Linear in Task Sources only removes it from the picker. It does not remove your key or skill.",
-          "setupChecking": "Checking…"
-        },
-        "TaskSourceLinearSetup": {
-          "connectTitle": "Connect Linear",
-          "connectDescription": "Add a Personal API key so Orca can browse issues and open workspaces with ticket context.",
-          "manageAccess": "Manage keys",
-          "addAccess": "Add Linear access",
-          "connectedHint": "Workspaces and keys are stored for the active runtime. You can add more access any time.",
-          "recheck": "Re-check connection",
-          "skillTitle": "Install Linear agent skill",
-          "skillDescription": "Gives agents /orca-linear to read tickets, post updates, move states, and attach pull or merge requests.",
-          "skillBlocked": "Connect Linear first, then install the skill for agents.",
-          "skillPanelTitle": "Linear skill",
-          "terminalTitle": "Linear skill setup",
-          "terminalAriaLabel": "Linear skill install terminal",
-          "showDescription": "Include Linear in the Tasks page source picker and sidebar shortcuts."
         },
         "TaskSourceProviderCard": {
           "statusChecking": "Checking…",
@@ -14055,7 +13916,7 @@
             "list_end": ", and ",
             "list_pair": " and ",
             "list_mid": ", ",
-            "code_host_tasks_summary": "issues available as tasks · add Linear or Jira if your team plans work there",
+            "code_host_tasks_summary": "issues available as tasks · add Jira if your team plans work there",
             "code_host_tasks_caption": "Your code host's issues also work as tasks.",
             "review_step_title": "See PR status while agents work",
             "review_step_description": "Connect a review provider so Orca can show PR or MR status, checks, and reviews.",
@@ -15962,7 +15823,8 @@
           "none": "None",
           "search": "Search",
           "showUnreadOnly": "Show unread only",
-          "showChildAgents": "Show child agents"
+          "showChildAgents": "Show child agents",
+          "activityOptions": "Activity options"
         },
         "clearCompleted": {
           "clearedOne": "Cleared 1 completed agent",
@@ -17259,7 +17121,9 @@
   "dashboard": {
     "sidebar": {
       "label": "Agents",
-      "dashboardLabel": "Agent Dashboard"
+      "dashboardLabel": "Agent Dashboard",
+      "closeActivity": "Turn off activity view",
+      "openActivity": "View activity"
     }
   },
   "runtimeRpc": {

@@ -24,26 +24,6 @@ const updateCapableCallers = new Map<string, readonly string[]>([
     ['COMPUTER_USE_SKILL_UPDATE_COMMAND', 'installedCommand={updateCommand}']
   ],
   [
-    // Shared hook owns update-target resolution for Linear settings + Task Sources.
-    'src/renderer/src/components/settings/use-linear-agent-skill-setup.ts',
-    [
-      'getLinearAgentSkillUpdateTarget',
-      'updateTarget.command',
-      // The builder also reads the focused runtime environment, so memoizing
-      // either command on the runtime alone serves a stale Windows host command.
-      'const installCommand = activeSkillRuntime.installDisabledReason',
-      'const updateCommand = activeSkillRuntime.installDisabledReason'
-    ]
-  ],
-  [
-    'src/renderer/src/components/settings/LinearAgentSkillPane.tsx',
-    ['installedCommand={skillSetup.updateCommand}']
-  ],
-  [
-    'src/renderer/src/components/settings/TaskSourceLinearSetup.tsx',
-    ['installedCommand={skillSetup.updateCommand}']
-  ],
-  [
     'src/renderer/src/components/settings/EphemeralVmsPane.tsx',
     [
       'EPHEMERAL_VMS_SKILL_UPDATE_COMMAND',
@@ -68,16 +48,6 @@ const updateCapableCallers = new Map<string, readonly string[]>([
   [
     'src/renderer/src/components/feature-wall/BrowserUseSkillSetupCard.tsx',
     ['ORCA_CLI_SKILL_UPDATE_COMMAND', 'installedCommand={updateCommand}']
-  ],
-  [
-    // Why: the single-skill update command selection moved into
-    // getLinearAgentSkillUpdateCommand so the settings install CTA shares it.
-    'src/renderer/src/components/sidebar/LinearAgentSkillSetupPrompt.tsx',
-    ['getLinearAgentSkillUpdateCommand', 'installedCommand={installedCommand}']
-  ],
-  [
-    'src/renderer/src/components/sidebar/LinearAgentSkillSetupDialog.tsx',
-    ['installedCommand={installedCommand}']
   ],
   [
     'src/renderer/src/components/settings/MobileEmulatorAgentControlRow.tsx',
@@ -106,14 +76,10 @@ const installOnlyCallers = new Map<string, readonly string[]>([
 ])
 
 const directPanelCallers = new Set([
-  // BrowserUsePane and LinearAgentSkillSetupPrompt delegate through child setup
-  // components that forward installedCommand and are validated separately above.
-  // use-linear-agent-skill-setup owns the update-target resolver but is not a panel host.
+  // BrowserUsePane delegates through a child setup component that forwards
+  // installedCommand and is validated separately above.
   ...[...updateCapableCallers.keys()].filter(
-    (relativePath) =>
-      relativePath !== 'src/renderer/src/components/settings/BrowserUsePane.tsx' &&
-      relativePath !== 'src/renderer/src/components/sidebar/LinearAgentSkillSetupPrompt.tsx' &&
-      relativePath !== 'src/renderer/src/components/settings/use-linear-agent-skill-setup.ts'
+    (relativePath) => relativePath !== 'src/renderer/src/components/settings/BrowserUsePane.tsx'
   ),
   ...installOnlyCallers.keys()
 ])

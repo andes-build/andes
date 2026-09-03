@@ -208,11 +208,11 @@ describe('AgentSkillSetupPanel', () => {
       installed: true,
       hideHeader: true,
       description: null,
-      freshnessSkillName: 'orca-linear'
+      freshnessSkillName: 'sample-skill'
     })
 
     expect(html).toContain('data-testid="skill-freshness"')
-    expect(html).toContain('orca-linear')
+    expect(html).toContain('sample-skill')
     expect(html).not.toContain('CLI skill')
   })
 

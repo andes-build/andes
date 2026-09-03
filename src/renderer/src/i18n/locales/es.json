@@ -639,25 +639,6 @@
         }
       },
       "linear": {
-        "usage": {
-          "examples": {
-            "readTicket": "Read the linked ticket",
-            "postUpdate": "Post a progress update",
-            "moveState": "Move the ticket forward",
-            "attachPr": "Adjuntar el enlace de revisión",
-            "triageFollowups": "Triage and create follow-ups",
-            "readTicketSummary": "Pull the linked Linear issue's full context before starting work.",
-            "readTicketPrompt": "Use {{value0}} to read the linked Linear issue for this worktree, then summarize the goal and acceptance criteria before you start.",
-            "postUpdateSummary": "Comment progress or a completion summary back to the Linear issue.",
-            "postUpdatePrompt": "Use {{value0}} to post a completion update on the linked Linear issue with what changed and how it was verified.",
-            "moveStateSummary": "Advance the Linear workflow state as the work progresses.",
-            "moveStatePrompt": "Use {{value0}} to move the linked Linear issue to In Review now that the change is ready.",
-            "attachPrSummary": "Vincula la pull request o merge request con la incidencia de Linear al abrirla.",
-            "attachPrPrompt": "Usa {{value0}} para adjuntar esta pull request o merge request a la incidencia de Linear vinculada.",
-            "triageFollowupsSummary": "Set assignee, priority, or estimate, and file parented follow-up tickets.",
-            "triageFollowupsPrompt": "Use {{value0}} to triage the linked Linear issue — set priority and estimate — and create a parented follow-up ticket for the deferred cleanup."
-          }
-        },
         "issue": {
           "workspace": {
             "open": {
@@ -824,8 +805,6 @@
         "devSearchKeywordError": "error",
         "devSearchKeywordNotification": "notification",
         "projectHostsSummary": "{{value0}} hosts",
-        "linearTitle": "Linear",
-        "linearDescription": "Cómo funciona Linear en Orca, lista de configuración, habilidad del agente y ejemplos de prompts.",
         "pluginsTitle": "Plugins",
         "pluginsDescription": "Instala y administra plugins experimentales de Orca.",
         "tasksDescription": "Conecta proveedores, instala la habilidad de Linear y elige qué aparece en Tareas."
@@ -5034,41 +5013,9 @@
           "b826a98b6f": "ocupado"
         },
         "LinearAgentSkillSetupPrompt": {
-          "missingCliAndSkill": "Faltan la CLI de Orca y el skill de Linear para Agents.",
-          "modalTitle": "Habilitar acceso a issues de Linear",
-          "modalDescription": "Instala el skill de Linear desde una terminal.",
-          "modalPrompt": "Permite que los Agents lean y editen el issue de Linear adjunto.",
-          "dontShowAgain": "No volver a mostrar",
           "missingBoth": "Faltan la CLI de Orca y el skill de Linear para Agents.",
-          "missingCli": "Falta la CLI de Orca.",
-          "missingSkill": "Falta el skill de Linear para Agents.",
-          "title": "Configurar skill de Linear para Agents",
-          "remoteCopy": "Esto instala el setup del host; los entornos de Agents remotos pueden necesitar setup propio.",
-          "hostCopy": "Instálalo para handoffs de Agents del host desde trabajo de Linear enlazado.",
-          "dismiss": "Descartar setup del skill de Linear para Agents",
-          "setup": "Configurar",
-          "recheck": "Volver a comprobar",
           "panelTitle": "Skill de Linear para Agents",
-          "panelDescription": "Instala el skill de Agents del host para handoffs desde tareas de Linear enlazadas.",
-          "terminalTitle": "Instalar skill de Linear para Agents",
-          "terminalAria": "Terminal de instalación del skill de Linear para Agents",
-          "install": "Instalar CLI y skill",
-          "successTitle": "El acceso a issues de Linear está listo",
-          "successDescription": "Los Agents ya pueden leer y actualizar issues de Linear enlazados desde este espacio de trabajo.",
-          "successDescriptionWsl": "Los Agents de WSL ya pueden usar issues de Linear enlazados desde este espacio de trabajo.",
-          "successDescriptionRemote": "Los Agents del host ya pueden usar issues de Linear enlazados. Los entornos de Agents remotos aún pueden necesitar setup propio.",
-          "successStatus": "Acceso a issues de Linear listo",
-          "done": "Listo",
-          "wslCopy": "Instálalo para handoffs de Agents en WSL desde trabajo de Linear enlazado.",
-          "wslLabel": "WSL predeterminado",
-          "toastMissingCliAndSkill": "Faltan la CLI de Orca y el skill de Linear",
-          "toastMissingCli": "Falta la CLI de Orca",
-          "toastMissingSkill": "Falta el skill de Linear",
-          "toastInstallCliAndSkillDescription": "Instala la CLI de Orca y el skill de Linear para permitir que tus Agents lean y editen tareas de Linear.",
-          "toastInstallCliDescription": "Instala la CLI de Orca para permitir que tus Agents lean y editen tareas de Linear.",
-          "toastInstallSkillDescription": "Instala el skill de Linear para permitir que tus Agents lean y editen tareas de Linear a través de la CLI de Orca.",
-          "toastRemoteDescription": "{{value0}} Los entornos de Agents remotos pueden necesitar setup propio.",
-          "toastWslDescription": "{{value0}} Este setup se ejecuta en el entorno de Agent WSL seleccionado."
+          "panelDescription": "Instala el skill de Agents del host para handoffs desde tareas de Linear enlazadas."
         },
         "FolderWorkspaceComposerDialog": {
           "connectFailed": "No se pudo conectar al proyecto.",
@@ -7066,8 +7013,6 @@
           "65358016ea": "Desechar",
           "dev": "Herramientas de desarrollo",
           "devDescription": "Herramientas solo de desarrollo para probar estados de la UI.",
-          "linearTitle": "Linear",
-          "linearDescription": "Cómo funciona Linear en Orca, lista de configuración, habilidad del agente y ejemplos de prompts.",
           "tasksDescription": "Conecta proveedores, instala la habilidad de Linear y elige qué aparece en Tareas."
         },
         "SettingsFormControls": {
@@ -7304,7 +7249,6 @@
         "TasksPane": {
           "f71d8a9dd3": "Proveedores de tareas",
           "6b23a34f6d": "Jira",
-          "09ae2d7c51": "Linear",
           "7c5d7fdc20": "GitLab",
           "e14063e727": "GitHub",
           "connectProviderTitle": "Conectar {{provider}}",
@@ -7327,9 +7271,7 @@
           "incompleteBannerBody": "Oculta los proveedores que no uses o expande una tarjeta y completa sus pasos.",
           "providersDescription": "Cada tarjeta guía la conexión (y la habilidad, en Linear) y si aparece en Tareas.",
           "integrationsHint": "Las credenciales de todos los proveedores también están en",
-          "integrationsLink": "Integraciones",
-          "skillHint": ". Después de conectar Linear, los ejemplos de uso están en Ajustes → Linear.",
-          "incompleteBannerBodyWithLinear": "Oculta los proveedores que no uses o expande una tarjeta y completa sus pasos. Para Linear: acceso a la API, la habilidad del agente y Mostrar en Tareas."
+          "integrationsLink": "Integraciones"
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "Grosor de la línea divisoria del panel.",
@@ -8485,11 +8427,7 @@
           "search": {
             "a626990bd2": "desconectar",
             "3c3d3d8ffa": "conectar",
-            "faa0b5a0d9": "clave API",
             "c450244ad7": "integración",
-            "7319e3015b": "linear",
-            "16a486a49d": "Conecta Linear para explorar y vincular issues.",
-            "b027b4b318": "Integración Linear",
             "20540996ef": "credenciales",
             "2ec2bd328c": "token de API",
             "7345b7c3e6": "atlassian",
@@ -8968,7 +8906,6 @@
             "44083ae418": "mostrar",
             "604d8e4089": "Atlassian",
             "5430396e11": "jira",
-            "412ec3c702": "Linear",
             "11f001cdd4": "gitlab",
             "c10ac2125e": "github",
             "3d81c26d78": "fuente",
@@ -9735,30 +9672,6 @@
           "singular": "Las guardadas globales no cambiarán 1 repositorio con su propia receta.",
           "tooltipTitle": "Sobrescrituras de repositorio"
         },
-        "linear": {
-          "agent": {
-            "skill": {
-              "install": {
-                "cta": {
-                  "copiedCommand": "Comando copiado.",
-                  "copyFailed": "Error al copiar el comando.",
-                  "skillLabel": "Habilidad del agente:",
-                  "checking": "Verificando...",
-                  "installed": "Instalado",
-                  "notInstalled": "No instalado",
-                  "recheck": "Reverificar",
-                  "installedDescription": "Habilidad del agente instalada. Para actualizarla, ejecuta:",
-                  "description": "Permite que los agentes lean y editen tareas de Linear. La configuración guiada completa (conexión + habilidad + visibilidad) está en Ajustes → Fuentes de tareas.",
-                  "copyCommand": "Copiar comando"
-                }
-              },
-              "search": {
-                "title": "Linear",
-                "description": "Estado de la habilidad de Linear, ejemplos de uso y enlaces a la configuración de Fuentes de tareas."
-              }
-            }
-          }
-        },
         "GrokAccountsSection": {
           "a1b2c3d4e5": "Grok (xAI)",
           "f6e5d4c3b2": "Muestra el uso semanal de créditos desde tu inicio de sesión en Grok CLI (archivo de sesión ~/.grok/auth.json).",
@@ -9841,17 +9754,6 @@
           "copyExampleAria": "Copiar prompt de ejemplo {{value0}}",
           "done": "Hecho",
           "copyPrompt": "Copiar prompt"
-        },
-        "LinearAgentSkillPane": {
-          "title": "Linear",
-          "description": "Cómo funciona Linear en Orca: explora incidencias, inicia espacios de trabajo vinculados y permite que los agentes actualicen incidencias con /orca-linear.",
-          "skillTitle": "Habilidad de Linear",
-          "howToUse": "Prompts de ejemplo",
-          "howToUseDescription": "Haz clic en una tarjeta para copiar un prompt. Úsalos en un espacio de trabajo vinculado a Linear después de instalar la habilidad.",
-          "terminalTitle": "Configuración de la habilidad de Linear",
-          "terminalAriaLabel": "Terminal de instalación de la habilidad de Linear",
-          "manageConnectionHint": "Revisa los espacios de trabajo de Linear conectados y las claves de API en",
-          "manageConnectionLink": "Integraciones"
         },
         "MobileRelayBetaNotice": {
           "notice": "Orca Relay is in beta."
@@ -10171,47 +10073,6 @@
             "logs": "registros de plugins",
             "development": "plugins de desarrollo"
           }
-        },
-        "LinearAgentSkillGuide": {
-          "setupConnectTitle": "1. Conectar Linear",
-          "setupConnectBody": "Una clave de API personal para que Orca pueda listar incidencias y abrir espacios de trabajo vinculados.",
-          "manageKeys": "Administrar claves",
-          "addAccess": "Añadir acceso",
-          "setupSkillTitle": "2. Instalar la habilidad del agente",
-          "setupSkillBody": "Proporciona /orca-linear a los agentes para leer, actualizar, clasificar y adjuntar solicitudes de cambio.",
-          "setupVisibleTitle": "3. Mostrar Linear en Tareas",
-          "setupVisibleBody": "Mantiene Linear en el selector de fuentes de Tareas y en los accesos directos de la barra lateral.",
-          "openTaskSources": "Fuentes de tareas",
-          "setupTitle": "Lista de configuración",
-          "setupBody": "Los tres pasos son necesarios para el flujo completo entre Tareas y agentes. La configuración inicial también está en Fuentes de tareas.",
-          "setupReady": "Todo listo",
-          "setupProgress": "{{done}} de {{total}} listos",
-          "notesTitle": "Conviene saberlo",
-          "notesIntro": "Recordatorios rápidos después de conectar Linear e instalar la habilidad.",
-          "noteLinkedTitle": "Comienza desde una incidencia de Linear",
-          "noteLinkedBody": "Las acciones de incidencias funcionan mejor en un espacio de trabajo creado desde Tareas, para mantener la incidencia vinculada como contexto.",
-          "noteSlashTitle": "Menciona /orca-linear",
-          "noteSlashBody": "En el chat, usa /orca-linear (o pide la acción en lenguaje natural) para que el agente cargue la habilidad durante ese turno.",
-          "noteKeysTitle": "Las claves siguen al entorno de ejecución",
-          "noteKeysBody": "Las claves de API y los espacios de trabajo se guardan para el entorno de ejecución activo.",
-          "noteVisibilityTitle": "Ocultar no desconecta",
-          "noteVisibilityBody": "Ocultar Linear en Fuentes de tareas solo lo quita del selector. No elimina la clave ni la habilidad.",
-          "setupChecking": "Comprobando…"
-        },
-        "TaskSourceLinearSetup": {
-          "connectTitle": "Conectar Linear",
-          "connectDescription": "Añade una clave de API personal para que Orca pueda explorar incidencias y abrir espacios de trabajo con su contexto.",
-          "manageAccess": "Administrar claves",
-          "addAccess": "Añadir acceso a Linear",
-          "connectedHint": "Los espacios de trabajo y las claves se guardan para el entorno de ejecución activo. Puedes añadir más accesos en cualquier momento.",
-          "recheck": "Volver a comprobar la conexión",
-          "skillTitle": "Instalar la habilidad de agente de Linear",
-          "skillDescription": "Proporciona /orca-linear a los agentes para leer incidencias, publicar actualizaciones, cambiar estados y adjuntar solicitudes de cambio.",
-          "skillBlocked": "Conecta Linear primero y luego instala la habilidad para los agentes.",
-          "skillPanelTitle": "Habilidad de Linear",
-          "terminalTitle": "Configuración de la habilidad de Linear",
-          "terminalAriaLabel": "Terminal de instalación de la habilidad de Linear",
-          "showDescription": "Incluye Linear en el selector de fuentes de Tareas y en los accesos directos de la barra lateral."
         },
         "TaskSourceProviderCard": {
           "statusChecking": "Comprobando…",

@@ -71,7 +71,7 @@ describe('groupSkillFreshness', () => {
     const groups = groupSkillFreshness(
       [
         placement('dataviz', { status: 'unrecognized', topology: 'independent-copy' }),
-        placement('linear-tickets', { status: 'inaccessible' })
+        placement('sample-skill', { status: 'inaccessible' })
       ],
       []
     )
@@ -89,12 +89,12 @@ describe('groupSkillFreshness', () => {
         ]
       },
       {
-        name: 'linear-tickets',
+        name: 'sample-skill',
         status: 'cannot-update',
         locations: [
           {
             id: expect.any(String),
-            path: '/home/.agents/skills/linear-tickets',
+            path: '/home/.agents/skills/sample-skill',
             chip: 'inaccessible',
             participatesInGlobalFreshness: true
           }

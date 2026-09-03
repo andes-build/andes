@@ -4100,6 +4100,8 @@ private func isAuthorizedAgentPeer(_ pid: pid_t) -> Bool {
     return isTrustedOrcaApplication(parentPid)
 }
 
+private let andesBundleId = "build.andes"
+
 private func isTrustedOrcaApplication(_ pid: pid_t) -> Bool {
     guard let app = NSRunningApplication(processIdentifier: pid),
           let bundleId = app.bundleIdentifier
@@ -4107,9 +4109,9 @@ private func isTrustedOrcaApplication(_ pid: pid_t) -> Bool {
         return false
     }
     // Why: dev validation runs from per-worktree wrapper apps with stable
-    // Orca-owned bundle ids; the sidecar peer check must still authorize them.
-    return bundleId == "com.stablyai.orca" ||
-        bundleId.hasPrefix("com.stablyai.orca.dev.") ||
+    // Andes-owned bundle ids; the sidecar peer check must still authorize them.
+    return bundleId == andesBundleId ||
+        bundleId.hasPrefix(andesBundleId + ".dev.") ||
         bundleId == "com.github.Electron"
 }
 

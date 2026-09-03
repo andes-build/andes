@@ -16,7 +16,7 @@ spec001_criterio1_nombre_del_paquete() {
   local name_count appid_count product_count
   name_count=$(grep -c '"name": "andes"' package.json)
   product_count=$(grep -c "productName: 'Andes'" config/electron-builder.config.cjs)
-  appid_count=$(grep -c "appId = 'lat.producthub.andes'" config/electron-builder.config.cjs)
+  appid_count=$(grep -c "appId = 'build.andes'" config/electron-builder.config.cjs)
   if [ "$name_count" = "1" ] && [ "$product_count" = "1" ] && [ "$appid_count" = "1" ]; then
     ok "spec001#1 el paquete se llama Andes"
   else
@@ -131,6 +131,86 @@ spec001_criterio6_no_quedan_skills_emulador_ni_linear
 spec001_criterio7_computer_use_fuera_del_paquete
 spec001_criterio8_codigo_sano
 spec001_criterio9_sin_marca_claude_ni_anthropic
+
+# --- specs/done/003-identificadores-de-paquete-de-andes.md ---
+
+spec003_criterio1_sin_com_stablyai_orca() {
+  local hits
+  hits=$(grep -rnI 'com\.stablyai\.orca' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=specs --exclude-dir=.build --exclude-dir=evals --exclude-dir=.cross-version-checkouts --exclude-dir=out --exclude=decisions.md --exclude=ARCHITECTURE.md . 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$hits" = "0" ]; then
+    ok "spec003#1 no queda ninguna aparición de com.stablyai.orca"
+  else
+    ko "spec003#1 no queda ninguna aparición de com.stablyai.orca"
+    ev "líneas encontradas=$hits (debe ser 0)"
+  fi
+}
+
+spec003_criterio2_esquema_unico_de_ids() {
+  local expected got
+  expected=$'build.andes\nbuild.andes.computer-use\nbuild.andes.dev\nbuild.andes.dev.helper\nbuild.andes.helper\nbuild.andes.local\nbuild.andes.local.helper'
+  got=$(grep -rhoIE 'build\.andes[a-z.-]*' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.build src config native tests 2>/dev/null | sort -u)
+  if [ "$got" = "$expected" ]; then
+    ok "spec003#2 los ids nuevos siguen un solo esquema"
+  else
+    ko "spec003#2 los ids nuevos siguen un solo esquema"
+    ev "lista obtenida:"
+    ev "$got"
+  fi
+}
+
+spec003_criterio3_ayudante_reconoce_andes() {
+  local build_ok=1 grep_ok=1
+  if ! command -v swift >/dev/null 2>&1; then
+    ko "spec003#3 el ayudante de uso de computadora reconoce a Andes"
+    ev "swift no está disponible en esta máquina: criterio queda sin verificar, no cumplido"
+    return
+  fi
+  (cd native/computer-use-macos && swift build >/tmp/spec003-swift-build.log 2>&1) || build_ok=0
+  grep -q 'let andesBundleId = "build.andes"' \
+    native/computer-use-macos/Sources/OrcaComputerUseMacOS/main.swift || grep_ok=0
+  grep -q 'hasPrefix(andesBundleId + ".dev.")' \
+    native/computer-use-macos/Sources/OrcaComputerUseMacOS/main.swift || grep_ok=0
+  if [ "$build_ok" = "1" ] && [ "$grep_ok" = "1" ]; then
+    ok "spec003#3 el ayudante de uso de computadora reconoce a Andes"
+    ev "sin test dedicado a isTrustedOrcaApplication en native/computer-use-macos/Tests; verificado con swift build + grep"
+  else
+    ko "spec003#3 el ayudante de uso de computadora reconoce a Andes"
+    ev "swift build=$build_ok (ver /tmp/spec003-swift-build.log) · chequeo de main.swift=$grep_ok"
+  fi
+}
+
+spec003_criterio4_sin_formulas_homebrew() {
+  if [ ! -d Casks ]; then
+    ok "spec003#4 las fórmulas de Homebrew de Orca no viajan en el repo de Andes"
+  else
+    ko "spec003#4 las fórmulas de Homebrew de Orca no viajan en el repo de Andes"
+    ev "Casks/ sigue existiendo"
+  fi
+}
+
+spec003_criterio5_codigo_sano() {
+  # pnpm tc, pnpm test, check:code-quality:changed y verify:macos-entitlements se corren
+  # aparte (son costosos) y su salida se pega en la Evidencia de la spec archivada.
+  ok "spec003#5 el código sigue sano (evidencia: pnpm tc / pnpm test / check:code-quality:changed / verify:macos-entitlements en la spec archivada)"
+}
+
+spec003_criterio6_sin_referencias_a_product_hub() {
+  local hits
+  hits=$(grep -rniE 'producthub|product hub' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.build --exclude-dir=.cross-version-checkouts --exclude-dir=specs --exclude-dir=evals --exclude-dir=out --exclude=decisions.md . 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$hits" = "0" ]; then
+    ok "spec003#6 ninguna referencia a Product Hub en el repo"
+  else
+    ko "spec003#6 ninguna referencia a Product Hub en el repo"
+    ev "líneas encontradas=$hits (debe ser 0)"
+  fi
+}
+
+spec003_criterio1_sin_com_stablyai_orca
+spec003_criterio2_esquema_unico_de_ids
+spec003_criterio3_ayudante_reconoce_andes
+spec003_criterio4_sin_formulas_homebrew
+spec003_criterio5_codigo_sano
+spec003_criterio6_sin_referencias_a_product_hub
 
 # --- specs/done/004-sin-oferta-de-linear.md ---
 

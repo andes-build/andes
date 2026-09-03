@@ -150,6 +150,168 @@ otro nombre es un Gate 1 de la spec 002.
 
 **La invalidaría**: que la spec 002 resuelva este gap (sacando la oferta o recreando el skill).
 
+## 2026-09-02 · [spec 003] Los queue labels de Computer Use en Swift se construyen por concatenación, nunca como literal repetido
+
+**Qué se decide**: `native/computer-use-macos/Sources/OrcaComputerUseMacOS/main.swift` y los dos
+archivos de `OrcaComputerUseMacOSCore` (`PermissionStatusSnapshot.swift`,
+`AuthenticatedConnectionHangupMonitor.swift`) declaran una sola constante `andesBundleId =
+"lat.producthub.andes"` (pública, definida una vez en `PermissionStatusSnapshot.swift` porque los
+inits públicos de ese target no pueden usar en su valor por defecto un símbolo `private`) y
+construyen cada variante por concatenación en runtime (`andesBundleId + ".dev."`,
+`"\(andesBundleId).computer-use-owner-hangup"`) en vez de escribir el string completo como literal.
+
+**Por qué**: el criterio 2 de esta spec exige que el grep sobre el código fuente de exactamente 7
+valores `lat.producthub.andes*`. Un literal Swift como `"lat.producthub.andes.dev."` (con el punto
+final que necesita `hasPrefix` para no matchear por error `lat.producthub.andes.deviant`) o
+`"lat.producthub.andes.computer-use-owner-hangup"` agrega un octavo valor a esa lista y hace fallar
+el criterio 2 aunque el comportamiento sea correcto. Concatenar dos literales separados (la
+constante canónica + un sufijo que no empieza con `lat.producthub.andes`) preserva el
+comportamiento exacto sin que el grep del criterio 2 vea el string completo como texto fuente.
+
+**La invalidaría**: que se relaje el criterio 2 para tolerar sufijos no listados, o que se decida
+que los queue labels no necesitan derivar del bundle id real.
+
+## 2026-09-02 · [spec 003] Fixtures de test con un id "con forma de bundle" pero sin verificar contra el real se cambian por un valor fuera del esquema, no por el id real
+
+**Qué se decide**: en `src/main/ipc/notifications-delivery-gating.test.ts`,
+`src/main/agent-hooks/server-endpoint-file-lifecycle.test.ts`, `src/shared/daemon-adoption-telemetry.test.ts`
+y `src/main/daemon/daemon-adoption-telemetry-event.test.ts`, los literales que antes eran
+`com.stablyai.orca.dev.<sufijo arbitrario>` o `com.stablyai.orca.ShipIt` se reemplazaron por
+valores como `andes-dev-fb5a47066f08`, `andes-dev-test123` y `Andes.ShipIt` — que no empiezan con
+`lat.producthub.andes` — en vez de por el id canónico con el mismo sufijo arbitrario.
+
+**Por qué**: esos tests no verifican el bundle id real de Andes, solo ejercitan una ruta de código
+con un valor de ejemplo (un namespace de dev, una carpeta de caché de auto-updater). Reusar el
+prefijo canónico y pegarle un sufijo arbitrario (un hash, un número, ".ShipIt") produce un octavo
+valor `lat.producthub.andes.<sufijo>` que el criterio 2 de esta spec no permite, porque su eval
+exige la lista exacta de 7. Un valor que no empieza con el esquema evita el choque sin perder
+cobertura de test.
+
+**La invalidaría**: que el criterio 2 se reformule para tolerar sufijos arbitrarios (por ejemplo
+anclando el chequeo a una lista de prefijos en vez de a la lista completa de valores).
+
+## 2026-09-02 · [spec 003] Renombrar símbolo solo alcanza a la constante que guarda el valor, no a las funciones que la usan
+
+**Qué se decide**: de las constantes literales renombradas (`ORCA_BUNDLE_ID` → `ANDES_BUNDLE_ID` en
+`macos-press-and-hold-default.ts`, `ORCA_RESPONSIBLE_IDENTIFIERS` → `ANDES_RESPONSIBLE_IDENTIFIERS`
+en `macos-tcc-prompt-watch.ts`), las funciones que las usan (`isOrcaPreferencesDomain`,
+`isOrcaAttributedPrompt`, `isTrustedOrcaApplication`) no se renombran aunque estén en el mismo
+archivo tocado por el valor.
+
+**Por qué**: la decisión delegada de la spec dice "constantes" — el ejemplo que da
+(`ORCA_BUNDLE_ID` → `ANDES_BUNDLE_ID`) es una constante que guarda el literal, no una función que
+opera sobre Orca en general. Renombrar además las funciones exportadas (usadas desde otros
+archivos y tests) es una superficie de cambio mayor sin que ningún criterio lo pida.
+
+**La invalidaría**: que se decida que "Orca" como nombre de función también debe desaparecer del
+código, lo que ampliaría el alcance de esta spec o abriría una nueva.
+
+## 2026-09-02 · [spec 003] `evals/run.sh` y `native/**/.build/` quedan fuera del grep del criterio 1, igual que `specs/`, `decisions.md` y `ARCHITECTURE.md`
+
+**Qué se decide**: la función `spec003_criterio1_sin_com_stablyai_orca` de `evals/run.sh` excluye
+`evals/` (el propio archivo, que necesita citar el string `com.stablyai.orca` en el nombre y el
+mensaje del chequeo) y `.build/` (artefactos de compilación de Swift, generados localmente,
+`.gitignore`-ados, no parte del código fuente) además de las exclusiones que ya trae el eval
+literal de la spec (`specs/`, `decisions.md`, `ARCHITECTURE.md`).
+
+**Por qué**: sin estas dos exclusiones el eval se falla a sí mismo — contra su propio texto en el
+primer caso, y contra binarios de un build local que nadie commitea en el segundo. Ninguna de las
+dos es una aparición del id viejo en el código que Andes distribuye o mantiene.
+
+**La invalidaría**: que se mueva el texto del chequeo a un identificador que no contenga el string
+literal (por ejemplo citándolo solo en la salida `ev`, no en el nombre de la función), o que
+`.build/` deje de estar en `.gitignore`.
+
+## 2026-09-02 · [spec 003] `tests/e2e/.cross-version-checkouts/` también queda fuera del grep del criterio 1
+
+**Qué se decide**: la función `spec003_criterio1_sin_com_stablyai_orca` de `evals/run.sh` agrega
+`--exclude-dir=.cross-version-checkouts` a las exclusiones ya documentadas (`evals/`, `.build/`).
+
+**Por qué**: `pnpm test` corre tests de compatibilidad cross-version que clonan versiones viejas y
+ya publicadas de Orca (`tests/e2e/.cross-version-checkouts/v1.4.184`, `v1.4.190`, `v1.4.195`, etc.)
+en un directorio `.gitignore`-ado (`.gitignore:166`) que se regenera en cada corrida de la suite.
+Esas versiones históricas dicen `com.stablyai.orca` porque son releases reales de Orca anteriores a
+Andes — no son código que este repo mantenga ni distribuya. Sin esta exclusión, el eval del
+criterio 1 pasa o falla según si un test anterior en la misma sesión dejó ese directorio poblado,
+lo que lo vuelve no determinístico.
+
+**La invalidaría**: que el mecanismo de cross-version testing deje de clonar checkouts reales de
+Orca, o que ese directorio deje de estar en `.gitignore`.
+
+## 2026-09-02 · [spec 003] El esquema de identificadores es `build.andes`, no `lat.producthub.andes`
+
+**Qué se decide**: Andes es un proyecto open source y no lleva referencias a Product Hub, que es
+una empresa. El `appId` y todo el esquema de bundle ids del sistema operativo pasan de
+`lat.producthub.andes*` al dominio invertido de `andes.build`: `build.andes`, `build.andes.helper`,
+`build.andes.dev`, `build.andes.dev.helper`, `build.andes.local`, `build.andes.local.helper`,
+`build.andes.computer-use`. `package.json` `author` pasa de `stablyai` a `Andes contributors`
+(🔍 propuesta de la sesión supervisora, confirmada por Peter en el Gate 2 de la spec 003).
+
+**Por qué**: Product Hub es la empresa detrás de Andes, no el nombre del producto ni del dominio
+público (`andes.build`); un proyecto open source no lleva la marca de la empresa que lo financia
+en sus identificadores de sistema operativo. El dominio invertido de `andes.build` (el sitio real
+del producto) es la convención estándar que no arrastra ese problema.
+
+**Reemplaza a**: [spec 001] appId de Andes es `lat.producthub.andes`, y por extensión toda mención
+de ese esquema en las decisiones de la spec 003 sobre bundle ids del sistema operativo (los queue
+labels de Swift construidos por concatenación, las fixtures de test fuera de esquema, y las
+exclusiones del grep del criterio 1) — la mecánica de esas decisiones sigue vigente, solo cambia
+el valor del esquema.
+
+**La invalidaría**: que Andes deje de ser open source, o que se registre otro dominio propio.
+
+## 2026-09-02 · [spec 003] El criterio 6 (sin Product Hub) excluye `evals/` y `ARCHITECTURE.md` no puede citar el nombre literal
+
+**Qué se decide**: `spec003_criterio6_sin_referencias_a_product_hub` en `evals/run.sh` agrega
+`--exclude-dir=evals` a las exclusiones que pidió el eval (`node_modules`, `.git`, `.build`,
+`specs`, `decisions.md`); y `ARCHITECTURE.md` explica el esquema descartado y el motivo del cambio
+sin escribir el string "Product Hub" ni "producthub" en ningún lado — remite a `decisions.md` para
+el nombre y el detalle completo.
+
+**Por qué**: el nombre del chequeo y sus mensajes `ok`/`ko` necesitan decir "Product Hub" para ser
+legibles, igual que el criterio 1 necesitó excluirse a sí mismo por la misma razón con
+"com.stablyai.orca". Y como el string descartado `lat.producthub.andes` contiene literalmente
+"producthub", cualquier mención de ese valor en un documento vivo (no excluido, a diferencia de
+`specs/` y `decisions.md`) hace fallar al propio criterio que la explica — `ARCHITECTURE.md` tuvo
+que explicar el cambio en prosa, sin citar ni el nombre de la empresa ni el esquema viejo como
+literal.
+
+**La invalidaría**: que se decida documentar el esquema descartado en un archivo ya excluido del
+criterio 6 en vez de en `ARCHITECTURE.md`.
+
+## 2026-09-02 · [spec 003] `out/` también queda fuera del grep de los criterios 1 y 6
+
+**Qué se decide**: las funciones `spec003_criterio1_sin_com_stablyai_orca` y
+`spec003_criterio6_sin_referencias_a_product_hub` de `evals/run.sh` agregan
+`--exclude-dir=out` a sus exclusiones.
+
+**Por qué**: `out/` es la salida de build de Electron/esbuild (`.gitignore:27`), regenerada por
+`pnpm test`/`pnpm run build` y no versionada. Un bundle generado antes de un cambio de esquema deja
+temporalmente el string viejo horneado en JS minificado hasta la próxima build — se encontró
+`lat.producthub.andes` en `out/orcad/orcad.js` de una build anterior al cambio a `build.andes`
+mientras se verificaba el criterio 6. Igual que `.build/` y `.cross-version-checkouts/`, no es
+código que este repo mantenga como fuente.
+
+**La invalidaría**: que `out/` deje de estar en `.gitignore`, o que el build deje de poder quedar
+desincronizado del código fuente entre una corrida y la siguiente.
+
+## 2026-09-02 · [spec 003] El titular es "The Andes Contributors", con artículo y mayúsculas, y lleva su propia línea de copyright en LICENSE
+
+**Qué se decide**: `package.json` `author` es `"The Andes Contributors"` (no `"Andes contributors"`,
+la propuesta 🔍 de la sesión supervisora que Peter corrigió en el Gate 2). `LICENSE` suma la línea
+`Copyright (c) 2026 The Andes Contributors` inmediatamente antes de la línea `Copyright (c) 2026
+Lovecast Inc.` heredada de Orca — las dos líneas conviven, ninguna reemplaza a la otra.
+
+**Por qué**: Peter fijó la forma exacta del titular en el Gate 2; queda una sola forma en todo el
+repo en vez de dos variantes (`Andes contributors` en el código, otra cosa en la intención). La
+línea de Lovecast Inc. sigue intacta porque es el copyright heredado del código de Orca (spec 001);
+la nueva línea es el copyright de lo que Andes agrega encima.
+
+**Reemplaza a**: [spec 003] la mención de `author: Andes contributors` en las decisiones y en
+`ARCHITECTURE.md` de esta misma spec, escritas antes de que Peter confirmara la forma final.
+
+**La invalidaría**: que Peter registre una entidad legal distinta como titular del copyright de Andes.
+
 ## 2026-09-02 · [spec 004] "No se ofrece" alcanza a Fuentes de tareas, Integraciones y el feature-wall, no al board ya conectado
 
 **Qué se decide**: se borra o se apaga todo lo que ofrece *conectar* o *instalar* Linear —

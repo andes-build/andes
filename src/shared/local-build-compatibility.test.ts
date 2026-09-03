@@ -8,7 +8,7 @@ import {
 function target(overrides: Partial<LocalBuildCompatibility> = {}): LocalBuildCompatibility {
   return {
     formatVersion: 1,
-    appId: 'lat.producthub.andes',
+    appId: 'build.andes',
     buildId: '1.2.3-abc-arm64',
     version: '1.2.3-local.1.abc',
     commit: 'abc',

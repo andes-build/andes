@@ -25,6 +25,9 @@ export type ActivityBarItem = {
   folderOnly?: boolean
   /** When true, shown only for worktrees that belong to an SSH repo. */
   sshOnly?: boolean
+  /** When true, not offered in simple mode — the developer-only surfaces of
+   *  criterion 4 (spec 002): Checks, PR checks, Worktrees, Ports. */
+  hiddenInSimpleMode?: boolean
   /** Host-owned health indicator; plugin content cannot style this chrome. */
   statusIndicator?: CheckStatus
 }

@@ -9,6 +9,7 @@ import {
 import { PER_REPO_FETCH_LIMIT } from '../../../../../shared/work-items'
 import { isGitRepoKind } from '../../../../../shared/repo-kind'
 import { presetToQuery } from './ui-slice-hydration-sanitizers'
+import { INTERFACE_MODE_SIMPLE } from '../../../../../shared/interface-mode'
 
 const LINEAR_TASK_PREFETCH_LIMIT = 36
 
@@ -32,6 +33,10 @@ export function createUiTaskActions(set: UISliceSet, get: UISliceGet): Partial<U
     githubTaskDrawerWorkItem: null,
     newWorkspaceDraft: null,
     openTaskPage: (data = {}, options = {}) => {
+      // Spec 002, criterion 5: task-page is a developer-only surface.
+      if (get().settings?.interfaceMode === INTERFACE_MODE_SIMPLE) {
+        return
+      }
       if (options.recordTasksInteraction !== false) {
         const wasTasksPreviouslyInteracted = hasFeatureInteraction(
           get().featureInteractions,

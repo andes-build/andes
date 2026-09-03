@@ -49,6 +49,7 @@ export function createSettings(overrides: Partial<GlobalSettings> = {}): GlobalS
     branchPrefixCustom: '',
     theme: 'system',
     uiLanguage: 'system',
+    interfaceMode: overrides.interfaceMode ?? 'simple',
     appIcon: overrides.appIcon ?? 'classic',
     editorAutoSave: false,
     editorAutoSaveDelayMs: 1000,

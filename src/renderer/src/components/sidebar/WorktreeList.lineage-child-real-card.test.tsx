@@ -315,7 +315,10 @@ function setLineageState(
     setShowSleepingWorkspaces: vi.fn(),
     setSortBy: vi.fn(),
     setWorktreesPinnedAndReveal: vi.fn(),
-    settings: null,
+    // Why: this suite covers the real WorktreeCard's linked-review metadata, a
+    // developer-mode surface (spec 002, criterion 6); interfaceMode gating
+    // itself is covered by worktree-card-git-detail-visibility.test.ts.
+    settings: { interfaceMode: 'developer' },
     showSleepingWorkspaces: true,
     sortBy: 'manual',
     sortEpoch: 0,
@@ -406,7 +409,10 @@ describe('WorktreeList real child WorktreeCard integration', () => {
   })
 
   it('keeps expanded child cards in the parent title column', async () => {
-    mockStore.state.settings = { experimentalNewWorktreeCardStyle: true }
+    mockStore.state.settings = {
+      experimentalNewWorktreeCardStyle: true,
+      interfaceMode: 'developer'
+    }
     const container = await renderWorktreeList()
     const childList = container.querySelector<HTMLElement>('[data-worktree-lineage-children]')
 
@@ -417,7 +423,10 @@ describe('WorktreeList real child WorktreeCard integration', () => {
 
   it('keeps three-level experimental lineage children on the immediate-parent step', async () => {
     setLineageState({ includeGrandchild: true })
-    mockStore.state.settings = { experimentalNewWorktreeCardStyle: true }
+    mockStore.state.settings = {
+      experimentalNewWorktreeCardStyle: true,
+      interfaceMode: 'developer'
+    }
     const container = await renderWorktreeList()
     const wrappers = [
       ...container.querySelectorAll<HTMLElement>('[data-worktree-lineage-children]')

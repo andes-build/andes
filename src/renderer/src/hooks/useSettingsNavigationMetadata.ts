@@ -11,6 +11,7 @@ import {
 import { getTerminalPaneSearchEntries } from '@/components/settings/terminal-search'
 import { isMacUserAgent, isWindowsUserAgent } from '@/components/terminal-pane/pane-helpers'
 import { useLinearProviderConnected } from '@/hooks/useLinearProviderConnected'
+import { useInterfaceMode } from '@/hooks/useInterfaceMode'
 import { getClientCreationActionPolicy } from '@/lib/client-creation-action-policy'
 import type { SettingsNavSection } from '@/lib/settings-navigation-types'
 import { isWebClientLocation } from '@/lib/web-client-location'
@@ -21,6 +22,12 @@ import {
 import { getActiveRuntimeTarget } from '@/runtime/runtime-rpc-client'
 import { useAppStore } from '@/store'
 import type { Repo } from '../../../shared/repo-types'
+import {
+  INTERFACE_MODE_DEVELOPER,
+  INTERFACE_MODE_SIMPLE,
+  type InterfaceMode
+} from '../../../shared/interface-mode'
+import { SIMPLE_MODE_SETTINGS_NAV_IDS } from '../../../shared/simple-mode-settings-nav'
 import {
   buildCapabilitySettingsSections,
   buildSetupSettingsSections
@@ -43,6 +50,11 @@ export function buildSettingsNavigationMetadata({
   mobileEmulatorCreationEnabled = !isWebClient,
   isDev = import.meta.env.DEV,
   isLinearConnected = false,
+  // Why: this pure builder is also called directly by tests that enumerate the
+  // full developer-mode metadata without passing interfaceMode; the live app
+  // always passes an explicit value from the settings-backed hook below, where
+  // simple is the real default (see default-global-settings.ts).
+  interfaceMode = INTERFACE_MODE_DEVELOPER,
   repos
 }: {
   isMac: boolean
@@ -54,6 +66,7 @@ export function buildSettingsNavigationMetadata({
   mobileEmulatorCreationEnabled?: boolean
   isDev?: boolean
   isLinearConnected?: boolean
+  interfaceMode?: InterfaceMode
   repos: readonly Repo[]
 }): SettingsNavSection[] {
   const terminalPaneSearchEntries = getTerminalPaneSearchEntries({
@@ -80,19 +93,26 @@ export function buildSettingsNavigationMetadata({
     mobileEmulatorCreationEnabled,
     isDev,
     isLinearConnected,
+    interfaceMode,
     repos
   }
 
   // Why: this array's order must mirror SETTINGS_NAV_GROUPS so the Settings
   // sidebar and the Cmd+J palette both read top-to-bottom in the same grouped
   // order — keep each new entry beside its group's siblings.
-  return [
+  const sections = [
     ...buildCapabilitySettingsSections(options),
     ...buildSetupSettingsSections(options),
     ...buildWorkflowSettingsSections(options, terminalPaneSearchEntries),
     ...buildInterfaceSettingsSections(options),
     ...buildRemoteSettingsSections(options, runtimeEnvironmentsSearchEntry, reposById)
   ]
+  // Why: simple mode is a visibility filter over the same metadata developer
+  // mode gets — nothing is added or removed from the four builders above.
+  if (interfaceMode === INTERFACE_MODE_SIMPLE) {
+    return sections.filter((section) => SIMPLE_MODE_SETTINGS_NAV_IDS.includes(section.id))
+  }
+  return sections
 }
 
 export function useSettingsNavigationMetadata(): SettingsNavSection[] {
@@ -117,6 +137,7 @@ export function useSettingsNavigationMetadata(): SettingsNavSection[] {
   const isWindows = isWindowsUserAgent()
   const isWebClient = isWebClientLocation()
   const isLinearConnected = useLinearProviderConnected()
+  const interfaceMode = useInterfaceMode()
   const windowsTerminalCapabilityOwnerKey = useWindowsTerminalCapabilityOwnerKey(
     settings?.activeRuntimeEnvironmentId
   )
@@ -159,6 +180,7 @@ export function useSettingsNavigationMetadata(): SettingsNavSection[] {
         mobileEmulatorCreationEnabled,
         isDev: import.meta.env.DEV,
         isLinearConnected,
+        interfaceMode,
         repos
       }),
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- activeLocale is read implicitly by the translate() calls inside buildSettingsNavigationMetadata; without it the memo keeps the previous language's sections.
@@ -171,6 +193,7 @@ export function useSettingsNavigationMetadata(): SettingsNavSection[] {
       managedBrowserCreationEnabled,
       mobileEmulatorCreationEnabled,
       isLinearConnected,
+      interfaceMode,
       repos,
       activeLocale
     ]

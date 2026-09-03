@@ -728,7 +728,16 @@ describe('createUISlice space navigation', () => {
 
   it('opens and restores Artifacts when its sidebar shortcut is hidden', () => {
     const store = createUIStore()
-    store.setState({ settings: { ...getDefaultSettings('/tmp'), showArtifactsButton: false } })
+    store.setState({
+      // Why interfaceMode: developer — this test covers the sidebar-shortcut-hidden
+      // case, not interface-mode gating (spec 002, criterion 5, covered by
+      // ui-slice-view-actions.simple-mode.test.ts).
+      settings: {
+        ...getDefaultSettings('/tmp'),
+        showArtifactsButton: false,
+        interfaceMode: 'developer'
+      }
+    })
 
     store.getState().openArtifactsPage()
     expect(store.getState().activeView).toBe('artifacts')

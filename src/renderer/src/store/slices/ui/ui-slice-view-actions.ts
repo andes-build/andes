@@ -1,7 +1,10 @@
 import type { UISlice, UISliceGet, UISliceSet } from './ui-slice-contract'
 import { rewindHistoryIndexPastView } from '../worktree-nav-history'
+import { INTERFACE_MODE_SIMPLE } from '../../../../../shared/interface-mode'
 
 export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<UISlice> {
+  // Spec 002, criterion 5: automations and artifacts are developer-only surfaces.
+  const isSimpleMode = (): boolean => get().settings?.interfaceMode === INTERFACE_MODE_SIMPLE
   return {
     openActivityPage: () => {
       set((state) => ({
@@ -20,6 +23,9 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
     setPendingAutomationRunNavigation: (navigation) =>
       set({ pendingAutomationRunNavigation: navigation }),
     openAutomationsPage: () => {
+      if (isSimpleMode()) {
+        return
+      }
       get().recordViewVisit('automations')
       set((state) => ({
         activeView: 'automations',
@@ -80,6 +86,9 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
     },
     clearPendingSkillsSharedView: () => set({ pendingSkillsSharedView: false }),
     openArtifactsPage: () => {
+      if (isSimpleMode()) {
+        return
+      }
       get().recordViewVisit('artifacts')
       set((state) => ({
         activeView: 'artifacts',

@@ -8,6 +8,8 @@ import {
   LOCAL_BROWSER_UNAVAILABLE_MESSAGE,
   MANAGED_BROWSER_UNAVAILABLE_MESSAGE,
   MOBILE_EMULATOR_UNAVAILABLE_MESSAGE,
+  SIMPLE_MODE_BROWSER_UNAVAILABLE_MESSAGE,
+  SIMPLE_MODE_MOBILE_EMULATOR_UNAVAILABLE_MESSAGE,
   assertClientCreationActionAvailable,
   assertManagedBrowserMaterializationAllowed,
   getClientCreationActionPolicy,
@@ -117,6 +119,46 @@ describe('resolveClientCreationActionPolicy', () => {
       reason: MOBILE_EMULATOR_UNAVAILABLE_MESSAGE
     })
   })
+
+  // Spec 002, criterion 5: browser-pane and emulator-pane are unavailable — by
+  // command, shortcut, or menu — in simple mode, on every surface and runtime.
+  it('hides both actions in simple mode regardless of platform or runtime capability', () => {
+    const capableRuntime = runtimeStatus(['browser.screencast.v1'])
+    for (const surface of ['electron', 'paired-web'] as const) {
+      const policy = resolveClientCreationActionPolicy({
+        surface,
+        runtimeStatus: capableRuntime,
+        interfaceMode: 'simple'
+      })
+      expect(policy['managed-browser']).toEqual({
+        state: 'hidden',
+        reason: SIMPLE_MODE_BROWSER_UNAVAILABLE_MESSAGE
+      })
+      expect(policy['mobile-emulator']).toEqual({
+        state: 'hidden',
+        reason: SIMPLE_MODE_MOBILE_EMULATOR_UNAVAILABLE_MESSAGE
+      })
+    }
+  })
+
+  it('keeps developer mode (the implicit default) fully enabled on Electron', () => {
+    expect(resolveClientCreationActionPolicy({ surface: 'electron', runtimeStatus: null })).toEqual(
+      {
+        'managed-browser': { state: 'enabled', provider: 'local-client' },
+        'mobile-emulator': { state: 'enabled', provider: 'local-client' }
+      }
+    )
+    expect(
+      resolveClientCreationActionPolicy({
+        surface: 'electron',
+        runtimeStatus: null,
+        interfaceMode: 'developer'
+      })
+    ).toEqual({
+      'managed-browser': { state: 'enabled', provider: 'local-client' },
+      'mobile-emulator': { state: 'enabled', provider: 'local-client' }
+    })
+  })
 })
 
 describe('client creation action guards', () => {
@@ -166,6 +208,21 @@ describe('client creation action guards', () => {
         'managed-browser'
       ]
     ).toEqual({ state: 'hidden', reason: FLOATING_BROWSER_UNAVAILABLE_MESSAGE })
+  })
+
+  it('reads interfaceMode off settings to hide both actions in simple mode', () => {
+    const state = {
+      settings: { interfaceMode: 'simple' as const },
+      runtimeStatusByEnvironmentId: new Map()
+    }
+
+    expect(getClientCreationActionPolicy(state as never, null)).toEqual({
+      'managed-browser': { state: 'hidden', reason: SIMPLE_MODE_BROWSER_UNAVAILABLE_MESSAGE },
+      'mobile-emulator': {
+        state: 'hidden',
+        reason: SIMPLE_MODE_MOBILE_EMULATOR_UNAVAILABLE_MESSAGE
+      }
+    })
   })
 
   it('uses folder and SSH workspace ownership instead of the focused runtime', () => {

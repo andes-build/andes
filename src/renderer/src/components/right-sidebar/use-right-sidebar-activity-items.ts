@@ -13,6 +13,8 @@ import {
   type PluginPanelsFetchStatus
 } from '@/store/plugin-panels'
 import { useShortcutLabel } from '@/hooks/useShortcutLabel'
+import { useInterfaceMode } from '@/hooks/useInterfaceMode'
+import { INTERFACE_MODE_SIMPLE } from '../../../../shared/interface-mode'
 import { translate } from '@/i18n/i18n'
 import { AgentSessionHistoryIcon } from './agent-session-history-icon'
 import type { ActivityBarItem } from './activity-bar-buttons'
@@ -46,10 +48,13 @@ export function useRightSidebarActivityItems({
   const isFolder = isFolderWorkspace || (activeRepo ? isFolderRepo(activeRepo) : false)
   const isSshRepo = Boolean(activeRepo?.connectionId)
   const pluginSystemEnabled = useAppStore((s) => s.settings?.pluginSystemEnabled === true)
+  const interfaceMode = useInterfaceMode()
+  const isSimpleMode = interfaceMode === INTERFACE_MODE_SIMPLE
   const pluginPanels = usePluginPanels()
   const visiblePluginPanels = useMemo(
-    () => (pluginSystemEnabled ? pluginPanels : []),
-    [pluginPanels, pluginSystemEnabled]
+    // Why: Plugin is a developer-only surface in simple mode (criterion 4, spec 002).
+    () => (pluginSystemEnabled && !isSimpleMode ? pluginPanels : []),
+    [pluginPanels, pluginSystemEnabled, isSimpleMode]
   )
   const installedPlugins = usePluginPanelsStore((s) => s.plugins)
   const pluginFetchStatus = usePluginPanelsStore((s) => s.fetchStatus)
@@ -81,14 +86,16 @@ export function useRightSidebarActivityItems({
           'Attached worktrees'
         ),
         shortcut: '',
-        folderOnly: true
+        folderOnly: true,
+        hiddenInSimpleMode: true
       },
       {
         id: 'pr-checks',
         icon: ListChecks,
         title: translate('auto.components.right.sidebar.index.parentPrChecks', 'PR Checks'),
         shortcut: '',
-        folderOnly: true
+        folderOnly: true,
+        hiddenInSimpleMode: true
       },
       {
         id: 'source-control',
@@ -102,14 +109,16 @@ export function useRightSidebarActivityItems({
         icon: ListChecks,
         title: translate('auto.components.right.sidebar.index.83a10e3c44', 'Checks'),
         shortcut: checksShortcut === 'Unassigned' ? '' : checksShortcut,
-        gitOnly: true
+        gitOnly: true,
+        hiddenInSimpleMode: true
       },
       {
         id: 'ports',
         icon: Plug,
         title: translate('auto.components.right.sidebar.index.441733b630', 'Ports'),
         shortcut: portsShortcut === 'Unassigned' ? '' : portsShortcut,
-        sshOnly: true
+        sshOnly: true,
+        hiddenInSimpleMode: true
       },
       // Why: plugin panels append after the built-in tabs so core navigation
       // keeps stable positions regardless of which plugins are installed.
@@ -130,9 +139,10 @@ export function useRightSidebarActivityItems({
       getVisibleRightSidebarActivityItems(activityItems, {
         isFolder,
         isFolderWorkspace,
-        isSshRepo
+        isSshRepo,
+        isSimpleMode
       }),
-    [activityItems, isFolder, isFolderWorkspace, isSshRepo]
+    [activityItems, isFolder, isFolderWorkspace, isSshRepo, isSimpleMode]
   )
 
   const activeFolderWorkspaceKey = isFolderWorkspace ? (activeWorktreeId ?? null) : null

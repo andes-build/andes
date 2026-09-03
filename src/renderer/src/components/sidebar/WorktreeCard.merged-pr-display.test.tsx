@@ -34,7 +34,10 @@ vi.mock('@/store', () => ({
       prCache,
       projectGroups: [],
       remoteBranchConflictByWorktreeId: {},
-      settings,
+      // Why interfaceMode: developer — this suite covers PR card display, a
+      // developer-mode surface (spec 002, criterion 6); interfaceMode gating
+      // itself is covered by worktree-card-git-detail-visibility.test.ts.
+      settings: { interfaceMode: 'developer', ...settings },
       sshConnectionStates: new Map(),
       sshTargetLabels: new Map(),
       updateWorktreeMeta,

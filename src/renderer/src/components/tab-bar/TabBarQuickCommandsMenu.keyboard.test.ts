@@ -12,7 +12,10 @@ const appStoreMock = vi.hoisted(() => ({
     activeView: 'terminal' as 'terminal' | 'settings',
     keybindings: {} as Record<string, string[]>,
     settings: {
-      terminalShortcutPolicy: 'orca-first' as 'orca-first' | 'terminal-first'
+      terminalShortcutPolicy: 'orca-first' as 'orca-first' | 'terminal-first',
+      // Why: this shortcut is a developer-only surface (spec 002, criterion 5);
+      // this suite covers its own matching logic, not interface-mode gating.
+      interfaceMode: 'developer' as 'simple' | 'developer'
     }
   }
 }))
@@ -163,6 +166,7 @@ beforeEach(() => {
   appStoreMock.state.activeView = 'terminal'
   appStoreMock.state.keybindings = {}
   appStoreMock.state.settings.terminalShortcutPolicy = 'orca-first'
+  appStoreMock.state.settings.interfaceMode = 'developer'
   vi.stubGlobal('window', {
     addEventListener: vi.fn((type: string, handler: (e: KeyboardEvent) => void) => {
       windowListeners.set(type, handler)

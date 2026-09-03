@@ -4,6 +4,7 @@ import { ExperimentalPane } from './ExperimentalPane'
 import { PluginsSettingsSection } from './PluginsSettingsSection'
 import { SettingsSection } from './SettingsSection'
 import { translate } from '@/i18n/i18n'
+import { nextInterfaceModeOnAltClick } from '@/lib/interface-mode-toggle'
 import type { SettingsRenderContext } from './settings-render-context'
 
 const DevToolsPane = import.meta.env.DEV
@@ -23,6 +24,16 @@ export function renderAdvancedSettingsSection(
         'Low-level compatibility settings for troubleshooting.'
       )}
       searchEntries={navigation.getSectionSearchEntries('advanced')}
+      // Why: hidden developer-mode door (spec 002) — Option-click the Advanced
+      // page title to flip interfaceMode, same idiom as the Experimental
+      // hidden-staff-group unlock above.
+      onTitleClick={(event) => {
+        if (event.altKey) {
+          model.updateSettings({
+            interfaceMode: nextInterfaceModeOnAltClick(model.settings.interfaceMode)
+          })
+        }
+      }}
     >
       {view.isSectionMounted('advanced') ? (
         <AdvancedPane settings={model.settings} updateSettings={model.updateSettings} />

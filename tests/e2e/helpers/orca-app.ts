@@ -244,6 +244,10 @@ export const test = base.extend<OrcaTestFixtures, OrcaWorkerFixtures>({
       // Electron app's getAppPath() points at the compiled main bundle in E2E,
       // so pass the repo-root relay path explicitly for this opt-in suite.
       env: {
+        // Spec 002, criterion 7: the existing e2e suite exercises Andes in
+        // developer mode by default (a spec's own launchEnv/orcaAppExtraEnv can
+        // still override this key if it ever needs to test simple mode instead).
+        ANDES_INTERFACE_MODE: 'developer',
         ...homeIsolation.env,
         NODE_ENV: 'development',
         ...((process.env.ORCA_E2E_SSH_LOCALHOST === '1' ||

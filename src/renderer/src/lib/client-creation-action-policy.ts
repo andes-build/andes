@@ -2,6 +2,7 @@ import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
 import { BROWSER_SCREENCAST_RUNTIME_CAPABILITY } from '../../../shared/protocol-version'
 import type { RuntimeStatus } from '../../../shared/runtime-types'
 import type { AppState } from '@/store/types'
+import { INTERFACE_MODE_SIMPLE, type InterfaceMode } from '../../../shared/interface-mode'
 import { isPairedWebClientWindow } from './desktop-window-chrome'
 import { getRuntimeEnvironmentIdForWorktree } from './worktree-runtime-owner'
 
@@ -15,6 +16,10 @@ export const LOCAL_BROWSER_UNAVAILABLE_MESSAGE =
   'Managed browser tabs in the web client must be created by a capable paired runtime.'
 export const MOBILE_EMULATOR_UNAVAILABLE_MESSAGE =
   'Mobile Emulator is unavailable in the web client.'
+// Spec 002, criterion 5: browser-pane and emulator-pane are developer-only surfaces.
+export const SIMPLE_MODE_BROWSER_UNAVAILABLE_MESSAGE = 'Browser tabs are a developer-mode feature.'
+export const SIMPLE_MODE_MOBILE_EMULATOR_UNAVAILABLE_MESSAGE =
+  'Mobile Emulator is a developer-mode feature.'
 
 export type ClientCreationAction = 'managed-browser' | 'mobile-emulator'
 export type ClientCreationActionProvider = 'local-client' | 'paired-runtime'
@@ -32,7 +37,19 @@ export function resolveClientCreationActionPolicy(args: {
   surface: 'electron' | 'paired-web'
   runtimeStatus: Pick<RuntimeStatus, 'capabilities' | 'hostPlatform'> | null
   floatingWorkspace?: boolean
+  // Why: default developer keeps every existing caller (tests included) at its
+  // current behavior — the live app always passes the real settings-backed value.
+  interfaceMode?: InterfaceMode
 }): ClientCreationActionPolicy {
+  if (args.interfaceMode === INTERFACE_MODE_SIMPLE) {
+    return {
+      'managed-browser': { state: 'hidden', reason: SIMPLE_MODE_BROWSER_UNAVAILABLE_MESSAGE },
+      'mobile-emulator': {
+        state: 'hidden',
+        reason: SIMPLE_MODE_MOBILE_EMULATOR_UNAVAILABLE_MESSAGE
+      }
+    }
+  }
   const browserStreamingAvailable = args.runtimeStatus?.capabilities?.includes(
     BROWSER_SCREENCAST_RUNTIME_CAPABILITY
   )
@@ -75,7 +92,8 @@ export function getClientCreationActionPolicy(
   return resolveClientCreationActionPolicy({
     surface: isPairedWebClientWindow() ? 'paired-web' : 'electron',
     runtimeStatus,
-    floatingWorkspace
+    floatingWorkspace,
+    interfaceMode: state.settings?.interfaceMode
   })
 }
 

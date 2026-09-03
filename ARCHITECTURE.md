@@ -160,7 +160,7 @@ visibilidad, nunca una segunda implementación.
   `tests/e2e/helpers/orca-app.ts` y `orca-restart.ts` fijan `ANDES_INTERFACE_MODE=developer` en el
   `env` de `electron.launch`, y un spec que necesite modo simple lo pisa con
   `test.use({ launchEnv: { ANDES_INTERFACE_MODE: 'simple' } })`
-  (`tests/e2e/simple-mode-onboarding.spec.ts`, `tests/e2e/simple-mode-surfaces.spec.ts`).
+  (`tests/e2e/simple-mode-onboarding.spec.ts`, `tests/e2e/simple-mode-surfaces.spec.ts`). La corrida completa de la suite existente con este fixture quedó **verificada parcialmente** — pendiente para el Gate 2, con el hallazgo de un locale español pre-existente del sandbox que confunde el resultado (ver `decisions.md` y la sección Evidencia de `specs/done/002-modo-simple-y-modo-desarrollo.md`).
 - **Onboarding**: el paso de Integraciones (`IntegrationsStep.tsx`) ya no menciona "pull request" ni
   "worktree" en su copy — son superficies que no existen en modo simple, el modo del primer
   arranque.

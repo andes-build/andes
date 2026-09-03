@@ -485,3 +485,22 @@ esta spec de producto.
 
 **La invalidaría**: que el fixture compartido de e2e (`orca-app.ts`) fije `--lang=en-US` por
 default para toda la suite, momento en el que este gap desaparece solo.
+
+## 2026-09-03 · [spec 002] Confirmación adicional del gap de locale: forzar `--lang=en-US` revierte la mayoría de las fallas e2e
+
+**Qué se decide**: no se toca el fixture compartido (ver decisión anterior), pero se deja registrada
+la verificación que confirma el diagnóstico. Con un cambio temporal y descartado (no commiteado) que
+agregaba `--lang=en-US` a `getOrcaElectronLaunchArgs`, se re-corrieron 17 tests que habían fallado en
+la corrida completa: 13 pasaron (incluidos los tres que tocan directamente superficies de esta spec —
+`automation-runs-dashboard.spec.ts`, `automation-prompt-disclosure.spec.ts`,
+`agent-dashboard-status-burst.spec.ts`, y el flujo de cmd-j en `worktree-jump-palette-filter.spec.ts`).
+Quedaron 4 en rojo incluso con locale forzado (`right-sidebar-windows-titlebar.spec.ts`,
+`floating-tab-rename.spec.ts:144`, `settings-agent-awake.spec.ts:175`,
+`worktree-jump-palette-filter.spec.ts:209`) — no se investigaron más a fondo, quedan para el Gate 2.
+
+**Por qué**: cierra la duda de la decisión anterior con evidencia directa en vez de una sola
+inspección de DOM: la mayoría de las fallas de la corrida completa desaparecen con el locale
+correcto, confirmando que no son regresiones de esta spec.
+
+**La invalidaría**: que los 4 tests que siguen en rojo con locale forzado resulten, al investigarlos,
+ser regresiones reales de esta spec y no fallas propias de esos tests.

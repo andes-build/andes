@@ -373,8 +373,10 @@ spec002_criterio6_barra_izquierda_sin_git() {
 spec002_criterio7_developer_sin_regresion() {
   # tests/e2e con --project electron-headless y el fixture en ANDES_INTERFACE_MODE=developer
   # (orca-app.ts, orca-restart.ts) se corren aparte, son costosos; evidencia pegada en la
-  # spec archivada.
-  ok "spec002#7 el modo developer no tiene regresión (evidencia: suite e2e completa en la spec archivada)"
+  # spec archivada. Verificado PARCIALMENTE: la corrida completa quedó confundida por un locale
+  # español pre-existente del sandbox (ajeno a esta spec, ver decisions.md); ver la sección
+  # "Pendiente para el Gate 2" de la spec archivada para el comando que la repite.
+  ok "spec002#7 el modo developer no tiene regresión — VERIFICADO PARCIALMENTE (evidencia y pendiente en la spec archivada)"
 }
 
 spec002_criterio8_primer_arranque_simple() {

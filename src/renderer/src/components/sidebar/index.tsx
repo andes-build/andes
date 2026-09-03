@@ -19,6 +19,9 @@ import { useWorkspaceRevealBodyRedirect } from './use-workspace-reveal-body-redi
 import { resolveLeftSidebarStyleVariables } from '@/lib/left-sidebar-appearance'
 import { useSystemPrefersDark } from '@/components/terminal-pane/use-system-prefers-dark'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
+import { useInterfaceMode } from '@/hooks/useInterfaceMode'
+import { INTERFACE_MODE_SIMPLE } from '../../../../shared/interface-mode'
+import { SimpleModeSidebar } from './workspace-scope/SimpleModeSidebar'
 
 // Why lazy: the Agents list pulls the whole activity pipeline (virtualizer, markdown
 // previews, thread derivation); users on the workspace view should not load or render any of it.
@@ -49,6 +52,7 @@ function Sidebar({
   worktreeScrollOffsetRef,
   worktreeScrollAnchorRef
 }: SidebarProps): React.JSX.Element {
+  const isSimpleMode = useInterfaceMode() === INTERFACE_MODE_SIMPLE
   const sidebarOpen = useAppStore((s) => s.sidebarOpen)
   const sidebarWidth = useAppStore((s) => s.sidebarWidth)
   const setSidebarWidth = useAppStore((s) => s.setSidebarWidth)
@@ -156,7 +160,9 @@ function Sidebar({
         style={leftSidebarStyle}
         {...dropHandlers}
       >
-        {sidebarOpen && (
+        {sidebarOpen && isSimpleMode ? (
+          <SimpleModeSidebar />
+        ) : sidebarOpen ? (
           <>
             {/* Fixed controls */}
             <SidebarNav />
@@ -201,7 +207,7 @@ function Sidebar({
               />
             </div>
           </>
-        )}
+        ) : null}
 
         {sidebarOpen && affordance.visible ? (
           <div

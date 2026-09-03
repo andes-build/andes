@@ -286,9 +286,11 @@ detrás del overlay.
   limpia `browserTabsByWorktree`), manda `activeView` de vuelta a `terminal` si estaba en
   `tasks`/`automations`/`artifacts`, y cierra el drawer del dashboard de agentes. Nunca toca
   `terminal` ni `agent-session`: la conversación sigue.
-- **Bloqueado, no implementado**: el nombre con el que la app se presenta a macOS (notificaciones,
-  Dock) sigue diciendo "Orca"/"Orca Dev" (`BASE_APP_NAME`,
-  `src/main/startup/dev-instance-identity.ts`). `app.setName()` es el único valor que alimenta tanto
-  el nombre visible como el nombre del ítem de Keychain que `safeStorage` resuelve antes de `ready`
-  — no hay forma de separar uno del otro sin arriesgar los secretos ya cifrados del perfil de
-  desarrollo. Ver "Decisiones" para las dos alternativas presentadas y sin elegir.
+- **La app publicada ya se llama Andes ante el sistema operativo**: `productName: 'Andes'`
+  (`config/electron-builder.config.cjs`) fija el `CFBundleName`/AppUserModelId real de cualquier
+  build empaquetado. Lo que queda diciendo "Orca"/"Orca Dev" es solo la instancia de *desarrollo*
+  (`BASE_APP_NAME`, `src/main/startup/dev-instance-identity.ts`), aplicado por `app.setName()` —
+  gateado a `isDev` (`shouldApplyPreReadyAppName`) y sin efecto en un paquete publicado. Ese
+  renombre cosmético de desarrollo pasa a la spec 007: `app.setName()` alimenta también el nombre
+  del ítem de Keychain que `safeStorage` resuelve antes de `ready`, así que cambiarlo sin cuidado
+  arriesga los secretos ya cifrados del perfil de desarrollo — ver "Decisiones".

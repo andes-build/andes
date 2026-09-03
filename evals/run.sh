@@ -731,14 +731,21 @@ spec006_criterio8_codigo_sano() {
   ok "spec006#8 código sano (evidencia: pnpm tc / pnpm test / check:code-quality:changed / e2e en la spec archivada)"
 }
 
-spec006_criterio9_nombre_ante_el_sistema_operativo() {
-  # 📌 Peter 2026-09-03 — agregado sobre la marcha, condición de parada: no hay
-  # forma de cambiar app.setName() en modo developer sin mover el nombre del
-  # ítem de Keychain ("<nombre> Safe Storage") que ya usa el perfil de
-  # desarrollo de Peter. Bloqueado, no implementado — ver Decisiones y
-  # Evidencia de la spec archivada.
-  ko "spec006#9 el nombre con el que la app se presenta al sistema operativo es Andes"
-  ev "bloqueado en Gate 1 (2026-09-03): sin una forma limpia de separar el nombre visible del nombre que usa el llavero de macOS; ver Decisiones"
+spec006_criterio9_nombre_publicado_ante_el_sistema_operativo() {
+  # Ajuste 2026-09-03: el criterio original medía app.setName(), que solo corre
+  # en modo developer (shouldApplyPreReadyAppName devuelve identity.isDev). Lo
+  # que le llega al sistema operativo en la app publicada es productName, vía
+  # CFBundleName — ver decisions.md.
+  local product_ok=1 unit_ok=1
+  count=$(grep -c "productName: 'Andes'" config/electron-builder.config.cjs)
+  [ "$count" = "1" ] || product_ok=0
+  npx vitest run --config config/vitest.config.ts     src/main/startup/dev-instance-identity.test.ts     >/dev/null 2>&1 || unit_ok=0
+  if [ "$product_ok" = "1" ] && [ "$unit_ok" = "1" ]; then
+    ok "spec006#9 el nombre con el que la app publicada se presenta al sistema operativo es Andes"
+  else
+    ko "spec006#9 el nombre con el que la app publicada se presenta al sistema operativo es Andes"
+    ev "productName='Andes' en electron-builder.config.cjs=$product_ok · dev-instance-identity.test.ts (shouldApplyPreReadyAppName solo en dev)=$unit_ok"
+  fi
 }
 
 spec006_criterio1_sin_orca_en_catalogos
@@ -749,7 +756,7 @@ spec006_criterio5_actualizador_no_rompe_sin_versiones
 spec006_criterio6_excepciones_en_un_solo_lugar
 spec006_criterio7_cierra_pestanas_de_desarrollo
 spec006_criterio8_codigo_sano
-spec006_criterio9_nombre_ante_el_sistema_operativo
+spec006_criterio9_nombre_publicado_ante_el_sistema_operativo
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

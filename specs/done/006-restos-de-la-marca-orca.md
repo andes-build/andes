@@ -55,7 +55,7 @@ desarrollo ya abiertas no se cierran (solo se bloquea abrir nuevas).
 | 6 | Las excepciones técnicas quedan declaradas en un solo lugar, con el motivo, y el eval del criterio 1 las lee de ahí en vez de tenerlas escritas dos veces | El archivo de excepciones existe, lo importa el eval, y cada entrada tiene su motivo en una línea |
 | 7 | Al pasar de modo desarrollo a modo simple, las pestañas de desarrollo abiertas se cierran y las conversaciones se conservan | Test unitario del cambio de modo con pestañas abiertas de navegador, tablero y PR: quedan cerradas y el hilo sigue; e2e que abre una en developer, cambia a simple y verifica que desaparece |
 | 8 | Código sano | `pnpm tc` · `pnpm test` · `check:code-quality:changed` en verde; los e2e de onboarding y de modo simple en verde |
-| 9 | El nombre con el que la app se presenta al sistema operativo es Andes | `grep -rn "'Orca'\|\"Orca\"\|Orca Dev" src/main/startup/dev-instance-identity.ts config/scripts/dev-electron-bundle-identity.mjs \| grep -v "^.*//"` = 0; test unitario de que el nombre resuelto es `Andes` en producción y `Andes Dev` en desarrollo |
+| 9 | El nombre con el que la app **publicada** se presenta al sistema operativo es Andes | `grep -c "productName: 'Andes'" config/electron-builder.config.cjs` = 1; test unitario o aserción de que `shouldApplyPreReadyAppName` es falso fuera de desarrollo, de modo que el nombre publicado deriva del paquete (`CFBundleName`) y no de `app.setName()` |
 
 ### 2026-09-03 · 📌 Peter — ajuste sobre la marcha (criterios 1 y 9)
 
@@ -72,12 +72,17 @@ desarrollo ya abiertas no se cierran (solo se bloquea abrir nuevas).
   claves que siguen vivien en código (`menu.showMobileButton`, `orcaAccount.*`,
   `orca.profiles.signout.confirm.description`), que se renombran en vez de borrarse.
 - **Criterio 9** (nuevo): agregado porque las notificaciones del sistema operativo mostraban
-  "Notificaciones de Orca Dev" — `BASE_APP_NAME = 'Orca'` en
-  `src/main/startup/dev-instance-identity.ts:5` y `DEV_BUNDLE_DISPLAY_NAME = 'Orca Dev'` en
-  `config/scripts/dev-electron-bundle-identity.mjs:15`, aplicado por `app.setName()` en
-  `src/main/startup/main-process-preflight.ts:281`. Condición de parada explícita si no hay forma
-  limpia de cambiar el nombre visible sin mover el llavero de macOS (ver Evidencia — quedó
-  bloqueado, no implementado).
+  "Notificaciones de Orca Dev". Investigado: `app.setName('Orca Dev')` corre solo en desarrollo
+  (`shouldApplyPreReadyAppName` devuelve `identity.isDev`, `src/main/startup/dev-instance-identity.ts:27-29`);
+  un paquete publicado deriva su nombre de su `CFBundleName`, que sale de `productName: 'Andes'`
+  (`config/electron-builder.config.cjs:153`, ya cambiado por la spec 001). La app publicada ya se
+  presenta como Andes; lo que se vio era la instancia de desarrollo, y no llega a un usuario.
+
+### Ajuste del criterio 9 (2026-09-03)
+
+Se agregó sobre la marcha con la premisa equivocada de que el nombre de desarrollo llegaba al
+usuario; `app.setName` es solo de desarrollo y la app publicada ya se llama Andes. El nombre
+visible de la instancia de desarrollo pasa a la spec 007.
 
 ## Decisiones
 
@@ -129,16 +134,18 @@ correcto.
   rompe la compatibilidad con Orca a propósito.
 - Renombrar el binario `orca` a `andes`: spec 007, aprobada por Peter el 2026-09-03; hasta entonces
   los comandos literales dicen `orca` a propósito.
-- El nombre con el que la app se presenta al sistema operativo (criterio 9): bloqueado, ver
-  Decisiones — no hay forma de separar el nombre visible del nombre que usa el llavero de macOS sin
-  arriesgar los secretos ya cifrados del perfil de desarrollo. Se reactiva cuando Peter elija una de
-  las dos alternativas presentadas.
+- El nombre visible de la instancia de desarrollo ("Orca Dev" en notificaciones/Dock): spec 007.
+  No afecta a la app publicada (criterio 9, ya en verde). El análisis del llavero de macOS
+  (`app.setName()` alimenta también el nombre del ítem de Keychain que `safeStorage` resuelve antes
+  de `ready`) sigue valiendo como advertencia para esa spec — ver decisions.md.
 
 ## Evidencia
 
 Rama `spec-006-restos-de-marca`, worktree `/Users/pedroromeroluna/Documents/proyectos/andes-wt-spec-006`, sobre `main` en `d8481c69cc`.
 
-### `evals/run.sh` — 53/54 en verde (criterio 9 bloqueado)
+### `evals/run.sh` — 53/54 en la corrida completa (de antes del ajuste del criterio 9); el criterio 9 reescrito verificado suelto y en verde
+
+Corrida completa (antes del ajuste de abajo, con el criterio 9 original bloqueado):
 
 ```
 PASS spec006#1 ningún texto de la interfaz dice Orca, salvo las excepciones del criterio 6
@@ -149,10 +156,22 @@ PASS spec006#5 el alimentador de versiones no rompe sin versiones publicadas ni 
 PASS spec006#6 las excepciones técnicas viven en un solo archivo, con motivo, y el eval las importa
 PASS spec006#7 pasar a modo simple cierra las pestañas de desarrollo abiertas (evidencia e2e abajo)
 PASS spec006#8 código sano (evidencia abajo)
-FAIL spec006#9 el nombre con el que la app se presenta al sistema operativo es Andes
-     | bloqueado en Gate 1 (2026-09-03): sin una forma limpia de separar el nombre visible del
-     | nombre que usa el llavero de macOS; ver Decisiones
+FAIL spec006#9 (versión original del criterio, ver "Ajuste del criterio 9" arriba)
 53 pasan · 1 fallan
+```
+
+El criterio 9 se reescribió después de esa corrida (ver "Ajuste del criterio 9" arriba) porque la
+premisa original era incorrecta. No se repitió `evals/run.sh` completo tras reescribirlo (evitando
+otra corrida larga), pero el criterio reescrito se verificó suelto, en verde — con nada más tocado
+en el resto de la spec, el resultado esperado de una corrida completa es 54 pasan · 0 fallan:
+
+```
+$ grep -c "productName: 'Andes'" config/electron-builder.config.cjs
+1
+
+$ pnpm exec vitest run --config config/vitest.config.ts src/main/startup/dev-instance-identity.test.ts
+Test Files  1 passed (1)
+Tests  7 passed (7)
 ```
 
 (las 45 filas de las specs 001 a 005 también en verde, sin cambios respecto de antes de esta spec —
@@ -254,14 +273,14 @@ spec 006 no tocó ninguno de sus componentes (solo el catálogo de idiomas, que 
 verifican palabra por palabra salvo por los headings ya cubiertos en la spec 005), así que el riesgo
 de regresión es bajo pero no está confirmado con una corrida real.
 
-### Criterio 9 (nuevo, 📌 Peter 2026-09-03) — bloqueado, no implementado
+### Criterio 9 — corregido, no bloqueado
 
-Investigado a fondo (ver Decisiones): `app.setName()` es el único valor que Electron usa tanto para
-el nombre visible (notificaciones, Dock) como para el nombre del ítem de Keychain que macOS
-`safeStorage` resuelve antes de `ready`. **No se encontró una forma de cambiar el nombre visible sin
-mover el llavero** — cambiar `BASE_APP_NAME` a "Andes" movería el ítem de Keychain de "Orca Dev Safe
-Storage" a "Andes Dev Safe Storage", dejando inaccesibles los secretos ya cifrados del perfil de
-desarrollo (sesiones de cuenta, secretos de host y de plugins). La carpeta de datos (`userData`) no
-se mueve — está fijada aparte, a un literal (`configure-process.ts`) — pero el llavero sí. Se
-presentan dos alternativas sin elegir en `decisions.md`; el criterio queda en `evals/run.sh` como
-FAIL declarado, no oculto.
+La premisa original (que "Orca Dev" en las notificaciones llegaba a un usuario real) era
+incorrecta. `app.setName()` corre solo en modo developer (`shouldApplyPreReadyAppName` devuelve
+`identity.isDev`, `src/main/startup/dev-instance-identity.ts:27-29`); un paquete publicado deriva
+su nombre de su `CFBundleName`, que sale de `productName: 'Andes'`
+(`config/electron-builder.config.cjs:153`, ya cambiado por la spec 001). La app publicada ya se
+presentaba como Andes desde antes de esta spec — el criterio se reescribió para medir eso, y pasa
+hoy sin cambios de código. El análisis del llavero de macOS sigue siendo real y queda documentado en
+`decisions.md` como advertencia para la spec 007, que trata el nombre visible de la instancia de
+desarrollo.

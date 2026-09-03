@@ -822,3 +822,6 @@ la fija a `<appData>/orca-dev`, un literal, no derivado de `app.getName()`), per
 **La invalidaría**: que Peter elija una de las dos alternativas (o decida que perder el perfil de
 desarrollo actual es aceptable), momento en el que esto se implementa en una spec o un ajuste
 puntual.
+
+**Corregido el 2026-09-03**: esto es solo de desarrollo, no afecta a la app publicada; el renombre
+cosmético de desarrollo se trata en la spec 007, con la advertencia del llavero.

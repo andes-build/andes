@@ -13,7 +13,7 @@ import {
   type PressAndHoldRecord
 } from './macos-press-and-hold-default'
 
-const ORCA_DOMAIN = 'com.stablyai.orca'
+const ANDES_DOMAIN = 'build.andes'
 
 type HostOverrides = Partial<PressAndHoldHost> & { record?: PressAndHoldRecord | null }
 
@@ -28,7 +28,7 @@ function createHost(overrides: HostOverrides = {}): {
   let stored = overrides.record ?? null
   const host: PressAndHoldHost = {
     platform: 'darwin',
-    resolveBundleIdentifier: () => ORCA_DOMAIN,
+    resolveBundleIdentifier: () => ANDES_DOMAIN,
     readRecord: () => stored,
     writeRecord: (record) => {
       stored = record
@@ -46,7 +46,7 @@ function createHost(overrides: HostOverrides = {}): {
 }
 
 function terminalRecord(decision: PressAndHoldDecision): PressAndHoldRecord {
-  return { version: 1, decision, domain: ORCA_DOMAIN, decidedAt: '2026-01-01T00:00:00.000Z' }
+  return { version: 1, decision, domain: ANDES_DOMAIN, decidedAt: '2026-01-01T00:00:00.000Z' }
 }
 
 describe('ensureMacPressAndHoldDefault', () => {
@@ -54,7 +54,7 @@ describe('ensureMacPressAndHoldDefault', () => {
     const { host, writes, records } = createHost()
 
     expect(ensureMacPressAndHoldDefault(host)).toBe('applied')
-    expect(writes).toEqual([{ domain: ORCA_DOMAIN, value: false }])
+    expect(writes).toEqual([{ domain: ANDES_DOMAIN, value: false }])
     expect(records.at(-1)?.decision).toBe('applied')
   })
 
@@ -141,11 +141,11 @@ describe('ensureMacPressAndHoldDefault', () => {
     })
 
     it('accepts Orca and its channel-scoped bundles, and nothing else', () => {
-      expect(isOrcaPreferencesDomain('com.stablyai.orca')).toBe(true)
-      expect(isOrcaPreferencesDomain('com.stablyai.orca.dev')).toBe(true)
+      expect(isOrcaPreferencesDomain('build.andes')).toBe(true)
+      expect(isOrcaPreferencesDomain('build.andes.dev')).toBe(true)
       expect(isOrcaPreferencesDomain('com.github.Electron')).toBe(false)
       // Why: a prefix test without the dot would accept a lookalike bundle id.
-      expect(isOrcaPreferencesDomain('com.stablyai.orcafake')).toBe(false)
+      expect(isOrcaPreferencesDomain('build.andesFake')).toBe(false)
     })
   })
 
@@ -164,7 +164,7 @@ describe('ensureMacPressAndHoldDefault', () => {
 
       const retry = createHost({ record: records.at(-1) })
       expect(ensureMacPressAndHoldDefault(retry.host)).toBe('applied')
-      expect(retry.writes).toEqual([{ domain: ORCA_DOMAIN, value: false }])
+      expect(retry.writes).toEqual([{ domain: ANDES_DOMAIN, value: false }])
     })
   })
 
@@ -245,10 +245,10 @@ describe('readBundleIdentifierFromExecutablePath', () => {
   it('reads CFBundleIdentifier from the plist beside the executable', () => {
     const exe = bundleWithPlist(
       '<plist><dict>\n<key>CFBundleName</key>\n<string>Orca</string>\n' +
-        '<key>CFBundleIdentifier</key>\n\t<string>com.stablyai.orca</string>\n</dict></plist>'
+        '<key>CFBundleIdentifier</key>\n\t<string>build.andes</string>\n</dict></plist>'
     )
 
-    expect(readBundleIdentifierFromExecutablePath(exe)).toBe('com.stablyai.orca')
+    expect(readBundleIdentifierFromExecutablePath(exe)).toBe('build.andes')
   })
 
   it('returns null when the plist is missing or carries no identifier', () => {

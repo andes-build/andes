@@ -461,3 +461,27 @@ regresión en un área no cubierta por ningún criterio.
 **La invalidaría**: un criterio de aceptación futuro que ejercite este camino explícitamente, o un
 reporte real de un usuario de developer mode que se encuentra con pestañas de desarrollo colgadas
 después de pasar a simple.
+
+## 2026-09-03 · [spec 002] Gap conocido pre-existente: el locale del sistema operativo de esta máquina rompe asserts e2e en inglés, ajeno a esta spec
+
+**Qué se decide**: no se corrige. Este sandbox tiene el locale del sistema operativo en español;
+Andes localiza la UI automáticamente según ese locale (`app.getLocale()`), así que cualquier spec
+e2e existente que busca texto en inglés sin fijar `--lang=en-US` falla acá aunque el feature
+funcione — confirmado inspeccionando el DOM de `agent-dashboard-status-burst.spec.ts`: el botón
+buscado como `/Agent Dashboard/` no aparece, pero el snapshot muestra `"Panel de agentes"` visible
+y funcional en el lugar exacto donde se lo esperaba. Los dos specs nuevos de esta spec
+(`simple-mode-onboarding.spec.ts`, `simple-mode-surfaces.spec.ts`) fijan
+`orcaAppExtraArgs: ['--lang=en-US']` para no heredar este problema; los ~280 specs preexistentes
+del repo no lo hacen y por lo tanto son inestables en esta máquina en particular, en cualquier
+rama, con o sin esta spec.
+
+**Por qué**: es un problema del entorno donde corre el agente, no del código de Andes ni de esta
+spec — reproduce igual en `main` antes de este trabajo. Corregirlo (agregar `--lang=en-US` a ~280
+specs, o forzar el locale a nivel del fixture compartido) es una superficie mucho más amplia que
+"no agregues alcance" no autoriza acá, y además cambiaría el comportamiento de toda la suite e2e
+para cualquier corrida futura en una máquina con locale distinto al inglés — una decisión de
+infraestructura de test que le corresponde a quien mantiene `tests/e2e/helpers/orca-app.ts`, no a
+esta spec de producto.
+
+**La invalidaría**: que el fixture compartido de e2e (`orca-app.ts`) fije `--lang=en-US` por
+default para toda la suite, momento en el que este gap desaparece solo.

@@ -27,11 +27,15 @@ Todo eso deja de aparecer. El módulo `src/main/linear/` se queda porque el moto
 
 | # | Criterio | Eval |
 |---|---|---|
-| 1 | No queda referencia a los skills de Linear en el código | `grep -rn 'orca-linear\|linear-tickets\|LINEAR_AGENT_SKILL\|ORCA_LINEAR_SKILL' src --include='*.ts' --include='*.tsx'` devuelve 0 líneas |
+| 1 | No queda referencia a los skills de Linear en el código | `grep -rn 'orca-linear\|linear-tickets\|LINEAR_AGENT_SKILL\|ORCA_LINEAR_SKILL' src --include='*.ts' --include='*.tsx' --exclude-dir=linear \| grep -v '^src/main/ssh/'` devuelve 0 líneas |
 | 2 | Linear no se ofrece en ninguna superficie: no hay sección `linear` en la navegación de Ajustes aunque haya una cuenta conectada, no aparece en Integraciones ni en Fuentes de tareas, y la barra lateral no muestra el aviso ni el recordatorio | Test unitario de los constructores de navegación con `isLinearConnected: true`: la lista no contiene `linear`; test de componente de Integraciones y de Fuentes de tareas: sin fila Linear; e2e: `getByText(/linear/i)` en Ajustes → `toHaveCount(0)` |
 | 3 | `src/main/linear/`, `src/shared/linear/` y `src/main/ssh/ssh-remote-linear-*.ts` no se tocan | `git diff --stat main..HEAD -- src/main/linear src/shared/linear src/main/ssh` vacío |
 | 4 | Ninguna cadena de idioma huérfana: las claves de los textos borrados salen del catálogo | `pnpm run verify:localization-catalog` y `verify:localization-extraction` en verde |
 | 5 | El código sigue sano | `pnpm tc` · `pnpm test` · `pnpm run check:code-quality:changed` en verde |
+
+Ajuste al criterio 1 el 2026-09-02 tras condición de parada: 🔍 el grep excluye `src/main/linear`,
+`src/shared/linear` y `src/main/ssh`, que el criterio 3 protege; aplicado por la sesión
+supervisora, Peter lo confirma en el Gate 2.
 
 ## Decisiones
 

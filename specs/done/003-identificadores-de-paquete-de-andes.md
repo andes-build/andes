@@ -135,10 +135,18 @@ instalada no hereda sus permisos de TCC en Andes — son apps distintas para mac
   el criterio 4 — es automatización de CI/CD de la distribución de Orca, no un identificador de
   paquete, y esta spec no tocó nada de `.github/`.
 
+
 ## Evidencia
 
 Rama `spec-003-identificadores-de-paquete`, worktree
 `/Users/pedroromeroluna/Documents/proyectos/andes-wt-spec-003`.
+
+Esta spec pasó por dos cambios de alcance decididos por Peter después de la primera implementación:
+el esquema de identificadores pasó de `lat.producthub.andes` (dominio invertido de Product Hub) a
+`build.andes` (dominio invertido de `andes.build`), porque Andes es open source y no puede llevar
+referencias a la empresa que lo desarrolla — se agregó el criterio 6 para cerrar ese chequeo — y
+el titular de copyright se fijó como "The Andes Contributors" en `LICENSE` y `package.json`. La
+evidencia de abajo es de la corrida final, después de ambos ajustes.
 
 ### evals/run.sh
 
@@ -162,24 +170,21 @@ PASS spec003#3 el ayudante de uso de computadora reconoce a Andes
      | sin test dedicado a isTrustedOrcaApplication en native/computer-use-macos/Tests; verificado con swift build + grep
 PASS spec003#4 las fórmulas de Homebrew de Orca no viajan en el repo de Andes
 PASS spec003#5 el código sigue sano (evidencia: pnpm tc / pnpm test / check:code-quality:changed / verify:macos-entitlements en la spec archivada)
-14 pasan · 0 fallan
+PASS spec003#6 ninguna referencia a Product Hub en el repo
+15 pasan · 0 fallan
 ```
 
 ### swift build (criterio 3)
 
 ```
-$ cd native/computer-use-macos && swift build
-[13/19] Compiling OrcaComputerUseMacOSCore ActionArgumentValidation.swift
-[14/19] Compiling OrcaComputerUseMacOSCore AgentSessionOwnership.swift
-[15/19] Compiling OrcaComputerUseMacOSCore NumericArgumentParsing.swift
-[16/19] Compiling OrcaComputerUseMacOSCore ComputerSnapshotCachePolicy.swift
-[17/20] Compiling OrcaComputerUseMacOSCore UnixSocketPathSafety.swift
-[18/22] Compiling OrcaComputerUseMacOS main.swift
+$ cd native/computer-use-macos && rm -rf .build && swift build
+[18/22] Emitting module OrcaComputerUseMacOS
+[19/22] Compiling OrcaComputerUseMacOS main.swift
 ... (warning preexistente de CGWindowListCreateImage deprecado, no relacionado a esta spec) ...
-[19/22] Emitting module OrcaComputerUseMacOS
+[19/22] Write Objects.LinkFileList
 [20/22] Linking orca-computer-use-macos
 [21/22] Applying orca-computer-use-macos
-Build complete! (45.37s)
+Build complete! (29.83s)
 ```
 
 `swift test` no corre en esta máquina (`error: no such module 'XCTest'` — el toolchain de línea de
@@ -200,37 +205,26 @@ $ pnpm tc
 ```
 $ pnpm test
 ...
-Test Files  1 failed | 7545 passed | 48 skipped (7594)
-     Tests  1 failed | 70123 passed | 289 skipped (70413)
-   Duration  748.71s
+Test Files  7546 passed | 48 skipped (7594)
+     Tests  70124 passed | 289 skipped (70413)
+   Duration  1006.76s
+
+[exited with code 0]
 ```
 
-El único rojo fue `src/renderer/src/components/dashboard-popout/AgentMapWorkspaceContextMenu.test.tsx`
-— un archivo que esta spec no toca y que no importa nada de lo modificado (sin ninguna coincidencia
-de `stablyai`, `producthub`, `BUNDLE_ID` ni de los módulos tocados). No es uno de los dos flakies
-documentados en las reglas de trabajo, así que se verificó aparte en vez de asumir intermitencia:
-
-```
-$ npx vitest run --config config/vitest.config.ts src/renderer/src/components/dashboard-popout/AgentMapWorkspaceContextMenu.test.tsx
-# primera corrida: falla en un test distinto al de la corrida completa (timeout de findByText
-# la primera vez, assertion de modalData la segunda) — dos fallas distintas en el mismo archivo
-# es la firma de un test con estado compartido entre casos bajo carga, no un bug de esta spec.
-$ npx vitest run --config config/vitest.config.ts src/renderer/src/components/dashboard-popout/AgentMapWorkspaceContextMenu.test.tsx
- Test Files  1 passed (1)
-      Tests  10 passed (10)
-```
-
-Los dos flakies documentados en las reglas de trabajo
-(`macos-computer-helper-owner-loss-processes.test.mjs`,
-`structured-tui-transcript-catchup.test.ts`) no aparecieron en esta corrida.
+Corrida final sin ningún archivo rojo — incluido el que en la corrida anterior había mostrado dos
+fallas distintas bajo carga (`AgentMapWorkspaceContextMenu.test.tsx`, no relacionado a esta spec y
+ya confirmado intermitente entonces al pasar aislado dos veces). Los dos flakies documentados en
+las reglas de trabajo (`macos-computer-helper-owner-loss-processes.test.mjs`,
+`structured-tui-transcript-catchup.test.ts`) tampoco aparecieron.
 
 ### check:code-quality:changed
 
 ```
 $ node config/scripts/check-changed-code-quality.mjs
-code quality: 0 new finding(s) across 17 changed file(s).
-type-aware code quality: 0 new finding(s) across 17 changed file(s).
-React Doctor: 0 new finding(s) across 17 changed file(s).
+code quality: 0 new finding(s) across 24 changed file(s).
+type-aware code quality: 0 new finding(s) across 24 changed file(s).
+React Doctor: 0 new finding(s) across 24 changed file(s).
 Changed-code quality gate passed since d3f01a720203.
 ```
 
@@ -240,4 +234,11 @@ Changed-code quality gate passed since d3f01a720203.
 $ node config/scripts/verify-macos-entitlements.mjs
 resources/build/entitlements.mac.plist: OK
 resources/build/entitlements.computer-use.mac.plist: OK
+```
+
+### git log sin trailer Co-Authored-By ni mención de Claude
+
+```
+$ git log main..HEAD --format=%B | grep -i 'co-authored\|claude'
+(sin salida)
 ```

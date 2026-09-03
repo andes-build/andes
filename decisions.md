@@ -745,3 +745,80 @@ ellas, así que quedaron sin detectar hasta la revisión manual.
 **La invalidaría**: nada — es una limpieza mecánica confirmada contra la extracción real
 (`compareExtraction().orphans` filtrado a las claves de esta spec, verificado en cero después del
 borrado).
+
+## 2026-09-03 · [spec 006] "Orca CLI" describe la herramienta sin marca, no se renombra a "Andes CLI"
+
+**Qué se decide**: en los cinco catálogos de idiomas, "Orca CLI" pasa a describir la herramienta
+genéricamente ("the command line tool" / "the command line" en inglés, y su equivalente en cada
+idioma) en vez de convertirse en "Andes CLI". "Orca Server"/"Remote Orca Servers" sí son un
+servicio real de la app (no el binario) y pasan a "Andes server"/"remote Andes servers" por
+sustitución mecánica normal. Donde el texto muestra el comando literal (`orca worktree create`,
+`orca serve`, `` `orca` `` a secas) el comando no cambia. "Orca Cloud" se renombra a Andes. "Orca
+Relay" y "Orca Mobile" quedan huérfanos del emparejamiento móvil borrado en la spec 001 y se borran
+del catálogo (33 claves, verificado sin referencias vivas en el código) — salvo las que siguen
+vivas (`menu.showMobileButton`, `auto.components.settings.orcaAccount.*`,
+`auto.components.orca.profiles.signout.confirm.description`), que se renombran igual que el resto
+del catálogo en vez de borrarse.
+
+**Por qué**: Peter (2026-09-03), como respuesta a la condición de parada que este agente reportó —
+el binario real de Andes sigue llamándose `orca` (`package.json` bin, nunca renombrado por ninguna
+spec) y el skill `orca-cli` documenta exactamente ese comando. Renombrar la etiqueta visible a
+"Andes CLI" mientras el comando real sigue siendo `orca` sería un texto que miente; dejar "Orca CLI"
+tal cual incumple el objetivo de la spec (nada de la interfaz dice Orca). Describir la herramienta
+sin nombrarla resuelve las dos cosas. Las claves huérfanas de Mobile/Relay se verificaron una por
+una con `grep -rl` sobre `src/` excluyendo `i18n/locales` y `*.test.*`; las que sí aparecieron vivas
+(la cuenta de Andes, el menú de macOS) se excluyeron de la lista de borrado.
+
+**La invalidaría**: que una spec futura renombre el binario real `orca` a `andes` (ver "Fuera de
+alcance" de la spec 006, spec 007 pendiente) — en ese momento "Orca CLI"/"the command line tool"
+puede volver a ser una marca ("Andes CLI") sin mentir.
+
+## 2026-09-03 · [spec 006] Los cuatro canales de versión y las tres URL de descarga apuntan al mismo repo `andes-build/andes`
+
+**Qué se decide**: `HOURLY_RELEASE_REPO`, `DAILY_RELEASE_REPO`, `ADHOC_RELEASE_REPO` y
+`MAIN_RELEASE_REPO` (`src/shared/release-channel.ts`) son los cuatro el mismo valor,
+`'andes-build/andes'`. Antes cada canal de desarrollo (hourly/daily/adhoc) apuntaba a un repo de
+Stably separado (`stablyai/orca-hourly`, etc.) para no desplazar las 10 entradas del feed de
+stable/RC. Ese riesgo vuelve el día que Andes publique builds hourly/daily/adhoc reales — no antes,
+porque hoy `andes-build/andes` no tiene ninguna versión publicada.
+
+**Por qué**: el criterio 4 de la spec 006, literal ("los cuatro canales de versión y las tres URL de
+descarga apuntan a `andes-build/andes`"). No existe hoy un repo separado de Andes para builds de
+desarrollo; inventar nombres (`andes-build/andes-hourly`, etc.) que Peter no decidió habría sido una
+decisión no pedida por la spec.
+
+**La invalidaría**: que Andes publique un repo propio para canales de desarrollo, momento en el que
+`HOURLY_RELEASE_REPO`/`DAILY_RELEASE_REPO`/`ADHOC_RELEASE_REPO` vuelven a apuntar a un repo propio
+para no repetir el riesgo de desplazar el feed de stable/RC.
+
+## 2026-09-03 · [spec 006] Bloqueado: el nombre de la app ante macOS (notificaciones) sigue diciendo "Orca Dev"
+
+**Qué se decide**: no se implementa el criterio 9 (agregado sobre la marcha por Peter,
+2026-09-03: "el nombre con el que la app se presenta al sistema operativo es Andes"). `BASE_APP_NAME`
+(`src/main/startup/dev-instance-identity.ts:5`) y `DEV_BUNDLE_DISPLAY_NAME`
+(`config/scripts/dev-electron-bundle-identity.mjs:15`) siguen diciendo "Orca"/"Orca Dev". Queda
+como condición de parada explícita, reportada en vez de resuelta.
+
+**Por qué**: `app.setName()` (`src/main/startup/main-process-preflight.ts:281`, dev-only —
+`shouldApplyPreReadyAppName`) es el único valor que Electron usa tanto para el nombre visible
+(notificaciones, Dock) como para el nombre del ítem de Keychain que macOS `safeStorage` resuelve
+antes de `ready` ("<nombre> Safe Storage") — no hay una API separada para lo uno sin lo otro.
+Renombrar `BASE_APP_NAME` a "Andes" (y por lo tanto el `appName` de desarrollo a "Andes Dev") movería
+el nombre del ítem de Keychain de "Orca Dev Safe Storage" a "Andes Dev Safe Storage", dejando
+inaccesibles los secretos ya cifrados bajo el ítem viejo (`safeStorage` se usa para sesiones de
+cuenta, secretos de host y de plugins — `src/main/orca-profiles/profile-cloud-session-store.ts`,
+`src/main/host/electron-secret-store.ts`, `src/main/plugins/plugin-secrets-store.ts`) — el perfil de
+desarrollo de Peter es real y vivo. La carpeta de datos (`userData`) no se movería (`configure-process.ts`
+la fija a `<appData>/orca-dev`, un literal, no derivado de `app.getName()`), pero el llavero sí.
+
+**Alternativas presentadas, ninguna elegida por este agente**:
+1. Renombrar y aceptar que el perfil de desarrollo pierde acceso a sus secretos cifrados (hay que
+   volver a iniciar sesión / reingresar credenciales una vez).
+2. Llamar `app.setName('Orca Dev')` pre-ready (preserva el Keychain existente) y una segunda vez
+   `app.setName('Andes Dev')` después de `ready` para el nombre visible — no verificado: no hay
+   certeza de que macOS Notification Center/Dock lean el nombre en vivo después de un primer
+   registro, y probarlo mal podría romper el Keychain sin arreglar lo visible.
+
+**La invalidaría**: que Peter elija una de las dos alternativas (o decida que perder el perfil de
+desarrollo actual es aceptable), momento en el que esto se implementa en una spec o un ajuste
+puntual.

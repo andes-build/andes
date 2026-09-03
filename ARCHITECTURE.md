@@ -345,3 +345,39 @@ Orca y nadie los pidió.
   de valor específicos) se borraron. `src/renderer/src/i18n/locale-english-regression.test.ts`
   quedó reducido a lo que puede seguir verificando con un solo catálogo: que un incidente histórico
   de reversión no vuelva a pisar `en.json`.
+
+## El hilo — el ajuste experimental deja de mandar en modo simple (spec 011, etapa 1)
+
+En modo simple, la conversación nativa (Native Chat) es la superficie por omisión al lanzar un
+agente soportado (`claude`, `openclaude`, `codex`, `grok`, `omp`) — sin prender
+`experimentalNativeChat` ni `openAgentTabsInChatByDefault`. En modo developer, los dos ajustes
+siguen mandando exactamente igual que antes; nada de esto se tocó para esa rama.
+
+Dos gates distintos decidían esto y a los dos había que enseñarles `interfaceMode`:
+
+- **Qué pestaña nace siendo chat**: `decideInitialAgentTabViewMode`
+  (`src/renderer/src/lib/native-chat-initial-view-mode.ts`) ahora abre en `'chat'` cuando
+  `interfaceMode === 'simple'`, sin exigir los dos ajustes. Los ocho puntos de llamada que
+  construyen sus argumentos (`worktree-default-terminal-tabs.ts`,
+  `worktree-initial-terminal-seeding.ts`, `launch-agent-in-new-tab.ts`,
+  `terminal-{request,presentation}-ipc-bridge.ts`, `worktree-draft-startup-view-mode.ts`,
+  `worktree-creation-agent-seeds.ts`, `native-chat-launch-session-options.ts`, y los hooks de
+  `composer-state/`) pasan `interfaceMode` desde `store.settings`.
+- **Si esa pestaña se renderiza como chat**: `nativeChatEnabled`
+  (`src/renderer/src/components/terminal-pane/use-terminal-pane-chat-state.ts`) —el flag real detrás
+  de `effectiveChatViewMode` y de `canToggleNativeChat`— es
+  `experimentalNativeChat === true || interfaceMode === 'simple'`. Sin este segundo gate, una
+  pestaña podía nacer con `viewMode: 'chat'` y renderizarse igual como terminal cruda.
+
+**El permiso sigue por teclas, no por datos** (ver `specs/done/011-el-hilo.md`, criterio 0 y
+criterio 2b diferido): el único adaptador de sesión estructurada (canal de datos) que existe hoy es
+para Codex (`src/main/codex/codex-structured-session-adapter.ts`;
+`structured-agent-session-provider-support.ts:14` sólo habilita `agent === 'codex'`). Para Claude,
+`NativeChatBridgeView` sigue siendo el único camino, y `NativeChatInteractiveCard.tsx` sigue
+escribiendo la cadena literal de la opción a la PTY del agente. Construir el canal de datos para
+Claude queda como spec aparte.
+
+Diferido de esta spec, sin implementar: la tarjeta de subagente, los estados incómodos (sin
+sesión, caída a mitad, respuesta vacía), la revisión de jerga, que el hilo nazca con el alcance del
+Command Center (spec 009, todavía sin mergear), y la paridad de modo developer contra la suite
+completa. Detalle en "Diferido a la spec de restos" de `specs/done/011-el-hilo.md`.

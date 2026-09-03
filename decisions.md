@@ -890,3 +890,28 @@ existió", es la regla más simple que cumple el criterio sin un caso especial.
 
 **La invalidaría**: que una spec futura necesite distinguir, en el valor persistido, un ajuste que
 nunca fue válido de uno que dejó de serlo.
+
+## 2026-09-03 · [spec 011] El hilo se entrega en dos etapas; esta etapa usa el puente existente, no el canal de datos
+
+**Qué se decide**: la spec 011 pedía que el permiso del agente llegara **como dato**, no leyendo la
+pantalla de una terminal. El criterio 0 encontró que hoy, para Claude, llega leyendo la terminal y
+mandando teclas (el único adaptador de sesión estructurada existente es para Codex —
+`src/main/codex/codex-structured-session-adapter.ts` — y
+`structured-agent-session-provider-support.ts:14` sólo habilita `agent === 'codex'`). Peter, vía la
+sesión supervisora, decidió no bloquear la entrega: esta etapa saca la conversación de detrás del
+ajuste experimental y hace funcionar la tarjeta de permiso **sobre el puente existente** (teclas),
+y deja "el permiso llega como dato" (criterio 2b) como una spec aparte, con el hallazgo del
+criterio 0 como su estado previo.
+
+**Por qué**: la prioridad explícita de Peter era poder crear hilos y conversar cuanto antes; para
+el operador, hoy, la tarjeta se ve y funciona igual en los dos casos (por dato o por teclas). Parar
+la entrega completa hasta construir el adaptador de datos para Claude —que no existe hoy y es
+trabajo no trivial— hubiera dejado a Peter sin nada que probar. El criterio original (permiso por
+datos) no se abandona: queda declarado, con su motivo original intacto (es lo único que permite
+dibujar el permiso como tarjeta *de verdad*, sin depender de leer una pantalla), como el criterio
+de apertura de la próxima spec.
+
+**La invalidaría**: que la próxima spec (el canal de datos para Claude) resuelva que el puente
+actual no alcanza ni como paso intermedio — por ejemplo, si aparece un caso donde la tarjeta por
+teclas se desincroniza de lo que la terminal real está mostrando y eso rompe la confianza del
+operador antes de que el canal de datos esté listo.

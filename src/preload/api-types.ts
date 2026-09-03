@@ -39,6 +39,7 @@ import type { NativeChatApi } from './api/native-chat-api'
 import type { OnboardingApi, StarNagApi } from './api/onboarding-api'
 import type { OnboardingBrainApi } from './api/onboarding-brain-api'
 import type { OrcaProfileApi } from './api/orca-profile-api'
+import type { WorkspaceScopeApi } from './api/workspace-scope-api'
 import type {
   ComputerUsePermissionsApi,
   DeveloperPermissionsApi,
@@ -110,6 +111,7 @@ export type PreloadApi = {
   notifications: NotificationsApi
   onboarding: OnboardingApi
   onboardingBrain: OnboardingBrainApi
+  workspaceScope: WorkspaceScopeApi
   dashboard: DashboardApi
   terminalPreview: TerminalPreviewApi
   macosTccPrompts: MacosTccPromptsApi

@@ -86,11 +86,24 @@ const bundledPluginResources = {
   from: 'resources/plugins/launch',
   to: 'plugins/launch'
 }
+// Why: the onboarding "Preparar el brain" step (spec 005) runs
+// `vendor/ai-first-os-core/core/install.sh` as a real subprocess against the
+// user's chosen folder — it must be an ordinary file on disk, not bytes
+// inside app.asar.
+const vendoredCoreResources = {
+  from: 'vendor/ai-first-os-core',
+  to: 'vendor/ai-first-os-core'
+}
 // Why: the main bundle, packaged CLI, SSH paths, and speech worker all execute
 // from package directories where pnpm's symlink farm is absent. Copy the exact
 // runtime dependency closure to Resources/node_modules so bare require() calls
 // do not fall through to a developer checkout's node_modules.
-const commonExtraResources = [relayExtraResource, bundledPluginResources, skillFreshnessResources]
+const commonExtraResources = [
+  relayExtraResource,
+  bundledPluginResources,
+  skillFreshnessResources,
+  vendoredCoreResources
+]
 // Why: native speech addons must be real files outside app.asar; copy only the
 // package matching the artifact target instead of every optional variant.
 const macSpeechNativeResource = {
@@ -198,6 +211,10 @@ module.exports = {
     // Why: bundled plugins ship via extraResources to resources/plugins/launch;
     // packing the source tree into app.asar would duplicate those exact bytes.
     '!resources/plugins/launch/**',
+    // Why: the vendored core ships via extraResources to vendor/ai-first-os-core
+    // as ordinary files so install.sh can run as a real subprocess (spec 005);
+    // packing the source tree into app.asar too would duplicate those bytes.
+    '!vendor/ai-first-os-core/**',
     // Why: speech packages are copied selectively through the platform
     // extraResources entry below; keeping them in app.asar would ship every
     // native variant (and duplicate the selected one).

@@ -29,6 +29,8 @@ export const preflightApi = {
     ipcRenderer.invoke('preflight:detectAgents', args),
   refreshAgents: (args?: PreflightRuntimeContext): Promise<RefreshAgentsResult> =>
     ipcRenderer.invoke('preflight:refreshAgents', args),
+  detectNpx: (args?: PreflightRuntimeContext): Promise<boolean> =>
+    ipcRenderer.invoke('preflight:detectNpx', args),
   detectRemoteAgents: (args: { connectionId: string }): Promise<string[]> =>
     ipcRenderer.invoke('preflight:detectRemoteAgents', args),
   detectRemoteWindowsTerminalCapabilities: (args: {

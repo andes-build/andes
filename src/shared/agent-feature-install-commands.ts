@@ -1,6 +1,6 @@
 import { isSkillsCliAgentKeyShaped } from './skills-cli-agent-keys'
 
-export const ORCA_SKILLS_REPOSITORY_URL = 'https://github.com/stablyai/orca'
+export const ORCA_SKILLS_REPOSITORY_URL = 'https://github.com/andes-build/andes'
 
 export const ORCA_CLI_SKILL_NAME = 'orca-cli'
 export const COMPUTER_USE_SKILL_NAME = 'computer-use'
@@ -16,18 +16,14 @@ export type AgentFeatureSkillCommandOptions = {
   agents?: readonly string[]
 }
 
-export function buildAgentFeatureSkillInstallArgs(
-  skillNames: readonly string[],
-  options: AgentFeatureSkillCommandOptions = {}
-): string[] {
-  if (skillNames.length === 0) {
-    throw new Error('At least one skill name is required.')
-  }
-  const global = options.global ?? true
+// Why: shared by both install-args builders below (named skills from the
+// Andes repo, and a whole pack from an arbitrary repo) so the two agent
+// safety rules — no unattended all-agents install, no value the CLI would
+// silently drop — live in exactly one place.
+function validateAgentInstallTargets(agents: readonly string[], yes: boolean | undefined): void {
   // Why: -y with no --agent is the one combination that makes `skills add` install
   // into every agent it knows. Refuse it here so no caller can express it.
-  const agents = options.agents ?? []
-  if (options.yes && agents.length === 0) {
+  if (yes && agents.length === 0) {
     throw new Error('An install target is required when skipping prompts.')
   }
   // Why: a value the skills CLI would drop leaves it with no target at all, which
@@ -36,6 +32,18 @@ export function buildAgentFeatureSkillInstallArgs(
   if (unusable !== undefined) {
     throw new Error(`"${unusable}" is not a usable install target.`)
   }
+}
+
+export function buildAgentFeatureSkillInstallArgs(
+  skillNames: readonly string[],
+  options: AgentFeatureSkillCommandOptions = {}
+): string[] {
+  if (skillNames.length === 0) {
+    throw new Error('At least one skill name is required.')
+  }
+  const global = options.global ?? true
+  const agents = options.agents ?? []
+  validateAgentInstallTargets(agents, options.yes)
   // Why: one flag per name remains compatible with both single-value and variadic parsers.
   const skillArgs = skillNames.flatMap((name) => ['--skill', name])
   return [
@@ -52,6 +60,37 @@ export function buildAgentFeatureSkillInstallArgs(
     // forever on any TTY, which is every ssh session.
     ...(options.yes ? ['-y'] : [])
   ]
+}
+
+// Why: the onboarding Skills step (spec 005, criterion 6) installs a whole
+// pack from a repo the person types in, with no fixed skill grabbed in code —
+// so unlike buildAgentFeatureSkillInstallArgs above, there is no --skill
+// filter and no fixed repository constant. Same agent-target validation,
+// reused instead of re-implemented.
+export function buildSkillsPackInstallArgs(
+  repositoryUrl: string,
+  options: Pick<AgentFeatureSkillCommandOptions, 'agents' | 'yes'> = {}
+): string[] {
+  const trimmedRepo = repositoryUrl.trim()
+  if (trimmedRepo.length === 0) {
+    throw new Error('A skills pack repository is required.')
+  }
+  const agents = options.agents ?? []
+  validateAgentInstallTargets(agents, options.yes)
+  return [
+    'skills',
+    'add',
+    trimmedRepo,
+    ...agents.flatMap((agent) => ['--agent', agent]),
+    ...(options.yes ? ['-y'] : [])
+  ]
+}
+
+export function buildSkillsPackInstallCommand(
+  repositoryUrl: string,
+  options: Pick<AgentFeatureSkillCommandOptions, 'agents' | 'yes'> = {}
+): string {
+  return `npx ${buildSkillsPackInstallArgs(repositoryUrl, options).join(' ')}`
 }
 
 export function buildAgentFeatureSkillInstallCommand(

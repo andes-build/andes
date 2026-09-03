@@ -47,6 +47,7 @@ export type PreflightApi = {
   check: (args?: PreflightRuntimeContext & { force?: boolean }) => Promise<PreflightStatus>
   detectAgents: (args?: PreflightRuntimeContext) => Promise<string[]>
   refreshAgents: (args?: PreflightRuntimeContext) => Promise<RefreshAgentsResult>
+  detectNpx: (args?: PreflightRuntimeContext) => Promise<boolean>
   detectRemoteAgents: (args: { connectionId: string }) => Promise<string[]>
   detectRemoteWindowsTerminalCapabilities: (args: { connectionId: string }) => Promise<{
     wslAvailable: boolean

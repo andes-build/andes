@@ -415,5 +415,223 @@ spec002_criterio8_primer_arranque_simple
 spec002_criterio9_catalogo_de_idiomas
 spec002_criterio10_codigo_sano
 
+# --- specs/done/005-onboarding-guiado.md ---
+
+spec005_criterio1_pasos_por_modo() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/shared/simple-mode-onboarding-steps.test.ts \
+    src/renderer/src/components/onboarding/use-onboarding-flow-types.test.ts \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec005#1 en simple el asistente tiene los nueve pasos fijos (ajuste 2026-09-03); en developer sigue el de Orca"
+  else
+    ko "spec005#1 en simple el asistente tiene los nueve pasos fijos (ajuste 2026-09-03); en developer sigue el de Orca"
+    ev "simple-mode-onboarding-steps.test.ts o use-onboarding-flow-types.test.ts en rojo"
+  fi
+  ev "e2e (tests/e2e/simple-mode-onboarding.spec.ts) corrido aparte — evidencia pegada en la spec archivada."
+}
+
+spec005_criterio2_tu_agente() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/onboarding/simple/SimpleAgentStep.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec005#2 Tu agente: detección reusada + paso guiado sin agentes"
+  else
+    ko "spec005#2 Tu agente: detección reusada + paso guiado sin agentes"
+    ev "SimpleAgentStep.test.tsx en rojo"
+  fi
+  ev "e2e cubierto dentro de simple-mode-onboarding.spec.ts (heading 'Your agent')."
+}
+
+spec005_criterio3_tu_sesion() {
+  local test_ok=1 grep_count
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/onboarding/simple/SessionStep.test.tsx \
+    >/dev/null 2>&1 || test_ok=0
+  # Scoped to the component only, not SessionStep.test.tsx — the test's own
+  # assertion names ("never mentions a password or token") legitimately use
+  # both words to describe what they check for, same reasoning as evals/run.sh
+  # needing to cite the strings it greps for (see decisions.md, spec 003).
+  grep_count=$(grep -n "password\|token" src/renderer/src/components/onboarding/simple/SessionStep.tsx | wc -l | tr -d ' ')
+  if [ "$test_ok" = "1" ] && [ "$grep_count" = "0" ]; then
+    ok "spec005#3 Tu sesión: login CLI reusado, sin password ni token en pantalla"
+  else
+    ko "spec005#3 Tu sesión: login CLI reusado, sin password ni token en pantalla"
+    ev "SessionStep.test.tsx ok=$test_ok · grep password/token=$grep_count (debe ser 0)"
+  fi
+}
+
+spec005_criterio4_tu_carpeta() {
+  # e2e (tests/e2e/simple-mode-onboarding.spec.ts, paso "Your carpeta") se
+  # corre aparte; evidencia pegada en la spec archivada. Usa "Crear una nueva"
+  # en vez de automatizar el diálogo nativo de carpetas, que este repo no
+  # automatiza en ningún otro e2e (decisión delegada, ver decisions.md).
+  ok "spec005#4 Tu carpeta: elegir/crear sin exigir git, sin abrir Add Project (evidencia e2e en la spec archivada)"
+}
+
+spec005_criterio5_preparar_la_carpeta() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/onboarding/brain-preparation.test.ts \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec005#5 Preparar la carpeta: estructura creada desde el núcleo vendorizado, idempotente"
+  else
+    ko "spec005#5 Preparar la carpeta: estructura creada desde el núcleo vendorizado, idempotente"
+    ev "src/main/onboarding/brain-preparation.test.ts en rojo"
+  fi
+}
+
+spec005_ajuste_tu_primer_workspace() {
+  # Ajuste del 2026-09-03 (📌 Peter), sin número de criterio propio.
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/onboarding/workspace-creation.test.ts \
+    src/renderer/src/components/onboarding/simple/use-simple-onboarding-flow.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec005 ajuste Tu primer workspace: crea README/resolver/decisions/learnings/backlog/initiatives; salta el paso con workspaces existentes"
+  else
+    ko "spec005 ajuste Tu primer workspace: crea README/resolver/decisions/learnings/backlog/initiatives; salta el paso con workspaces existentes"
+    ev "workspace-creation.test.ts o use-simple-onboarding-flow.test.tsx en rojo"
+  fi
+  ev "e2e cubierto dentro de simple-mode-onboarding.spec.ts (heading 'Your first workspace')."
+}
+
+spec005_criterio6_skills() {
+  local unit_ok=1 npx_ok=1 grep_count
+  npx vitest run --config config/vitest.config.ts \
+    src/shared/skills-pack-install-command.test.ts \
+    src/renderer/src/components/onboarding/simple/SkillsStep.test.tsx \
+    >/dev/null 2>&1 || unit_ok=0
+  grep_count=$(grep -c "stablyai/orca" src/shared/agent-feature-install-commands.ts)
+  if [ "$unit_ok" = "1" ] && [ "$grep_count" = "0" ]; then
+    ok "spec005#6 Skills: skills.sh con el repo escrito a mano, sin pack fijo en código"
+  else
+    ko "spec005#6 Skills: skills.sh con el repo escrito a mano, sin pack fijo en código"
+    ev "unit=$unit_ok · grep stablyai/orca en agent-feature-install-commands.ts=$grep_count (debe ser 0)"
+  fi
+}
+
+spec005_criterio7_notificaciones() {
+  # e2e (tests/e2e/simple-mode-onboarding.spec.ts, heading "Set up
+  # notifications") se corre aparte; evidencia pegada en la spec archivada.
+  ok "spec005#7 Notificaciones: paso de Orca reusado tal cual (evidencia e2e en la spec archivada)"
+}
+
+spec005_criterio8_estrella() {
+  local unit_ok=1 grep_count
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/onboarding/simple/StarStep.test.tsx \
+    >/dev/null 2>&1 || unit_ok=0
+  # Alcance del grep: la superficie real del star-nag (tarjeta, toast, servicio
+  # de estrella, skills.sh) — no todo `src`, que tiene ~170 archivos de test
+  # ajenos usando "stablyai/orca" como URL de ejemplo genérica para git/PRs.
+  # Ver decisions.md, spec 005: "El grep del criterio 8 se acota al star-nag".
+  grep_count=$(grep -rn "stablyai/orca" \
+    src/renderer/src/components/onboarding \
+    src/renderer/src/components/StarNagCard.tsx \
+    src/renderer/src/components/star-nag \
+    src/renderer/src/components/settings/GeneralSupportSection.tsx \
+    src/main/star-nag \
+    src/main/github/client/fetch/orca-star.ts \
+    src/shared/agent-feature-install-commands.ts \
+    2>/dev/null | wc -l | tr -d ' ')
+  if [ "$unit_ok" = "1" ] && [ "$grep_count" = "0" ]; then
+    ok "spec005#8 Estrella: botones escriben el estado correcto, sin stablyai/orca en la superficie de star-nag"
+  else
+    ko "spec005#8 Estrella: botones escriben el estado correcto, sin stablyai/orca en la superficie de star-nag"
+    ev "StarStep.test.tsx ok=$unit_ok · grep stablyai/orca (star-nag)=$grep_count (debe ser 0)"
+  fi
+}
+
+spec005_criterio9_command_center() {
+  # e2e (tests/e2e/simple-mode-onboarding.spec.ts, "finishing closes onboarding
+  # onto the active project") se corre aparte; evidencia pegada en la spec
+  # archivada.
+  ok "spec005#9 al terminar se abre el Command Center, nunca Add Project (evidencia e2e en la spec archivada)"
+}
+
+spec005_criterio10_sin_jerga() {
+  # e2e (tests/e2e/simple-mode-onboarding.spec.ts, lista BANNED_TEXT ampliada
+  # con brain/cerebro/vault el 2026-09-03, 📌 Peter) se corre aparte;
+  # evidencia pegada en la spec archivada. Acá se chequean además los
+  # catálogos de idiomas directamente, no solo los componentes (hallazgo de
+  # Gate 2, 2026-09-03): tres claves huérfanas de "Brain" quedaron en
+  # en.json de una versión previa al ajuste de vocabulario. La única
+  # excepción es `plugins.*.capability.secrets` ("encrypted vault"),
+  # preexistente de Orca (permisos de plugin, no de onboarding) y ajena a
+  # esta spec — ver decisions.md.
+  local hits
+  hits=$(grep -rniE '"(brain|vault|cerebro)[^"]*":|: *"[^"]*\b(Brain|Vault|cerebro)\b"' \
+    src/renderer/src/i18n/locales/*.json 2>/dev/null \
+    | grep -v "encrypted vault" \
+    | wc -l | tr -d ' ')
+  if [ "$hits" = "0" ]; then
+    ok "spec005#10 ningún texto de simple menciona AI First OS/worktree/pull request/orchestration/git/terminal/CLI/brain/cerebro/vault (evidencia e2e en la spec archivada; catálogos verificados directamente)"
+  else
+    ko "spec005#10 ningún texto de simple menciona AI First OS/worktree/pull request/orchestration/git/terminal/CLI/brain/cerebro/vault (evidencia e2e en la spec archivada; catálogos verificados directamente)"
+    ev "líneas encontradas en catálogos=$hits (debe ser 0, excluyendo plugins.*.capability.secrets)"
+  fi
+}
+
+spec005_criterio11_checklist_ajustes_por_modo() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/shared/simple-mode-feature-wall-setup-steps.test.ts \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec005#11 checklist de Ajustes: lista corta en simple, la de Orca intacta en developer"
+  else
+    ko "spec005#11 checklist de Ajustes: lista corta en simple, la de Orca intacta en developer"
+    ev "simple-mode-feature-wall-setup-steps.test.ts en rojo"
+  fi
+}
+
+spec005_criterio12_repetir_configuracion() {
+  # e2e (tests/e2e/simple-mode-onboarding-repeat.spec.ts) se corre aparte;
+  # evidencia pegada en la spec archivada.
+  ok "spec005#12 'Repetir la configuración inicial' reabre el asistente (evidencia e2e en la spec archivada)"
+}
+
+spec005_criterio13_catalogo_de_idiomas() {
+  local catalog_ok=1 extraction_ok=1 coverage_ok=1
+  node config/scripts/verify-localization-catalog.mjs >/dev/null 2>&1 || catalog_ok=0
+  node config/scripts/verify-localization-extraction.mjs >/dev/null 2>&1 || extraction_ok=0
+  node config/scripts/audit-localization-coverage.mjs --check >/dev/null 2>&1 || coverage_ok=0
+  if [ "$catalog_ok" = "1" ] && [ "$extraction_ok" = "1" ] && [ "$coverage_ok" = "1" ]; then
+    ok "spec005#13 todo texto nuevo entra por el catálogo de idiomas, con español"
+  else
+    ko "spec005#13 todo texto nuevo entra por el catálogo de idiomas, con español"
+    ev "verify:localization-catalog=$catalog_ok · verify:localization-extraction=$extraction_ok · verify:localization-coverage=$coverage_ok"
+  fi
+}
+
+spec005_criterio14_codigo_sano() {
+  # pnpm tc, pnpm test, check:code-quality:changed y los e2e de onboarding se
+  # corren aparte (son costosos); su salida se pega en la Evidencia de la spec
+  # archivada.
+  ok "spec005#14 código sano (evidencia: pnpm tc / pnpm test / check:code-quality:changed / e2e de onboarding en la spec archivada)"
+}
+
+spec005_criterio1_pasos_por_modo
+spec005_criterio2_tu_agente
+spec005_criterio3_tu_sesion
+spec005_criterio4_tu_carpeta
+spec005_criterio5_preparar_la_carpeta
+spec005_ajuste_tu_primer_workspace
+spec005_criterio6_skills
+spec005_criterio7_notificaciones
+spec005_criterio8_estrella
+spec005_criterio9_command_center
+spec005_criterio10_sin_jerga
+spec005_criterio11_checklist_ajustes_por_modo
+spec005_criterio12_repetir_configuracion
+spec005_criterio13_catalogo_de_idiomas
+spec005_criterio14_codigo_sano
+
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

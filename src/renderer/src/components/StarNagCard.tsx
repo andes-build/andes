@@ -6,7 +6,7 @@ import { useAppStore } from '../store'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { translate } from '@/i18n/i18n'
 
-const ORCA_REPO_URL = 'https://github.com/stablyai/orca'
+const ORCA_REPO_URL = 'https://github.com/andes-build/andes'
 type StarNagMode = 'gh' | 'web'
 
 /**

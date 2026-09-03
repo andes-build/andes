@@ -4,10 +4,21 @@ import { GeneralPane } from './GeneralPane'
 import { IntegrationsPane } from './IntegrationsPane'
 import { OrcaAccountSettingsPane } from './OrcaAccountSettingsPane'
 import { SettingsSetupGuidePane } from './SettingsSetupGuidePane'
+import { SimpleModeSetupGuidePane } from './SimpleModeSetupGuidePane'
 import { ShareSkillsSettingsPane } from './ShareSkillsSettingsPane'
 import { SettingsSection } from './SettingsSection'
 import { translate } from '@/i18n/i18n'
+import { useInterfaceMode } from '@/hooks/useInterfaceMode'
 import type { SettingsRenderContext } from './settings-render-context'
+
+// Why: developer mode keeps Orca's own `SettingsSetupGuidePane` unchanged;
+// simple mode (spec 005, criterion 11) shows its own shorter checklist. A
+// tiny router component so the hook it needs stays out of the plain render
+// functions below.
+function SetupGuidePaneRouter(): React.JSX.Element {
+  const interfaceMode = useInterfaceMode()
+  return interfaceMode === 'developer' ? <SettingsSetupGuidePane /> : <SimpleModeSetupGuidePane />
+}
 
 export function renderOrcaAccountSettingsSection(
   context: SettingsRenderContext
@@ -41,7 +52,7 @@ export function renderSetupGuideSettingsSection(context: SettingsRenderContext):
       searchEntries={navigation.getSectionSearchEntries('setup-guide')}
       bodyClassName="overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none"
     >
-      {view.isSectionMounted('setup-guide') ? <SettingsSetupGuidePane /> : null}
+      {view.isSectionMounted('setup-guide') ? <SetupGuidePaneRouter /> : null}
     </SettingsSection>
   )
 }

@@ -18,13 +18,15 @@ export const RELEASE_CHANNEL_LABELS: Readonly<Record<ReleaseChannel, string>> = 
   adhoc: 'Adhoc'
 }
 
-/** Dev builds live in their own repos so their tags never enter the main
- *  releases atom feed, which only exposes the 10 newest entries — 24 hourly
- *  tags a day would evict every stable/RC entry and strand real users. */
-export const HOURLY_RELEASE_REPO = 'stablyai/orca-hourly'
-export const DAILY_RELEASE_REPO = 'stablyai/orca-daily'
-export const ADHOC_RELEASE_REPO = 'stablyai/orca-adhoc'
-export const MAIN_RELEASE_REPO = 'stablyai/orca'
+/** All four channels resolve to the same public repo (spec 006): Andes has no
+ *  dedicated dev-channel repos yet, unlike Orca's separate hourly/daily/adhoc
+ *  repos (which existed so 24 hourly tags a day would not evict every stable/RC
+ *  entry from the shared releases atom feed, capped at 10 entries — that risk
+ *  returns once Andes cuts real hourly/daily/adhoc builds; see decisions.md). */
+export const HOURLY_RELEASE_REPO = 'andes-build/andes'
+export const DAILY_RELEASE_REPO = 'andes-build/andes'
+export const ADHOC_RELEASE_REPO = 'andes-build/andes'
+export const MAIN_RELEASE_REPO = 'andes-build/andes'
 
 export const HOURLY_PRERELEASE_IDENTIFIER = 'hourly'
 export const DAILY_PRERELEASE_IDENTIFIER = 'daily'

@@ -16,7 +16,7 @@ function buildAtomFeed(tags: string[]): string {
   const entries = tags
     .map(
       (tag) =>
-        `<entry><link rel="alternate" type="text/html" href="https://github.com/stablyai/orca/releases/tag/${tag}"/><title>${tag}</title></entry>`
+        `<entry><link rel="alternate" type="text/html" href="https://github.com/andes-build/andes/releases/tag/${tag}"/><title>${tag}</title></entry>`
     )
     .join('')
   return `<?xml version="1.0" encoding="UTF-8"?><feed>${entries}</feed>`
@@ -43,7 +43,7 @@ function respondWithAtom(
   const missingAssets = new Set(missingAssetTags)
   const unavailableManifests = new Set(unavailableManifestTags)
   netFetchMock.mockImplementation((url: string, init?: { method?: string }) => {
-    if (url === 'https://github.com/stablyai/orca/releases.atom') {
+    if (url === 'https://github.com/andes-build/andes/releases.atom') {
       return Promise.resolve({
         ok: true,
         text: () => Promise.resolve(buildAtomFeed(tags))
@@ -129,7 +129,7 @@ describe('fetchNewerReleaseTag', () => {
       const assetUrls: string[] = []
 
       netFetchMock.mockImplementation((url: string, init?: { method?: string }) => {
-        if (url === 'https://github.com/stablyai/orca/releases.atom') {
+        if (url === 'https://github.com/andes-build/andes/releases.atom') {
           return Promise.resolve({
             ok: true,
             text: () => Promise.resolve(buildAtomFeed(['v1.4.1']))
@@ -157,10 +157,10 @@ describe('fetchNewerReleaseTag', () => {
 
       expect(await fetchNewerReleaseTag('1.4.0')).toBe('v1.4.1')
       expect(manifestUrls).toEqual([
-        `https://github.com/stablyai/orca/releases/download/v1.4.1/${manifestName}`
+        `https://github.com/andes-build/andes/releases/download/v1.4.1/${manifestName}`
       ])
       expect(assetUrls).toEqual([
-        'https://github.com/stablyai/orca/releases/download/v1.4.1/Orca-1.4.1-arm64-mac.zip'
+        'https://github.com/andes-build/andes/releases/download/v1.4.1/Orca-1.4.1-arm64-mac.zip'
       ])
       expect(netRequestMock).toHaveBeenCalledTimes(platform === 'win32' ? 1 : 0)
     }
@@ -194,6 +194,30 @@ describe('fetchNewerReleaseTag', () => {
     netFetchMock.mockRejectedValue(new Error('network down'))
     const { fetchNewerReleaseTag } = await import('./updater-prerelease-feed')
     expect(await fetchNewerReleaseTag('1.3.19-rc.6')).toBe(null)
+  })
+
+  // spec006#5 — while andes-build/andes has no published releases yet, the atom
+  // feed responds with zero entries. The feed reader must report "no updates"
+  // instead of throwing, so the app keeps opening and Settings can say so.
+  it('reports no-newer, not an error, when the repo has zero releases', async () => {
+    respondWithAtom([])
+    const { fetchNewerReleaseTagsWithReadiness } = await import('./updater-prerelease-feed')
+    await expect(fetchNewerReleaseTagsWithReadiness('1.3.19-rc.6', 1)).resolves.toEqual({
+      tags: [],
+      state: 'no-newer'
+    })
+  })
+
+  // spec006#5 — a network failure (offline, DNS, GitHub down) must not throw
+  // either: it degrades to "unavailable" so update checks fail closed.
+  it('reports unavailable, not an error, when the feed request fails', async () => {
+    netFetchMock.mockRejectedValue(new Error('network down'))
+    const { fetchNewerReleaseTagsWithReadiness } = await import('./updater-prerelease-feed')
+    await expect(fetchNewerReleaseTagsWithReadiness('1.3.19-rc.6', 1)).resolves.toEqual({
+      tags: [],
+      state: 'unavailable',
+      unavailableReason: 'feed'
+    })
   })
 
   it('picks semver-newest across a mixed-order feed', async () => {
@@ -365,7 +389,7 @@ describe('fetchNewerReleaseTag', () => {
     const manifestResolvers: (() => void)[] = []
 
     netFetchMock.mockImplementation((url: string) => {
-      if (url === 'https://github.com/stablyai/orca/releases.atom') {
+      if (url === 'https://github.com/andes-build/andes/releases.atom') {
         return Promise.resolve({
           ok: true,
           text: () => Promise.resolve(buildAtomFeed(feedTags))

@@ -16,9 +16,9 @@
 }
 
 @font-face {
-  font-family: 'Instrument Serif';
-  src: url('./fonts/InstrumentSerif-Regular.woff2') format('woff2');
-  font-weight: 400;
+  font-family: 'Newsreader';
+  src: url('./fonts/Newsreader-Variable.woff2') format('woff2');
+  font-weight: 200 800;
   font-style: normal;
   font-display: swap;
 }
@@ -3046,7 +3046,7 @@ html.native-shell .app-layout {
    name of the place reads as a title and not as one more control
    (Peter, 2026-09-03; diseño aprobado en la maqueta de la iniciativa). */
 .andes-screen-title {
-  font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
   font-weight: 400;
   letter-spacing: -0.01em;
 }

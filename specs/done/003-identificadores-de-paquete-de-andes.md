@@ -63,7 +63,7 @@ el chequeo. 🔍 aplicado por la sesión supervisora sobre el aviso de Peter; ve
 - DECIDIDO por Peter (2026-09-02): Andes es open source y no lleva referencias a Product Hub, que
   es una empresa; el esquema de identificadores es el dominio invertido de `andes.build`,
   `build.andes` — reemplaza al `lat.producthub.andes` de arriba. `package.json` `author` pasa de
-  `stablyai` a `Andes contributors` (🔍 propuesta de la sesión supervisora, confirmada por Peter en
+  `stablyai` a `The Andes Contributors` (🔍 propuesta de la sesión supervisora, confirmada por Peter en
   el Gate 2 de esta spec).
 - DECIDIDO por Peter (2026-09-02): "se borra solo lo que es paquete aparte" — `Casks/` es la
   distribución de Orca por Homebrew, paquete aparte: se borra. Andes tendrá la suya cuando se publique.

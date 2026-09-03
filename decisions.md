@@ -295,3 +295,20 @@ código que este repo mantenga como fuente.
 
 **La invalidaría**: que `out/` deje de estar en `.gitignore`, o que el build deje de poder quedar
 desincronizado del código fuente entre una corrida y la siguiente.
+
+## 2026-09-02 · [spec 003] El titular es "The Andes Contributors", con artículo y mayúsculas, y lleva su propia línea de copyright en LICENSE
+
+**Qué se decide**: `package.json` `author` es `"The Andes Contributors"` (no `"Andes contributors"`,
+la propuesta 🔍 de la sesión supervisora que Peter corrigió en el Gate 2). `LICENSE` suma la línea
+`Copyright (c) 2026 The Andes Contributors` inmediatamente antes de la línea `Copyright (c) 2026
+Lovecast Inc.` heredada de Orca — las dos líneas conviven, ninguna reemplaza a la otra.
+
+**Por qué**: Peter fijó la forma exacta del titular en el Gate 2; queda una sola forma en todo el
+repo en vez de dos variantes (`Andes contributors` en el código, otra cosa en la intención). La
+línea de Lovecast Inc. sigue intacta porque es el copyright heredado del código de Orca (spec 001);
+la nueva línea es el copyright de lo que Andes agrega encima.
+
+**Reemplaza a**: [spec 003] la mención de `author: Andes contributors` en las decisiones y en
+`ARCHITECTURE.md` de esta misma spec, escritas antes de que Peter confirmara la forma final.
+
+**La invalidaría**: que Peter registre una entidad legal distinta como titular del copyright de Andes.

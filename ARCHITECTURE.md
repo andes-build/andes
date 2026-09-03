@@ -5,13 +5,15 @@
 ## Identidad del paquete (spec 001)
 
 - `package.json`: `name: andes`, `version: 0.1.0`, `description: The Agentic Work Environment
-  (AWE) for AI Native Companies`, `homepage: https://andes.build`, `author: Andes contributors`
+  (AWE) for AI Native Companies`, `homepage: https://andes.build`, `author: The Andes Contributors`
   (spec 003 — Andes es open source y no lleva en sus identificadores el nombre de la empresa que
   lo desarrolla).
 - `config/electron-builder.config.cjs`: `appId: build.andes`, `productName: 'Andes'` (spec 003:
   dominio invertido de `andes.build`, reemplaza al esquema original de la spec 001 por el mismo
   motivo — ver `decisions.md`).
-- `LICENSE`: nota de atribución a Orca/Stably antes del texto MIT original (que no se toca).
+- `LICENSE`: nota de atribución a Orca/Stably antes del texto MIT original (que no se toca);
+  el texto MIT lleva dos líneas de copyright, `Copyright (c) 2026 The Andes Contributors` (spec
+  003) seguida de la original `Copyright (c) 2026 Lovecast Inc.` (heredada de Orca, intacta).
 - `README.md`: sigue siendo el de Orca, con crédito y link a `github.com/stablyai/orca` en las
   primeras 30 líneas.
 

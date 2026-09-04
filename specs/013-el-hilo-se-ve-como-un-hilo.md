@@ -1,6 +1,6 @@
 ---
 status: pendiente
-depends_on: [009]
+depends_on: [009, 021]
 ---
 
 # 013 · El hilo se ve como un hilo
@@ -14,7 +14,10 @@ rastro de comandos y nombres de herramienta.
 ## Estado previo
 
 `main` en `d97c8cc07c`. El agente corre `git log d97c8cc07c..main --stat` antes de empezar. Se
-implementa **después** de que la spec 009 esté en `main`: las dos tocan la barra lateral.
+implementa **después de la spec 021**, no solo de la 009. La 009 ya está en `main` (merge
+`632c0be2`). La 021 arregla que, con un workspace elegido, el hilo no abre y el panel queda en
+blanco: hasta que eso esté arreglado, el chequeo funcional que esta spec necesita —abrir un hilo
+con un workspace elegido y mirar su cabecera— no se puede hacer.
 
 - "New thread" (`SimpleModeNav.tsx:69`) llama a `openNewThread()`, que en `open-new-thread.ts:97-105`
   lanza `launchAgentInNewTab`, y esa función crea una **pestaña** en

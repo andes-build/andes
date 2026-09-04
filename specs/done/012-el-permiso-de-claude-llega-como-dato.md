@@ -1,5 +1,5 @@
 ---
-status: pendiente
+status: implementada
 depends_on: []
 ---
 
@@ -95,3 +95,123 @@ Peter, así que consume su cuota; se hace con pedidos chicos.
   ítem de subagente.
 - El resto de los CLIs de la lista de Orca: se reactiva cuando `tsk-171` termine el relevamiento.
 - Los estados de error de la conversación: spec propia.
+
+## Evidencia
+
+Suite completa: `./evals/run.sh` → **158 pasan · 0 fallan**, dos corridas seguidas (2026-09-04).
+Ningún rojo heredado de `main`.
+
+### Criterio 1 — el permiso llega como dato y la respuesta vuelve, contra el binario real
+
+`src/main/claude/claude-structured-permission-as-data.integration.test.ts`. Corre el `claude` de la
+persona con `--output-format stream-json --verbose --input-format stream-json
+--permission-prompt-tool stdio` (`CLAUDE_STRUCTURED_LAUNCH_ARGS`,
+`src/main/claude/claude-structured-stream-protocol.ts:17-25`). Solo cambian los argumentos: nada
+empaqueta, parchea, envuelve ni reemplaza el binario, y la capa del inicio de sesión no se toca.
+
+```
+$ ANDES_EVAL_CLAUDE_REAL=1 npx vitest run --config config/vitest.config.ts \
+    src/main/claude/claude-structured-permission-as-data.integration.test.ts
+ Test Files  1 passed (1)
+      Tests  2 passed (2)   (25.36s)
+```
+
+Permitir escribe el archivo; rechazar no lo escribe. La prueba no fija qué herramienta elige el
+modelo — decisión del 2026-09-04 en `decisions.md`.
+
+### Criterio 2 — Claude entra por el mismo portón que Codex
+
+`src/main/native-chat/agent-session-wire/structured-agent-session-provider-support.ts`:
+`adapterSupportsCreate` y `adapterSupportsRecord` preguntan al adaptador (`supportsCreate`) en vez
+de comparar contra el literal `'codex'`. Los tests cubren `claude`, `codex` y un proveedor
+desconocido, que sigue afuera:
+`src/main/native-chat/agent-session-wire/structured-agent-session-adapter-router.test.ts`.
+
+### Criterio 3 — la tarjeta no escribe en la PTY
+
+```
+$ grep -c "PTY" src/renderer/src/components/native-chat/NativeChatApprovalCard.tsx
+0
+```
+
+`NativeChatApprovalCard.tsx` contesta con el id de la opción y nada más. El camino viejo
+(`NativeChatInteractiveCard.tsx`, modo desarrollo) mapea ese id a su tecla en su propio llamador.
+`NativeChatApprovalCard.test.tsx` verifica permitir y rechazar.
+
+### Criterio 4 — lo que la tarjeta dice sale de los datos del permiso
+
+El ítem de permiso trae la herramienta y su entrada
+(`AgentJournalApprovalItem.tool`, `src/shared/agent-session-journal-types.ts`), y la pantalla arma
+la pregunta con `describePermissionRequest`, el redactor de la spec 013
+(`src/renderer/src/components/native-chat/native-chat-activity-phrase.ts`). El título y la
+descripción del proveedor no llegan a la pantalla, y la línea de detalle desaparece con ellos.
+Ninguna función del camino lee el transcripto de la terminal.
+
+```
+$ npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/native-chat/NativeChatApprovalCard.test.tsx \
+    src/renderer/src/components/native-chat/native-chat-activity-phrase.test.ts
+      Tests  28 passed (28)
+```
+
+Los casos cerrados: un `Bash` con `.os/core/lib/session-start.sh --brain . --root` da
+"Run a command?" y el comando no aparece en ningún campo de la tarjeta; un `Write` da
+"Write the permiso?" sin la ruta; una herramienta desconocida da "Allow this action?" en vez de su
+entrada; un ítem sin `tool` —el carril de Codex— conserva título y detalle.
+
+### Criterio 5 — Codex sigue funcionando igual
+
+`src/main/codex/` entero en verde dentro de `spec012#2#3#4#5`, sin modificar ningún test para que
+pase. El portón nuevo se apoya en `supportsCreate` del adaptador, así que el carril de Codex
+contesta lo mismo que antes; el ítem de permiso de Codex no lleva `tool` y su tarjeta no cambió.
+
+### Criterio 6 — el modo desarrollo, con su terminal, no cambia
+
+```
+$ npx playwright test tests/e2e/spec-012-developer-mode-keeps-raw-terminal.spec.ts \
+    --config tests/playwright.config.ts --project=electron-headless --workers=1
+  ✓ a developer-mode tab is still a live raw terminal with the structured lane on (13.8s)
+  1 passed (21.6s)
+```
+
+Corre en modo desarrollo con las tres opciones del carril prendidas —la configuración en la que el
+carril nuevo existe—, verifica que la pestaña tiene una pty viva, ejecuta `echo` en ella y lee la
+salida en pantalla.
+
+### Criterio 7 — lo que el carril no puede dar está declarado
+
+Cabecera de `src/main/claude/claude-structured-session-adapter.ts:9-16`: subagentes (`tsk-172`),
+preguntas, opciones de sesión y diffs. `answerPrompt` rechaza `kind: 'question'` y `setOption`
+rechaza en vez de reportar un valor que nunca fijó.
+
+### Criterio 8 — código sano
+
+`pnpm tc` · `check:code-quality:changed` · `verify:localization-*` en verde dentro de
+`spec012#8 codigo sano`, dos corridas.
+
+### Criterio 9 — chequeo funcional en la app real
+
+`docs/research/2026-09-04-chequeo-funcional-spec-012/`, seis capturas. Modo simple, binario real de
+Claude, carpeta de prueba en `/tmp`. Se permite en un hilo (`permiso.txt` queda escrito con
+`PERMITIDO`) y se rechaza en otro (`rechazo.txt` no existe y el agente dice que no pudo escribirlo).
+
+**En ninguna captura la tarjeta muestra un comando**: dice "Write the permiso?" (captura 03) y
+"Run a command?" (captura 05). La captura 05 es el caso que Peter reportó — el permiso para correr
+el arranque, que antes se veía como "Allow Bash?" sobre `.os/core/lib/session-start.sh --brain .
+--root`.
+
+El chequeo encontró siete defectos que los tests unitarios no veían; están listados en el README de
+esa carpeta y los que trajeron una regla, en `decisions.md`.
+
+## Lo que queda abierto
+
+- **"Message delivery is unconfirmed · Retry" después de cada mensaje**, aunque el mensaje llegó y
+  el agente contestó. Es la reconciliación del outbox de la interfaz contra el journal.
+- **El transcripto muestra los cuadros internos del CLI** (`system:thinking_tokens`,
+  `system:task_summary`, `system:hook_started`) como filas propias. Qué se pliega es trabajo de la
+  superficie de la conversación.
+- **La fila de una herramienta ya resuelta muestra su nombre y su ruta** (`Write` · `rechazo.txt`).
+  La línea de actividad y la tarjeta sí están redactadas; la fila resuelta es la superficie que
+  dejó la spec 013.
+
+Las tres son de la superficie de la conversación, no del carril de datos, y ninguna es de esta spec.

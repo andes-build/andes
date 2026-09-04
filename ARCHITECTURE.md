@@ -541,6 +541,12 @@ Dos gates distintos decidían esto y a los dos había que enseñarles `interface
   una conversación abierta.
 - **La evidencia en la app real**: `docs/research/2026-09-04-chequeo-funcional-spec-012/`, con el
   permiso permitido en un hilo y rechazado en otro.
+- **Lo que la tarjeta de permiso dice**: el ítem de permiso lleva la herramienta y su entrada
+  (`AgentJournalApprovalItem.tool`) y la pantalla arma la pregunta con `describePermissionRequest`,
+  el mismo redactor que la línea de actividad de la spec 013
+  (`src/renderer/src/components/native-chat/native-chat-activity-phrase.ts`). El título y la
+  descripción del proveedor no llegan a la pantalla: ahí venía el comando crudo. Un ítem sin `tool`
+  —el carril de Codex— sigue mostrando su título y su detalle.
 - **Lo que el carril de Claude declara en vez de simular**: subagentes, preguntas, opciones de
   sesión y diffs — cabecera de `src/main/claude/claude-structured-session-adapter.ts`.
 

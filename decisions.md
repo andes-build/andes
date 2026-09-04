@@ -1622,3 +1622,19 @@ extender a Codex sin haber leído su formato real habría sido adivinar. Degrada
 el comportamiento correcto del criterio 6, no un hueco a tapar con urgencia.
 **La invalidaría**: alguien lee el formato de título de Codex (u otro agente) y lo cablea igual que
 Claude.
+
+## 2026-09-04 · [spec 012] La tarjeta de permiso redacta la pregunta con el redactor de la spec 013
+
+**Qué se decide**: el ítem de permiso lleva la herramienta y su entrada (`tool`), y la pantalla
+arma el título con `describePermissionRequest`, el mismo redactor de la línea de actividad
+(`native-chat-activity-phrase.ts`). El título y la descripción propios del proveedor no llegan a la
+tarjeta, y la línea de detalle desaparece con ellos. Un pedido que el redactor no reconoce muestra
+"Allow this action?".
+**Por qué**: en la app real la tarjeta decía "Allow Bash?" y debajo
+`.os/core/lib/session-start.sh --brain . --root` — el criterio 4 pide lo contrario, y la interfaz no
+muestra comandos ni rutas. Se descartó escribir un segundo redactor para la tarjeta: dos rúbricas
+para la misma regla se separan a la primera herramienta nueva. Se descartó también dejar la línea de
+detalle con la descripción del proveedor, que es de donde salía el comando. Un ítem sin `tool` —el
+carril de Codex— conserva el título y el detalle que siempre tuvo, así que el criterio 5 no se toca.
+**La invalidaría**: que la persona necesite ver el comando exacto para decidir, y que eso se resuelva
+con un modo explícito en vez de con el texto de la tarjeta.

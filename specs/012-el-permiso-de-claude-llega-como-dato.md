@@ -59,6 +59,10 @@ riesgo, no construir.
 - DECIDIDO por Peter (2026-09-03): **el hilo funciona por datos, no leyendo una terminal.** Es lo
   único que permite dibujar el permiso como tarjeta de verdad. La terminal queda solo en modo
   desarrollo.
+- DECIDIDO por Peter (Gate 1, 2026-09-04): **lanzar `claude` con argumentos distintos no viola
+  `def-007`.** La regla protege que el binario corra sin modificar, con la suscripción de la
+  persona; cambiarle los argumentos no lo modifica. Lo que sigue prohibido es empaquetarlo,
+  parchearlo, envolverlo o reemplazarlo, y la capa del inicio de sesión no se toca.
 - DECIDIDO por Peter (2026-09-04): esta spec es el adaptador de datos para Claude. Los cuatro
   hallazgos de la primera corrida que antes ocupaban este número quedaron absorbidos por las specs
   006, 009, 014 y 020; lo único que sobrevivía —el panel de archivos de la derecha en modo simple—
@@ -73,13 +77,9 @@ riesgo, no construir.
 
 **Condiciones de parada**
 
-- ❓ **A confirmar por Peter antes de escribir código**: la regla de `def-007` dice que en el fork
-  **no se toca la capa que lanza el binario ni la del inicio de sesión**, y de ahí viene heredada
-  toda la conformidad. Este adaptador exige lanzar `claude` con otros argumentos que los de hoy. La
-  postura de la sesión es que sigue siendo el binario oficial sin modificar, corriendo con la
-  suscripción de la persona, y que cambiar sus argumentos no es modificarlo — pero la regla la
-  escribió Peter y la confirma Peter. **Si el agente descubre que hace falta algo más que argumentos
-  distintos —empaquetar, parchear o reemplazar el binario— para y pregunta.**
+- **Si hace falta algo más que argumentos distintos para lanzar `claude` —empaquetar, parchear,
+  envolver o reemplazar el binario— para y pregunta.** Ahí se cruza la línea de `def-007`, que es de
+  donde viene heredada toda la conformidad.
 - Si el permiso como dato obliga a tocar la capa del inicio de sesión, para y pregunta.
 - Si el canal de datos entrega el permiso pero pierde algo que hoy se ve en la terminal, para y
   reporta qué se pierde antes de seguir.

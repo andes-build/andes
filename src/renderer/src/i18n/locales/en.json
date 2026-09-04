@@ -16516,7 +16516,11 @@
           "commandCenter": "Command Center",
           "files": "Files",
           "agentsAndSkills": "Agents & skills",
-          "more": "More"
+          "more": "More",
+          "noFolderForThread": "Open a folder before starting a thread.",
+          "noAgentForThread": "No coding agent is installed, so there is nobody to talk to yet.",
+          "noAgentForThreadAction": "Agents & skills",
+          "threadLaunchFailed": "The thread could not be started. Check the agent in Settings and try again."
         },
         "SimpleModeMoreMenu": {
           "settings": "Settings"

@@ -5,6 +5,11 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { SimpleModeNav } from './SimpleModeNav'
+import { openNewThread } from './open-new-thread'
+
+// Spec 015: the launch path itself is evaluated in open-new-thread.test.ts;
+// here the only question is that the button reaches it.
+vi.mock('./open-new-thread', () => ({ openNewThread: vi.fn(() => Promise.resolve()) }))
 
 let root: Root | null = null
 let container: HTMLDivElement | null = null
@@ -34,10 +39,9 @@ describe('SimpleModeNav', () => {
     expect(labels).toEqual(['New thread', 'Command Center', 'Files', 'Agents & skills', 'More'])
   })
 
-  it('New thread opens a real conversation: a chat-mode tab on the active folder (criterion 3)', async () => {
-    const setActiveView = vi.fn()
+  it('spec015#6 New thread delegates to the thread launcher, never to a bare createTab', async () => {
     const createTab = vi.fn()
-    useAppStore.setState({ setActiveView, createTab, activeWorktreeId: 'wt-1' })
+    useAppStore.setState({ createTab, activeWorktreeId: 'wt-1' })
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -52,64 +56,7 @@ describe('SimpleModeNav', () => {
       button?.click()
     })
 
-    expect(setActiveView).toHaveBeenCalledWith('terminal')
-    expect(createTab).toHaveBeenCalledWith('wt-1', undefined, undefined, {
-      viewMode: 'chat',
-      activate: true,
-      recordInteraction: true
-    })
-  })
-
-  it('New thread launches the detected agent CLI when one exists', async () => {
-    const setActiveView = vi.fn()
-    const createTab = vi.fn()
-    useAppStore.setState({
-      setActiveView,
-      createTab,
-      activeWorktreeId: 'wt-1',
-      detectedAgentIds: ['claude']
-    })
-    container = document.createElement('div')
-    document.body.appendChild(container)
-    root = createRoot(container)
-    await act(async () => {
-      root!.render(<SimpleModeNav />)
-    })
-
-    const button = container.querySelector<HTMLButtonElement>(
-      '[data-testid="simple-mode-nav-new-thread"]'
-    )
-    await act(async () => {
-      button?.click()
-    })
-
-    expect(createTab).toHaveBeenCalledWith('wt-1', undefined, undefined, {
-      viewMode: 'chat',
-      activate: true,
-      recordInteraction: true,
-      launchAgent: 'claude'
-    })
-  })
-
-  it('New thread does nothing without an active folder', async () => {
-    const setActiveView = vi.fn()
-    const createTab = vi.fn()
-    useAppStore.setState({ setActiveView, createTab, activeWorktreeId: null })
-    container = document.createElement('div')
-    document.body.appendChild(container)
-    root = createRoot(container)
-    await act(async () => {
-      root!.render(<SimpleModeNav />)
-    })
-
-    const button = container.querySelector<HTMLButtonElement>(
-      '[data-testid="simple-mode-nav-new-thread"]'
-    )
-    await act(async () => {
-      button?.click()
-    })
-
-    expect(setActiveView).not.toHaveBeenCalled()
+    expect(openNewThread).toHaveBeenCalledTimes(1)
     expect(createTab).not.toHaveBeenCalled()
   })
 })

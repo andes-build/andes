@@ -25,6 +25,7 @@ import { TUI_AGENT_CONFIG } from '../../../shared/tui-agent-config'
 import { repoIsRemote } from '../../../shared/agent-launch-remote'
 import { seedCommandCodeSubmittedPromptStatus } from '@/lib/command-code-prompt-status-seed'
 import type { TuiAgent } from '../../../shared/tui-agent'
+import type { ThreadScope } from '../../../shared/workspace-scope-types'
 import type { LaunchSource } from '../../../shared/telemetry-events'
 import { getConnectionIdFromState } from '@/lib/connection-context'
 import { resolveInitialNativeChatSessionOptions } from '@/components/native-chat/native-chat-launch-session-options'
@@ -52,6 +53,11 @@ export type LaunchAgentInNewTabArgs = {
   launchPlatform?: NodeJS.Platform
   /** Called after the prompt is actually delivered to the agent input path. */
   onPromptDelivered?: () => void
+  /** Spec 019: the scope this thread was born with, captured by the caller
+   *  before this call — never re-read later. Stamped on the created tab so
+   *  the thread screen can show it (see `ThreadScopeBadge`). Omitted for
+   *  launches outside simple mode's sidebar new-thread flow. */
+  threadScope?: ThreadScope
 }
 
 export type LaunchAgentInNewTabResult = {
@@ -60,7 +66,10 @@ export type LaunchAgentInNewTabResult = {
   pasteDraftAfterLaunch: boolean
   /** The host will publish and focus a structured tab asynchronously. */
   focusAfterMenuClose?: 'structured-session'
-  promptDeliveryResult?: Promise<{ delivered: boolean; failureNotified: boolean }>
+  promptDeliveryResult?: Promise<{
+    delivered: boolean
+    failureNotified: boolean
+  }>
 } | null
 
 export function shouldQueueTerminalFocusAfterMenuClose(
@@ -91,7 +100,8 @@ export function launchAgentInNewTab(args: LaunchAgentInNewTabArgs): LaunchAgentI
     launchSource,
     quickCommandLabel,
     launchPlatform,
-    onPromptDelivered
+    onPromptDelivered,
+    threadScope
   } = args
   const store = useAppStore.getState()
   const worktree = store.allWorktrees?.().find((entry: { id: string }) => entry.id === worktreeId)
@@ -203,6 +213,7 @@ export function launchAgentInNewTab(args: LaunchAgentInNewTabArgs): LaunchAgentI
   const tab = store.createTab(worktreeId, groupId, undefined, {
     launchAgent: agent,
     quickCommandLabel,
+    ...(threadScope ? { threadScope } : {}),
     ...initialViewModeProps
   })
   seedNativeChatAppliedSessionOptions(tab.id, agent, startupPlan.sessionOptions)
@@ -234,7 +245,11 @@ export function launchAgentInNewTab(args: LaunchAgentInNewTabArgs): LaunchAgentI
   if (hasPrompt && promptDelivery === 'draft' && pasteDraftAfterLaunch === null) {
     // Why: the draft rode in on argv (Claude --prefill etc.), so no paste runs
     // and deliverLaunchPromptToAgentTab never seeds. Mirror it into chat here.
-    seedNativeChatLaunchDraftForAgentTab({ tabId: tab.id, agent, text: trimmedPrompt })
+    seedNativeChatLaunchDraftForAgentTab({
+      tabId: tab.id,
+      agent,
+      text: trimmedPrompt
+    })
   }
   if (pasteDraftAfterLaunch !== null) {
     const timeoutNotice = createPasteReadinessTimeoutNotice({
@@ -259,7 +274,10 @@ export function launchAgentInNewTab(args: LaunchAgentInNewTabArgs): LaunchAgentI
         }
         onPromptDelivered?.()
       }
-      return { delivered, failureNotified: !delivered && timeoutNotice.wasNotified() }
+      return {
+        delivered,
+        failureNotified: !delivered && timeoutNotice.wasNotified()
+      }
     })
     if (promptDelivery === 'submit-after-ready') {
       promptDeliveryResult = deliveryPromise

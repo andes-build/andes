@@ -8,6 +8,8 @@ import {
   resolveSimpleModeThreadAgent,
   resolveSimpleModeThreadAgentArgs
 } from '@/lib/simple-mode-thread-launch'
+import { buildThreadScopeStartupMessage } from '@/lib/thread-scope-startup-message'
+import { resolveActiveWorkspaceScope } from '@/store/slices/workspace-scope'
 
 /**
  * Open a real thread in simple mode: launch a conversation-capable coding
@@ -27,6 +29,12 @@ import {
  * here instead of read from whatever another surface happened to populate.
  * Both dead ends — no folder, no conversation-capable agent — say so on screen
  * with an action; neither opens a terminal.
+ *
+ * Spec 019: the thread is born with the scope the sidebar selector had at
+ * this moment (`resolveActiveWorkspaceScope`) — a name and a slug, or the
+ * root. It rides in as this thread's first message
+ * (`buildThreadScopeStartupMessage`), so the agent already knows the scope
+ * the session contract asks for and never asks which one to use.
  */
 export async function openNewThread(): Promise<void> {
   const state = useAppStore.getState()
@@ -78,12 +86,22 @@ export async function openNewThread(): Promise<void> {
     return
   }
   const store = useAppStore.getState()
+  // Spec 019: capture the scope the sidebar selector had *right now* — never
+  // re-read later, so a selector change after this point never reaches back
+  // into this thread (see `decisions.md`, spec 019, criterion 2).
+  const threadScope = resolveActiveWorkspaceScope(
+    store.activeWorkspaceScopeSlug,
+    store.workspaceScopeOptions
+  )
   store.setActiveView('terminal')
   const launched = launchAgentInNewTab({
     agent,
     worktreeId,
     launchSource: 'sidebar',
-    agentArgs: resolveSimpleModeThreadAgentArgs(agent, store.settings)
+    agentArgs: resolveSimpleModeThreadAgentArgs(agent, store.settings),
+    threadScope,
+    prompt: buildThreadScopeStartupMessage(threadScope),
+    promptDelivery: 'auto-submit'
   })
   if (!launched) {
     toast.error(

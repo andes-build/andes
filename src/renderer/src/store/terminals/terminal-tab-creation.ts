@@ -129,6 +129,7 @@ export function createTerminalTabCreationActions(
           ...(startupCwd && startupCwd.length > 0 ? { startupCwd } : {}),
           ...(options?.forceHostRuntime ? { forceHostRuntime: true } : {}),
           ...(options?.launchAgent ? { launchAgent: options.launchAgent } : {}),
+          ...(options?.threadScope ? { threadScope: options.threadScope } : {}),
           // Why: mark click-caused (not work-caused) spawns so updateTabPtyId skips the activity/sortEpoch bump that would reorder Recent/Smart on click.
           ...(options?.pendingActivationSpawn ? { pendingActivationSpawn: true } : {})
         }
@@ -240,7 +241,10 @@ export function createTerminalTabCreationActions(
           activeGroupIdByWorktree: nextActiveGroupIdByWorktree,
           layoutByWorktree: {
             ...s.layoutByWorktree,
-            [worktreeId]: s.layoutByWorktree[worktreeId] ?? { type: 'leaf', groupId: group.id }
+            [worktreeId]: s.layoutByWorktree[worktreeId] ?? {
+              type: 'leaf',
+              groupId: group.id
+            }
           },
           activeTabId: shouldActivate ? tab.id : orphanCleanupPatch.activeTabId,
           activeTabIdByWorktree: {

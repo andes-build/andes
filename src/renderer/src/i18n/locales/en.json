@@ -16733,6 +16733,10 @@
         "copy": "Copy message"
       },
       "scrollMessageToTop": "Scroll this message to top",
+      "threadScope": {
+        "root": "My work",
+        "workspace": "{{value0}}"
+      },
       "loadingEarlier": "Loading…",
       "loadEarlier": "Load earlier messages",
       "question": {

@@ -31,3 +31,9 @@ export type WorkspaceFileTreeResult = {
 export type WorkspaceFileReadResult = {
   content: string
 }
+
+/** The scope a thread launched with (spec 019): captured once, at launch
+ *  time, from the sidebar selector. A thread keeps this value for its whole
+ *  life — changing the selector later only changes what the *next* thread
+ *  inherits, never an already-open one (see `decisions.md`, spec 019). */
+export type ThreadScope = { kind: 'root' } | { kind: 'workspace'; slug: string; name: string }

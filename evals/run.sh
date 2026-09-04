@@ -1253,6 +1253,80 @@ spec017_criterio8_chequeo_funcional() {
   fi
 }
 
+# --- specs/done/019-el-hilo-hereda-el-alcance.md ---
+
+spec019_unit() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/open-new-thread.test.ts \
+    src/renderer/src/lib/thread-scope-startup-message.test.ts \
+    src/renderer/src/components/native-chat/ThreadScopeBadge.test.tsx \
+    src/renderer/src/lib/launch-agent-in-new-tab-thread-scope.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec019#1 el hilo nace con el alcance del selector como primer mensaje (root)"
+    ok "spec019#2 el hilo nace con el alcance del selector como primer mensaje (workspace)"
+    ok "spec019#3 un slug de selector que ya no existe cae a la raíz, igual que Files (spec 010)"
+    ok "spec019#4 el mensaje nombra --root, nunca --workspace, para la raíz"
+    ok "spec019#5 el mensaje nombra --workspace <slug>, nunca --root, para un workspace"
+    ok "spec019#6 el mensaje nunca lleva un signo de pregunta"
+    ok "spec019#7 el badge muestra \"My work\" para un hilo nacido en la raíz"
+    ok "spec019#8 el badge muestra el nombre del workspace para un hilo nacido ahí"
+    ok "spec019#9 sin threadScope capturado, el badge no se dibuja"
+    ok "spec019#13 launchAgentInNewTab estampa threadScope en el tab, y lo omite si no se lo pasan"
+  else
+    ko "spec019#1 el hilo nace con el alcance del selector como primer mensaje (root)"
+    ko "spec019#2 el hilo nace con el alcance del selector como primer mensaje (workspace)"
+    ko "spec019#3 un slug de selector que ya no existe cae a la raíz, igual que Files (spec 010)"
+    ko "spec019#4 el mensaje nombra --root, nunca --workspace, para la raíz"
+    ko "spec019#5 el mensaje nombra --workspace <slug>, nunca --root, para un workspace"
+    ko "spec019#6 el mensaje nunca lleva un signo de pregunta"
+    ko "spec019#7 el badge muestra \"My work\" para un hilo nacido en la raíz"
+    ko "spec019#8 el badge muestra el nombre del workspace para un hilo nacido ahí"
+    ko "spec019#9 sin threadScope capturado, el badge no se dibuja"
+    ko "spec019#13 launchAgentInNewTab estampa threadScope en el tab, y lo omite si no se lo pasan"
+    ev "vitest en rojo sobre open-new-thread.test.ts / thread-scope-startup-message.test.ts / ThreadScopeBadge.test.tsx / launch-agent-in-new-tab-thread-scope.test.ts"
+  fi
+}
+
+spec019_criterio5_alcance_congelado() {
+  local reactive_read
+  reactive_read=$(grep -c "activeWorkspaceScopeSlug" src/renderer/src/components/native-chat/ThreadScopeBadge.tsx 2>/dev/null; true)
+  if [ "$reactive_read" = "0" ]; then
+    ok "spec019#12 cambiar el selector después de abierto un hilo no le toca el alcance a ese hilo (ThreadScopeBadge lee threadScope, nunca el selector)"
+  else
+    ko "spec019#12 cambiar el selector después de abierto un hilo no le toca el alcance a ese hilo"
+    ev "ThreadScopeBadge.tsx referencia activeWorkspaceScopeSlug=$reactive_read (debe ser 0 — leería el selector en vivo)"
+  fi
+}
+
+spec019_criterio6_prueba_de_interfaz_obligatoria() {
+  local spec_file question_guard root_assert workspace_assert
+  spec_file=tests/e2e/simple-mode-thread-inherits-scope.spec.ts
+  question_guard=$(grep -c "assertNoScopeQuestion" "$spec_file" 2>/dev/null; true)
+  root_assert=$(grep -c "spec019#10" "$spec_file" 2>/dev/null; true)
+  workspace_assert=$(grep -c "spec019#11" "$spec_file" 2>/dev/null; true)
+  if [ -f "$spec_file" ] && [ "$question_guard" -ge 1 ] && [ "$root_assert" -ge 1 ] && [ "$workspace_assert" -ge 1 ]; then
+    ok "spec019#10 prueba de interfaz obligatoria: hilo con la raíz elegida, primer intercambio sin pregunta de alcance"
+    ok "spec019#11 prueba de interfaz obligatoria: hilo con un workspace elegido, primer intercambio sin pregunta de alcance"
+    ev "e2e ($spec_file) corrido aparte con --workers=1 — evidencia pegada en la spec archivada."
+  else
+    ko "spec019#10 prueba de interfaz obligatoria: hilo con la raíz elegida, primer intercambio sin pregunta de alcance"
+    ko "spec019#11 prueba de interfaz obligatoria: hilo con un workspace elegido, primer intercambio sin pregunta de alcance"
+    ev "e2e=$spec_file · assertNoScopeQuestion=$question_guard (>=1) · spec019#10=$root_assert (>=1) · spec019#11=$workspace_assert (>=1)"
+  fi
+}
+
+spec019_criterio14_chequeo_funcional() {
+  local shots
+  shots=$(find docs/research -type d -name '*chequeo-funcional-spec-019' -exec find {} -name '*.png' \; 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$shots" -ge 6 ]; then
+    ok "spec019#14 chequeo funcional en la app real, con el agente Claude real: seis pasos recorridos con una captura cada uno"
+  else
+    ko "spec019#14 chequeo funcional en la app real, con el agente Claude real: seis pasos recorridos con una captura cada uno"
+    ev "capturas en docs/research/<fecha>-chequeo-funcional-spec-019/=$shots (deben ser 6 o más)"
+  fi
+}
 
 spec014_criterio1_sin_archivos_de_marca_visual() {
   local name_hits svg_content_hits
@@ -1338,6 +1412,10 @@ spec017_criterio1_2_3_prueba_de_interfaz
 spec017_criterio6_fixture_sin_puerta
 spec017_criterio7_codigo_sano
 spec017_criterio8_chequeo_funcional
+spec019_unit
+spec019_criterio5_alcance_congelado
+spec019_criterio6_prueba_de_interfaz_obligatoria
+spec019_criterio14_chequeo_funcional
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

@@ -1151,3 +1151,18 @@ la suite, que asume modo desarrollo (spec 002, criterio 7).
 
 **La invalidaría**: que el modo simple pase a ser el modo por omisión de la suite e2e, momento en el
 que la omisión se invierte y la opción sobra.
+
+## 2026-09-04 · [spec 019] El alcance de un hilo se congela en su primer mensaje, nunca se relee del selector
+
+**Qué se decide**: `openNewThread` captura el alcance activo del selector (root o workspace) una
+sola vez, en el momento del lanzamiento, y lo manda como primer mensaje del hilo. Ese valor queda
+estampado en el `TerminalTab` (`threadScope`); nada lo reconcilia después. Cambiar el selector
+después de abierto un hilo no le toca el alcance a ese hilo — solo cambia lo que hereda el próximo.
+
+**Por qué**: es el piso mínimo que pidió Peter para el criterio 2 de la spec 019, y el comportamiento
+que menos sorprende — un hilo es una conversación con un agente que ya arrancó sobre una carpeta
+real (`--root` o `--workspace <slug>`); cambiarle el badge sin reiniciar esa sesión sería cosmético
+y falso.
+
+**La invalidaría**: que el hilo pase a poder cambiar de alcance en caliente, reiniciando la sesión
+del agente — eso exige un mecanismo nuevo, no alcanza con leer el store en el render.

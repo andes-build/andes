@@ -508,3 +508,34 @@ selector de la interfaz muestra la ballena.
   configuración; el binario `orca` (spec 007); los `orca-plugin.json` de ejemplo y los tests que
   fijan `resources/darwin/bin/orca` / `linux/bin/orca-ide` / `win32/bin/orca.cmd` (nombres del
   binario, no marca visual).
+
+## El hilo hereda el alcance del selector (spec 019)
+
+Cierra el criterio 6 diferido de la spec 011: el contrato de sesión del núcleo
+(`vendor/ai-first-os-core/core/CLAUDE.md`, "When the session starts") exige que el primer mensaje de
+una sesión nombre su alcance —un workspace o la raíz— o el agente pregunta cuál usar. El hilo hoy ya
+sabe ese alcance (lo eligió el selector de la spec 010); esta spec se lo dice al agente.
+
+- **Captura, no lectura reactiva**: `openNewThread` (`sidebar/workspace-scope/open-new-thread.ts`)
+  resuelve `resolveActiveWorkspaceScope(activeWorkspaceScopeSlug, workspaceScopeOptions)` una sola
+  vez, en el momento del lanzamiento — nunca se vuelve a leer para ese hilo. El valor viaja como
+  `threadScope` hasta `launchAgentInNewTab` (`src/renderer/src/lib/launch-agent-in-new-tab.ts`,
+  parámetro nuevo), que lo estampa en las opciones de `store.createTab` solo si vino. `createTab`
+  (`store/terminals/terminal-actions.ts` + `terminal-tab-creation.ts`) lo copia al `TerminalTab`
+  (`shared/terminal-tab-types.ts`, campo `threadScope?: ThreadScope`, tipo compartido en
+  `shared/workspace-scope-types.ts`). Cambiar el selector después no reconcilia nada: es la ausencia
+  de ese mecanismo la que cumple la decisión de `decisions.md` (2026-09-04) — un hilo viejo conserva
+  su alcance, el próximo hereda el nuevo.
+- **El mensaje** (`src/renderer/src/lib/thread-scope-startup-message.ts`,
+  `buildThreadScopeStartupMessage`): texto en inglés con el vocabulario exacto del contrato
+  (`--root` / `--workspace <slug>`) y la instrucción explícita de no preguntar. Va como `prompt` de
+  `launchAgentInNewTab` con `promptDelivery: 'auto-submit'` — el mismo mecanismo de argv que ya usan
+  `resolveSimpleModeThreadAgentArgs` y el resto del lanzamiento (Claude tiene `promptInjectionMode:
+  'argv'`, spec 016), así que llega al agente antes de que la persona escriba nada.
+- **En pantalla** (`src/renderer/src/components/native-chat/ThreadScopeBadge.tsx`): lee
+  `tab.threadScope` —nunca el selector en vivo— y muestra "My work" o el nombre del workspace.
+  Montado arriba de la conversación en `TerminalPaneNativeChatPortal.tsx` (único cambio de layout).
+  Catálogo: `components.native-chat.threadScope.{root,workspace}` en `en.json`.
+
+Diferido, sin implementar: que un hilo ya abierto pueda cambiar de alcance en caliente (ver
+`decisions.md`); el canal de datos del permiso (criterio 2b de la spec 011, sin tocar).

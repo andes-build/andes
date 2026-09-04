@@ -1450,3 +1450,42 @@ función del camino lee el transcripto de la terminal.
 la tarjeta vieja los reconstruía leyendo la pantalla porque no tenía otra fuente. Leer la pantalla
 es lo que hacía que la tarjeta fuera una imitación.
 **La invalidaría**: un pedido de permiso cuyo texto para la persona no viaje en el propio pedido.
+
+## 2026-09-04 · [spec 012] El carril de Claude convive con el de Codex detrás de un router
+
+**Qué se decide**: el host sigue teniendo un solo lugar para el adaptador. El segundo proveedor
+entra como `StructuredAgentSessionAdapterRouter`
+(`src/main/native-chat/agent-session-wire/structured-agent-session-adapter-router.ts`), que enruta
+por el carril que adquirió cada sesión y nunca por el prefijo de su id.
+**Por qué**: el arriendo, el journal y la cerca son del host, no de un proveedor; un segundo host
+duplicaría las tres cosas. Adivinar el carril por el prefijo del id pondría la respuesta de un
+carril en el hijo del otro. El router pregunta a cada carril por `adapterSupportsCreate` y no por
+`supportsCreate` directo, porque el adaptador de Codex nunca declaró ese método y contesta por su
+respaldo.
+**La invalidaría**: un tercer proveedor cuyo ciclo de vida no entre en el contrato
+`StructuredAgentSessionAdapter`.
+
+## 2026-09-04 · [spec 012] Lo que el carril de Claude no puede dar, lo declara
+
+**Qué se decide**: cuatro cosas que Codex tiene y Claude no, y que el adaptador rechaza en vez de
+simular: los subagentes (los cuadros con `parent_tool_use_id` entran como ítems comunes y la tarjeta
+sigue diferida, `tsk-172`), las preguntas (`answerPrompt` rechaza `kind: 'question'`), las opciones
+de sesión (`setOption` rechaza) y los diffs (una edición de Claude es una llamada a herramienta y se
+queda así).
+**Por qué**: cada una de las cuatro tiene en Codex un canal propio del app-server que en el cable de
+Claude no existe. Contestar cualquiera de ellas con algo inventado le devolvería al agente una
+respuesta que la persona nunca dio.
+**La invalidaría**: que el cable de Claude abra un canal para alguna de las cuatro.
+
+## 2026-09-04 · [spec 012] El criterio 9 no pasa: el hilo del modo simple no llega al carril nuevo
+
+**Qué se decide**: se reporta, no se arregla por cuenta propia. El "New thread" del modo simple no
+puede tomar el camino estructurado porque el portón de `launch-agent-in-new-tab.ts` exige que no
+haya primer mensaje, y el modo simple siempre manda uno —el del alcance del hilo, obligatorio desde
+la spec 019—. `agentSession.create` no tiene ranura para ese mensaje.
+**Por qué**: darle una ranura, o mandarlo como primer turno después de crear la sesión, cambia el
+comportamiento del modo simple y agrega un segundo emisor sobre la misma sesión; las dos son
+decisiones de producto que la spec 012 no tomó. El chequeo funcional quedó registrado como
+incompleto en `docs/research/2026-09-04-chequeo-funcional-spec-012/`.
+**La invalidaría**: una decisión sobre cómo el carril estructurado recibe el primer mensaje de un
+hilo.

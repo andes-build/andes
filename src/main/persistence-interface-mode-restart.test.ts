@@ -49,11 +49,43 @@ describe('interfaceMode across a restart', () => {
     expect(diskInterfaceMode()).toBe('simple')
   })
 
-  it('REPRO: the env override must not be written back to disk', async () => {
+  it('keeps developer on disk when the operator chose it and no env override is set', async () => {
+    writeDataFile(persistedWithMode('simple'))
+    const store = await createStore()
+    store.updateSettings({ interfaceMode: 'developer' })
+    store.flushOrThrow()
+    expect(diskInterfaceMode()).toBe('developer')
+  })
+
+  it('does not write the env override back to disk', async () => {
     writeDataFile(persistedWithMode('simple'))
     process.env.ANDES_INTERFACE_MODE = 'developer'
     const store = await createStore()
     expect(store.getSettings().interfaceMode).toBe('developer')
+    store.updateSettings({ theme: 'dark' })
+    store.flushOrThrow()
+    expect(diskInterfaceMode()).toBe('simple')
+  })
+
+  it('an explicit choice made while the env door is open still reaches disk', async () => {
+    writeDataFile(persistedWithMode('simple'))
+    process.env.ANDES_INTERFACE_MODE = 'developer'
+    const store = await createStore()
+    store.updateSettings({ interfaceMode: 'simple' })
+    store.flushOrThrow()
+    expect(diskInterfaceMode()).toBe('simple')
+    store.updateSettings({ interfaceMode: 'developer' })
+    store.flushOrThrow()
+    expect(diskInterfaceMode()).toBe('developer')
+  })
+
+  it('a profile with no interfaceMode on disk stays simple after an env-door launch', async () => {
+    const base = getDefaultPersistedState(testState.dir)
+    const settings = { ...base.settings } as Record<string, unknown>
+    delete settings.interfaceMode
+    writeDataFile({ ...base, settings })
+    process.env.ANDES_INTERFACE_MODE = 'developer'
+    const store = await createStore()
     store.updateSettings({ theme: 'dark' })
     store.flushOrThrow()
     expect(diskInterfaceMode()).toBe('simple')

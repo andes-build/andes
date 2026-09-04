@@ -73,7 +73,7 @@ test('the chosen interface mode survives closing and reopening the app, with a r
     await expect(third.page.getByText(/Attached worktrees/i)).toHaveCount(0)
     await expect(third.page.getByRole('button', { name: /New worktree/i })).toHaveCount(0)
   } finally {
-    for (const app of launched.reverse()) {
+    for (const app of launched.toReversed()) {
       try {
         await session.close(app)
       } catch {
@@ -108,7 +108,7 @@ test('a launch with ANDES_INTERFACE_MODE=developer does not convert the stored p
     await expect.poll(() => readInterfaceMode(reopened.page)).toBe('simple')
     await expect(reopened.page.getByTestId('simple-mode-nav')).toBeVisible()
   } finally {
-    for (const app of launched.reverse()) {
+    for (const app of launched.toReversed()) {
       try {
         await session.close(app)
       } catch {

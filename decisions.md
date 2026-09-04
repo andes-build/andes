@@ -1118,3 +1118,36 @@ así que la evidencia de un criterio moría en la máquina del agente que lo cor
 
 **La invalidaría**: que la evidencia pase a vivir fuera del repo con una referencia estable desde la
 spec.
+
+## 2026-09-04 · [spec 017] `ANDES_INTERFACE_MODE` es una superposición de arranque y nunca se escribe en disco
+
+**Qué se decide**: `state.settings.interfaceMode` sigue teniendo el valor efectivo (la variable gana
+sobre el valor guardado, como declara la spec 002), pero el serializador escribe el valor persistido
+que `StoreRuntimeState.persistedInterfaceMode` recuerda desde la carga. Una escritura explícita
+—`updateSettings({ interfaceMode })`, el Option-clic— actualiza ese valor y sí llega al disco.
+
+**Por qué**: el valor superpuesto se serializaba junto con el resto de los settings, así que una
+sola arrancada con la variable puesta convertía el perfil a `developer` de forma permanente y el
+modo del operador no sobrevivía al reinicio siguiente. Se descartaron dos alternativas: aplicar la
+superposición en `getSettings()` —devuelve `state.settings` por identidad y tiene más de cuarenta
+llamadores en el proceso principal, cambiarlo a un objeto nuevo por llamada es un riesgo
+desproporcionado— y honrar la variable solo cuando no hay valor guardado, que contradice la regla de
+la spec 002 ("gana siempre sobre el valor persistido") y rompe la suite e2e existente, que se apoya
+en que la variable pise perfiles ya sembrados.
+
+**La invalidaría**: que se decida que la variable de entorno debe ser una preferencia y no una
+puerta de arranque, momento en el que el valor superpuesto vuelve a ser el que se guarda.
+
+## 2026-09-04 · [spec 017] El fixture de reinicio deja elegir si abre la puerta de entorno
+
+**Qué se decide**: `createRestartSession` acepta `{ interfaceModeEnvDoor: 'developer' | 'off' }`,
+con `'developer'` por omisión. Con `'off'` ninguna arrancada de esa sesión define
+`ANDES_INTERFACE_MODE`.
+
+**Por qué**: el fixture fijaba la variable en las dos arrancadas, así que ninguna prueba de reinicio
+podía observar la preferencia guardada — la prueba que la spec 010 dejó en `test.fixme` medía el
+fixture, no el producto. El valor por omisión se mantiene en `developer` para no tocar el resto de
+la suite, que asume modo desarrollo (spec 002, criterio 7).
+
+**La invalidaría**: que el modo simple pase a ser el modo por omisión de la suite e2e, momento en el
+que la omisión se invierte y la opción sobra.

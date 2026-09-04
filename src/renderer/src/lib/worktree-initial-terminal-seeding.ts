@@ -27,6 +27,7 @@ import {
   type IssueCommandLaunch
 } from '@/lib/worktree-setup-issue-command-queue'
 import { applyDefaultTerminalTabs } from '@/lib/worktree-default-terminal-tabs'
+import { INTERFACE_MODE_SIMPLE } from '../../../shared/interface-mode'
 
 function getSetupRunnerCommandPlatformForLaunch(setup: WorktreeSetupLaunch): 'windows' | 'posix' {
   return getSetupRunnerCommandPlatformForPath(
@@ -124,8 +125,15 @@ export function ensureWorktreeHasInitialTerminal(
   // Why: an execution host that has not answered is not a host with no terminals; seeding into that
   // gap is what adds a tab per launch (STA-4658). Explicit launch work below is a request to create
   // a terminal now, so it stays ungated.
+  // Why (spec 016): simple mode has no bare terminal to offer. Activating a
+  // folder there used to seed "Terminal 1" on its own, which is a developer
+  // surface the mode promises not to show; the thread is opened on purpose from
+  // "New thread". Explicit launch work below still creates its surface.
+  const autoCreateIsBlockedByInterfaceMode =
+    ownerState.settings?.interfaceMode === INTERFACE_MODE_SIMPLE
   const shouldAutoCreate =
     hostAuthority === 'none' &&
+    !autoCreateIsBlockedByInterfaceMode &&
     shouldAutoCreateInitialTerminal(renderableTabCount, shouldHonourClosedTerminalTombstone)
   const shouldCreateForExplicitWork = renderableTabCount === 0 && hasExplicitLaunchWork
   if (!shouldAutoCreate && !shouldCreateForExplicitWork) {

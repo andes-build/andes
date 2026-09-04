@@ -28,24 +28,44 @@ lee solo: nada de acá asume que el brain esté al alcance.
 
 📌 Peter, 2026-09-04. El trabajo se reparte entre **varios agentes al mismo tiempo**, no de a uno.
 
+**Lo que hace la diferencia no es cuántos agentes hay: es que ninguno espera.** Las dos reglas que
+siguen valen más que todas las demás juntas, y están primero por eso. El 2026-09-04, un día entero
+de trabajo se fue en estas dos cosas y no en escribir código.
+
+### 1. Ningún agente corre la suite completa
+
+La suite entera tarda **catorce minutos**. Un agente que la corre para verificar el cambio de una
+pantalla tiró a la basura el paralelismo que lo trajo, y si la corre tres veces perdió tres cuartos
+de hora.
+
+- Cada agente corre **solo las pruebas de lo suyo**: los archivos que tocó y sus vecinos directos.
+- `evals/run.sh` sí se corre —es rápido—, **dos veces**: miente en su primera corrida sobre un
+  worktree recién creado (dio 30 rojos y, sin tocar nada, todo verde en la segunda).
+- **La suite completa la corre una sola vez quien mergea, en el Gate 2.** Es el único lugar donde
+  tiene sentido: sobre el resultado del merge, que es lo que de verdad se está aprobando.
+
+### 2. Ningún agente se duerme esperando
+
+Si un agente tiene que correr algo largo, lo corre y **espera el resultado en la misma vuelta**.
+Nunca lanza algo en segundo plano y se detiene: un agente detenido esperando un monitor no está
+trabajando, y quien lo delegó no se entera de que se paró. El 2026-09-04 esto pasó **cuatro veces**
+en una sola spec, y fue lo que más demoró el día.
+
+Corolario para quien delega: **antes de relanzar un agente hay que matarlo explícitamente.** Que su
+aviso diga "terminó" no quiere decir que esté muerto — puede estar dormido esperando. Dos agentes
+vivos sobre el mismo worktree es el peor accidente del sistema, y el 2026-09-04 ocurrió dos veces.
+
+### El resto
+
 - **Se paraleliza por superficie, no por defecto.** Dos specs van en paralelo cuando tocan archivos
   distintos. Tres defectos de la misma pantalla son **una** spec: partirlos crea tres ramas peleando
   por los mismos archivos, y resolver esos conflictos cuesta más que el trabajo.
 - **Un agente por worktree, siempre.** El worktree lo crea quien delega, con su rama, antes de
   largar al agente.
-- **Cada agente corre solo las pruebas de lo suyo.** La suite completa tarda catorce minutos y la
-  corre una sola vez quien mergea, en el Gate 2. Un agente que corre la suite entera para verificar
-  un cambio de una pantalla desperdicia el paralelismo que lo trajo.
-- **Ningún agente se duerme esperando.** Si tiene que correr algo largo, lo corre y espera el
-  resultado en la misma vuelta. Un agente detenido esperando un monitor no está trabajando, y quien
-  lo delegó no se entera: el 2026-09-04 esto pasó cuatro veces y fue lo que más demoró el día.
 - **Cada agente usa su propio perfil para el chequeo en la app real**, para que dos instancias de
   Electron no choquen en la misma máquina.
 - **Los merges son de a uno y los hace la persona.** Quien mergea segundo trae `main` a su rama y
   resuelve el conflicto ahí, nunca en `main`.
-- **Antes de relanzar un agente hay que matarlo explícitamente.** Que su aviso diga "terminó" no
-  quiere decir que esté muerto: puede estar dormido esperando. Dos agentes vivos sobre el mismo
-  worktree es el peor accidente del sistema y el 2026-09-04 ocurrió dos veces.
 
 ## Definition of Done
 

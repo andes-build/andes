@@ -24,6 +24,29 @@ lee solo: nada de acá asume que el brain esté al alcance.
 - El PR lleva la evidencia de los evals. El que lo revisa no reporta nada que no pueda citar
   textualmente con `archivo:línea`, ni nada sin nombrar qué se rompe.
 
+## Paralelizar el trabajo
+
+📌 Peter, 2026-09-04. El trabajo se reparte entre **varios agentes al mismo tiempo**, no de a uno.
+
+- **Se paraleliza por superficie, no por defecto.** Dos specs van en paralelo cuando tocan archivos
+  distintos. Tres defectos de la misma pantalla son **una** spec: partirlos crea tres ramas peleando
+  por los mismos archivos, y resolver esos conflictos cuesta más que el trabajo.
+- **Un agente por worktree, siempre.** El worktree lo crea quien delega, con su rama, antes de
+  largar al agente.
+- **Cada agente corre solo las pruebas de lo suyo.** La suite completa tarda catorce minutos y la
+  corre una sola vez quien mergea, en el Gate 2. Un agente que corre la suite entera para verificar
+  un cambio de una pantalla desperdicia el paralelismo que lo trajo.
+- **Ningún agente se duerme esperando.** Si tiene que correr algo largo, lo corre y espera el
+  resultado en la misma vuelta. Un agente detenido esperando un monitor no está trabajando, y quien
+  lo delegó no se entera: el 2026-09-04 esto pasó cuatro veces y fue lo que más demoró el día.
+- **Cada agente usa su propio perfil para el chequeo en la app real**, para que dos instancias de
+  Electron no choquen en la misma máquina.
+- **Los merges son de a uno y los hace la persona.** Quien mergea segundo trae `main` a su rama y
+  resuelve el conflicto ahí, nunca en `main`.
+- **Antes de relanzar un agente hay que matarlo explícitamente.** Que su aviso diga "terminó" no
+  quiere decir que esté muerto: puede estar dormido esperando. Dos agentes vivos sobre el mismo
+  worktree es el peor accidente del sistema y el 2026-09-04 ocurrió dos veces.
+
 ## Definition of Done
 
 - Los criterios de la spec pasan sus evals, con la evidencia registrada. Afirmar sin evidencia no

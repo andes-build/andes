@@ -57,16 +57,17 @@ describe('repo slice skipped-onboarding folder startup', () => {
       'folder-1::/folder',
       {
         sidebarRevealBehavior: 'auto',
+        // Spec 016: the default mode is simple, and simple mode does not carry
+        // the profile's permission-bypass argument into the seeded folder agent.
         startup: {
-          command: "codex '--dangerously-bypass-approvals-and-sandbox'",
+          command: 'codex',
           env: {},
           launchAgent: 'codex',
           launchConfig: {
-            agentCommand: "codex '--dangerously-bypass-approvals-and-sandbox'",
-            agentArgs: '--dangerously-bypass-approvals-and-sandbox',
+            agentCommand: 'codex',
+            agentArgs: '',
             agentEnv: {}
           },
-          sessionOptions: undefined,
           telemetry: {
             agent_kind: 'codex',
             launch_source: 'onboarding',

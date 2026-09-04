@@ -42,9 +42,13 @@ describe('buildOnboardingFolderAgentStartup', () => {
     expect(startup).toBeUndefined()
   })
 
+  // Why: a terminal-default launch only exists in developer mode. Simple mode
+  // (spec 011) opens the thread in chat regardless of the two opt-in flags, so
+  // the mode is declared here instead of inherited from the defaults.
   it('omits native-chat preferences from terminal-default folder launches', () => {
     const startup = buildOnboardingFolderAgentStartup({
       ...getDefaultSettings('/tmp/orca-workspaces'),
+      interfaceMode: 'developer',
       defaultTuiAgent: 'codex',
       experimentalNativeChat: true,
       openAgentTabsInChatByDefault: false,

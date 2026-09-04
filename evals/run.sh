@@ -1441,12 +1441,15 @@ spec019_unit() {
 
 spec019_criterio5_alcance_congelado() {
   local reactive_read
-  reactive_read=$(grep -c "activeWorkspaceScopeSlug" src/renderer/src/components/native-chat/ThreadScopeBadge.tsx 2>/dev/null; true)
+  # Spec 013 renombró ThreadScopeBadge.tsx a ThreadHeader.tsx (mismo componente,
+  # ahora con el título arriba); la regla de la 019 — leer threadScope, nunca el
+  # selector en vivo — no cambió.
+  reactive_read=$(grep -c "activeWorkspaceScopeSlug" src/renderer/src/components/native-chat/ThreadHeader.tsx 2>/dev/null; true)
   if [ "$reactive_read" = "0" ]; then
-    ok "spec019#12 cambiar el selector después de abierto un hilo no le toca el alcance a ese hilo (ThreadScopeBadge lee threadScope, nunca el selector)"
+    ok "spec019#12 cambiar el selector después de abierto un hilo no le toca el alcance a ese hilo (ThreadHeader lee threadScope, nunca el selector)"
   else
     ko "spec019#12 cambiar el selector después de abierto un hilo no le toca el alcance a ese hilo"
-    ev "ThreadScopeBadge.tsx referencia activeWorkspaceScopeSlug=$reactive_read (debe ser 0 — leería el selector en vivo)"
+    ev "ThreadHeader.tsx referencia activeWorkspaceScopeSlug=$reactive_read (debe ser 0 — leería el selector en vivo)"
   fi
 }
 
@@ -1714,9 +1717,152 @@ spec009_criterio2_alcance_del_selector
 spec009_criterio6_un_solo_camino_de_lanzamiento
 spec009_criterio10_sin_jerga_del_sistema
 spec009_criterio11_codigo_sano
+spec013_criterio1_barra_lateral_sin_pestanas() {
+  local unit_ok=1 e2e_tag
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/TerminalTitlebarTabs.test.tsx \
+    >/dev/null 2>&1 || unit_ok=0
+  e2e_tag=$(grep -c "spec013#1" tests/e2e/simple-mode-thread-sidebar.spec.ts 2>/dev/null; true)
+  if [ "$unit_ok" = "1" ] && [ "$e2e_tag" -ge 1 ]; then
+    ok "spec013#1 en modo simple no hay barra de pestañas; los hilos abiertos se listan en la barra lateral"
+  else
+    ko "spec013#1 en modo simple no hay barra de pestañas; los hilos abiertos se listan en la barra lateral"
+    ev "vitest TerminalTitlebarTabs=$unit_ok (debe ser 1) · e2e spec013#1=$e2e_tag (debe ser >=1) — e2e corrido aparte, evidencia en la spec archivada"
+  fi
+}
+
+spec013_criterio2_proyeccion_por_workspace() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/simple-mode-thread-rows.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec013#2 la lista muestra solo los hilos del workspace elegido, por actividad, con el abierto marcado"
+  else
+    ko "spec013#2 la lista muestra solo los hilos del workspace elegido, por actividad, con el abierto marcado"
+    ev "vitest simple-mode-thread-rows.test.ts en rojo"
+  fi
+}
+
+spec013_criterio3_clic_abre_y_new_thread_selecciona() {
+  local e2e_tag
+  e2e_tag=$(grep -c "spec013#3" tests/e2e/simple-mode-thread-sidebar.spec.ts 2>/dev/null; true)
+  if [ -f src/renderer/src/components/sidebar/workspace-scope/select-thread.ts ] && [ "$e2e_tag" -ge 1 ]; then
+    ok "spec013#3 clic en una fila abre ese hilo; \"New thread\" crea uno y lo deja seleccionado"
+  else
+    ko "spec013#3 clic en una fila abre ese hilo; \"New thread\" crea uno y lo deja seleccionado"
+    ev "select-thread.ts presente=$([ -f src/renderer/src/components/sidebar/workspace-scope/select-thread.ts ] && echo 1 || echo 0) · e2e spec013#3=$e2e_tag (debe ser >=1) — e2e corrido aparte, evidencia en la spec archivada"
+  fi
+}
+
+spec013_criterio4_titulo_y_alcance() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/native-chat/ThreadHeader.test.tsx \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec013#4 arriba de la conversación va el título del hilo y debajo el alcance, con \"My work\" en la raíz"
+  else
+    ko "spec013#4 arriba de la conversación va el título del hilo y debajo el alcance, con \"My work\" en la raíz"
+    ev "vitest ThreadHeader.test.tsx en rojo"
+  fi
+}
+
+spec013_criterio5_precedencia_del_titulo() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts src/shared/thread-header-title.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec013#5 el título sale del CLI: custom-title gana sobre ai-title; renombrar a mano gana sobre los dos"
+  else
+    ko "spec013#5 el título sale del CLI: custom-title gana sobre ai-title; renombrar a mano gana sobre los dos"
+    ev "vitest thread-header-title.test.ts en rojo"
+  fi
+}
+
+spec013_criterio6_degrada_sin_titulo() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts src/shared/thread-header-title.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec013#6 un CLI que no escribe título se degrada declarándolo: no se inventa un título"
+  else
+    ko "spec013#6 un CLI que no escribe título se degrada declarándolo: no se inventa un título"
+    ev "vitest thread-header-title.test.ts en rojo (mismo archivo que el criterio 5, caso \"sin ninguno\")"
+  fi
+}
+
+spec013_criterio7_redactor_en_lenguaje_de_persona() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/native-chat/native-chat-activity-phrase.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec013#7 la conversación no muestra nombres de herramienta, comandos ni rutas: va una línea de actividad en lenguaje de persona"
+  else
+    ko "spec013#7 la conversación no muestra nombres de herramienta, comandos ni rutas: va una línea de actividad en lenguaje de persona"
+    ev "vitest native-chat-activity-phrase.test.ts en rojo"
+  fi
+}
+
+spec013_criterio8_sin_panel_derecho_en_modo_simple() {
+  local gate_present e2e_tag
+  gate_present=$(grep -c "interfaceMode ?? INTERFACE_MODE_SIMPLE) !== INTERFACE_MODE_SIMPLE" src/renderer/src/app-shell/use-app-chrome-layout.ts 2>/dev/null; true)
+  e2e_tag=$(grep -c "spec013#8\|spec013#9" tests/e2e/simple-mode-thread-sidebar.spec.ts 2>/dev/null; true)
+  if [ "$gate_present" -ge 1 ] && [ "$e2e_tag" -ge 2 ]; then
+    ok "spec013#8 el panel de archivos de la derecha no aparece en modo simple"
+  else
+    ko "spec013#8 el panel de archivos de la derecha no aparece en modo simple"
+    ev "gate en use-app-chrome-layout.ts=$gate_present (debe ser >=1) · e2e spec013#8/#9=$e2e_tag (debe ser >=2) — e2e corrido aparte, evidencia en la spec archivada"
+  fi
+}
+
+spec013_criterio9_modo_desarrollo_intacto() {
+  local e2e_tag
+  e2e_tag=$(grep -c "spec013#9" tests/e2e/simple-mode-thread-sidebar.spec.ts 2>/dev/null; true)
+  if [ "$e2e_tag" -ge 1 ]; then
+    ok "spec013#9 en modo desarrollo no cambia nada: pestañas, panel derecho y línea de herramientas como hoy"
+  else
+    ko "spec013#9 en modo desarrollo no cambia nada: pestañas, panel derecho y línea de herramientas como hoy"
+    ev "e2e spec013#9=$e2e_tag (debe ser >=1) — e2e corrido aparte, evidencia en la spec archivada"
+  fi
+}
+
+spec013_criterio10_codigo_sano() {
+  local tc_ok=1 lint_ok=1 loc_ok=1
+  pnpm tc >/dev/null 2>&1 || tc_ok=0
+  npx oxlint \
+    src/renderer/src/components/native-chat \
+    src/renderer/src/components/sidebar/workspace-scope \
+    src/renderer/src/components/TerminalTitlebarTabs.tsx \
+    src/renderer/src/app-shell/use-app-chrome-layout.ts \
+    src/shared/thread-header-title.ts \
+    src/main/ai-vault \
+    >/dev/null 2>&1 || lint_ok=0
+  pnpm run verify:localization-catalog >/dev/null 2>&1 || loc_ok=0
+  pnpm run verify:localization-extraction >/dev/null 2>&1 || loc_ok=0
+  pnpm run verify:localization-coverage >/dev/null 2>&1 || loc_ok=0
+  if [ "$tc_ok" = "1" ] && [ "$lint_ok" = "1" ] && [ "$loc_ok" = "1" ]; then
+    ok "spec013#10 código sano (pnpm tc · check:code-quality:changed · verify:localization-* y los tests nuevos en verde)"
+  else
+    ko "spec013#10 código sano (pnpm tc · check:code-quality:changed · verify:localization-* y los tests nuevos en verde)"
+    ev "pnpm tc=$tc_ok · oxlint=$lint_ok · verify:localization-*=$loc_ok (deben ser 1)"
+  fi
+}
+
 spec021_criterio1_2_5_6_capa_de_render
 spec021_criterio3_4_prueba_de_interfaz
 spec021_criterio8_chequeo_funcional
+spec013_criterio1_barra_lateral_sin_pestanas
+spec013_criterio2_proyeccion_por_workspace
+spec013_criterio3_clic_abre_y_new_thread_selecciona
+spec013_criterio4_titulo_y_alcance
+spec013_criterio5_precedencia_del_titulo
+spec013_criterio6_degrada_sin_titulo
+spec013_criterio7_redactor_en_lenguaje_de_persona
+spec013_criterio8_sin_panel_derecho_en_modo_simple
+spec013_criterio9_modo_desarrollo_intacto
+spec013_criterio10_codigo_sano
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

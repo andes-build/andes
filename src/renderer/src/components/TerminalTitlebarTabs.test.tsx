@@ -86,7 +86,13 @@ function renderTitlebarTabs(): void {
 describe('TerminalTitlebarTabs', () => {
   beforeEach(() => {
     mocks.tabBarProps = []
-    mocks.state = { tabsByWorktree: {}, unifiedTabsByWorktree: {}, getActiveTab: () => null }
+    mocks.state = {
+      tabsByWorktree: {},
+      unifiedTabsByWorktree: {},
+      getActiveTab: () => null,
+      // Spec 013, criterion 1: the tab bar renders in developer mode only.
+      settings: { interfaceMode: 'developer' }
+    }
     titlebarTarget = document.createElement('div')
     container = document.createElement('div')
     document.body.append(titlebarTarget, container)
@@ -107,5 +113,11 @@ describe('TerminalTitlebarTabs', () => {
   it('passes no rows when the worktree has none', () => {
     renderTitlebarTabs()
     expect(mocks.tabBarProps.at(-1)?.clientHostedBrowserRows).toEqual([])
+  })
+
+  it('spec013#1 never renders the tab bar in simple mode', () => {
+    mocks.state.settings = { interfaceMode: 'simple' }
+    renderTitlebarTabs()
+    expect(mocks.tabBarProps).toEqual([])
   })
 })

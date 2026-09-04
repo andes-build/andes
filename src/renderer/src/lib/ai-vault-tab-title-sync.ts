@@ -73,15 +73,23 @@ export function startAiVaultTabTitleSync(dependencies: SyncDependencies): () => 
   let stopped = false
   let writing = false
 
-  const writeTitle = (request: AiVaultTitleRequest, title: string | null): void => {
+  const writeTitle = (
+    request: AiVaultTitleRequest,
+    title: { title: string; explicitTitle: string | null } | null
+  ): void => {
     writing = true
     try {
-      dependencies
-        .getState()
-        .setAiVaultTabTitle(
-          request.tabId,
-          title ? { agent: request.agent, sessionId: request.providerSession.id, title } : null
-        )
+      dependencies.getState().setAiVaultTabTitle(
+        request.tabId,
+        title
+          ? {
+              agent: request.agent,
+              sessionId: request.providerSession.id,
+              title: title.title,
+              explicitTitle: title.explicitTitle
+            }
+          : null
+      )
     } finally {
       writing = false
     }
@@ -102,13 +110,13 @@ export function startAiVaultTabTitleSync(dependencies: SyncDependencies): () => 
     if (stopped) {
       return
     }
-    const titleByIdentity = new Map<string, string>()
+    const titleByIdentity = new Map<string, { title: string; explicitTitle: string | null }>()
     for (const title of result.titles) {
       if (title.title.trim()) {
-        titleByIdentity.set(
-          `${first.executionHostId}\0${title.agent}\0${title.sessionId}`,
-          title.title.trim()
-        )
+        titleByIdentity.set(`${first.executionHostId}\0${title.agent}\0${title.sessionId}`, {
+          title: title.title.trim(),
+          explicitTitle: title.explicitTitle?.trim() || null
+        })
       }
     }
     const currentByTabId = new Map(

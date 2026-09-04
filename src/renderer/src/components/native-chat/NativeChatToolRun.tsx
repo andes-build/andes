@@ -15,6 +15,8 @@ import {
   truncateToolDetail
 } from './native-chat-tool-summary'
 import { NativeChatDiffView } from './NativeChatDiffView'
+import { describeToolActivity } from './native-chat-activity-phrase'
+import { usePlainLanguageActivity } from './use-plain-language-activity'
 
 const COMMAND_TOOL_NAMES = new Set([
   'bash',
@@ -170,6 +172,11 @@ export function NativeChatToolRun({
   activeTurnIsWorking?: boolean
   structuredActivityUi?: boolean
 }): React.JSX.Element | null {
+  // Spec 013, criterion 7: simple mode only. Replaces the whole run — the raw
+  // collapsed summary and every expandable tool/detail line — with one fixed,
+  // non-interactive activity line in person language (criterion 9: developer
+  // mode keeps the branch below untouched).
+  const plainLanguage = usePlainLanguageActivity()
   const [open, setOpen] = useState(expandOverride ?? expandSignal)
   // Re-sync when the global toolbar toggle flips.
   useEffect(() => setOpen(expandOverride ?? expandSignal), [expandOverride, expandSignal])
@@ -210,6 +217,27 @@ export function NativeChatToolRun({
     activeTurnIsWorking === false
   ) {
     return null
+  }
+
+  // Spec 013, criterion 7: simple mode shows one non-interactive activity
+  // line in person language — never a tool name, a command, or a path — and
+  // nothing to expand into. Criterion 9: developer mode is untouched, which
+  // is why this branch sits above (never inside) the raw rendering below.
+  if (plainLanguage) {
+    const describedBlock = latestActiveCall ?? calls.at(-1) ?? blocks.at(-1)
+    if (!describedBlock) {
+      return null
+    }
+    return (
+      <div className="mt-3 flex min-h-6 w-full items-center gap-1.5 py-0.5 text-sm leading-relaxed text-muted-foreground">
+        <span className="flex size-6 shrink-0 items-center justify-center text-muted-foreground">
+          {isSettled ? <Check className="size-3.5" /> : <ActiveToolIcon className="size-4" />}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-foreground/85">
+          {describeToolActivity(describedBlock)}
+        </span>
+      </div>
+    )
   }
 
   return (

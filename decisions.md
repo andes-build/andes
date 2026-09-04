@@ -1423,3 +1423,40 @@ el rótulo del alcance, y el elemento del panel mide 0x0 con `display: flex`. Lo
 parecían contradecirse son uno solo: la tira de pestañas vacía y el panel en blanco son las dos
 caras de la misma hoja de layout muerta.
 **La invalidaría**: un caso de panel en blanco donde el store no tenga la pestaña.
+
+## 2026-09-04 · [spec 013] La barra de pestañas real de modo simple no es `TerminalTitlebarTabs`
+
+**Qué se decide**: gatear el strip de pestañas de `TabGroupPanel.tsx` por `interfaceMode`, no solo
+el portal de `TerminalTitlebarTabs.tsx`.
+**Por qué**: `TerminalTitlebarTabs` se vuelve `null` en cuanto `effectiveActiveLayout` existe (spec
+021: cualquier worktree con pestañas tiene un layout), así que en la app real nunca pinta — el
+strip que la persona ve es el de 32px que arma cada `TabGroupPanel`, sin condición de modo desde que
+existe. Gatear solo el portal habría dejado el eval unitario en verde (un store mockeado no ejecuta
+el layout de grupos real) y la app real mostrando pestañas en modo simple — se encontró recién con
+`pnpm dev` sobre la app compilada, no con la suite.
+**La invalidaría**: que `TerminalTitlebarTabs` vuelva a ser el único punto de render de pestañas
+(cambiaría si `effectiveActiveLayout` dejara de estar siempre poblado).
+
+## 2026-09-04 · [spec 013] El título del hilo nunca lee el `title` con *fallback* de AI Vault
+
+**Qué se decide**: `AiVaultSession`/`AiVaultSessionTitle` ganan un campo nuevo, `explicitTitle`
+(`string | null`) — solo lo que el CLI escribió como `custom-title`/`ai-title`, nunca el primer
+prompt de usuario ni un nombre inventado con el id de sesión. El encabezado del hilo
+(`resolveThreadHeaderTitle`) lee `explicitTitle`, nunca `title`.
+**Por qué**: `AiVaultSession.title` ya traía un *fallback chain* completo (custom-title → ai-title →
+primer prompt → `"Claude <id>"`) pensado para la lista de AI Vault, donde algún título siempre hace
+falta. El criterio 6 de la spec pide lo contrario para el encabezado: que un CLI sin título se
+degrade declarándolo, nunca inventando uno. Conflar los dos usos habría hecho que un hilo recién
+abierto mostrara su primer mensaje como título falso-explícito.
+**La invalidaría**: que el encabezado del hilo deje de distinguirse del listado de AI Vault.
+
+## 2026-09-04 · [spec 013] Codex (y el resto de los agentes) quedan sin `explicitTitle` por ahora
+
+**Qué se decide**: solo el parser de Claude calcula `accumulator.explicitTitle`. Codex y el resto
+quedan en `null` — el encabezado de un hilo de esos agentes muestra "New thread" hasta que alguien
+verifique su propio formato de título en el archivo de sesión.
+**Por qué**: la spec nombra explícitamente el registro de Claude Code (`custom-title`/`ai-title`);
+extender a Codex sin haber leído su formato real habría sido adivinar. Degradar a "New thread" es
+el comportamiento correcto del criterio 6, no un hueco a tapar con urgencia.
+**La invalidaría**: alguien lee el formato de título de Codex (u otro agente) y lo cablea igual que
+Claude.

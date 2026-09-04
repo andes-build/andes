@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
 import NativeChatView from '../native-chat/NativeChatView'
-import { ThreadScopeBadge } from '../native-chat/ThreadScopeBadge'
+import { ThreadHeader } from '../native-chat/ThreadHeader'
 import { makePaneKey } from '../../../../shared/stable-pane-id'
 import { canContinueAgentSessionInNewSession } from './terminal-agent-session-continuation'
 import type { TerminalPaneController } from './use-terminal-pane-controller'
@@ -44,7 +44,7 @@ export function TerminalPaneNativeChatPortal({
 
   return createPortal(
     <div className="native-chat-pane-shell absolute inset-0 z-10 flex min-h-0 min-w-0 flex-col bg-background">
-      <ThreadScopeBadge tabId={unifiedTabId ?? tabId} />
+      <ThreadHeader tabId={unifiedTabId ?? tabId} />
       <div className="flex min-h-0 min-w-0 flex-1">
         {structuredSessionId && structuredChatAgent ? (
           <NativeChatView

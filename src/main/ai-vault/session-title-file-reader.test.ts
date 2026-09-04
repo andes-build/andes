@@ -56,7 +56,9 @@ describe('readAiVaultSessionTitlesFromFiles', () => {
         { agent: 'codex', sessionId: 'session-1', transcriptPath: path }
       ])
     ).resolves.toEqual({
-      titles: [{ agent: 'codex', sessionId: 'session-1', title: 'Exact title' }]
+      titles: [
+        { agent: 'codex', sessionId: 'session-1', title: 'Exact title', explicitTitle: null }
+      ]
     })
     expect(parseAgentSessionFileCached).toHaveBeenCalledTimes(1)
     expect(parseAgentSessionFileCached.mock.calls[0]?.[0]).toMatchObject({

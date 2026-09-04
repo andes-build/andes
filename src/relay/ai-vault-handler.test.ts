@@ -65,7 +65,14 @@ describe('AiVaultHandler', () => {
         ]
       })
     ).resolves.toEqual({
-      titles: [{ agent: 'codex', sessionId: 'ssh-session', title: 'Resolve only this transcript' }]
+      titles: [
+        {
+          agent: 'codex',
+          sessionId: 'ssh-session',
+          title: 'Resolve only this transcript',
+          explicitTitle: null
+        }
+      ]
     })
     expect(scanRemoteSessions).not.toHaveBeenCalled()
   })

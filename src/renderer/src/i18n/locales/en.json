@@ -16692,6 +16692,16 @@
         "usedOneSummary": "Used 1 tool",
         "usedManySummary": "Used {{toolCount}} tools"
       },
+      "activity": {
+        "reading": "Reading a file",
+        "readingSubject": "Reading the {{value0}}",
+        "writing": "Writing a file",
+        "writingSubject": "Writing the {{value0}}",
+        "searching": "Searching the files",
+        "runningCommand": "Running a command",
+        "delegating": "Delegating a task",
+        "hitAProblem": "Ran into a problem"
+      },
       "providerFrame": {
         "byteLength": "{{value0}} bytes"
       },
@@ -16735,7 +16745,10 @@
       "scrollMessageToTop": "Scroll this message to top",
       "threadScope": {
         "root": "My work",
-        "workspace": "{{value0}}"
+        "workspace": "Workspace · Focus: {{value0}}"
+      },
+      "threadHeader": {
+        "newThread": "New thread"
       },
       "loadingEarlier": "Loading…",
       "loadEarlier": "Load earlier messages",

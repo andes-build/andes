@@ -171,6 +171,10 @@ export async function finalizeClaudeSessionParseState(
   // session name (ai-title) should outrank the raw first prompt when present.
   snapshot.accumulator.fallbackTitle =
     snapshot.generatedTitle ?? snapshot.firstUserTitle ?? snapshot.metaTitle
+  // Spec 013: the thread header's title never falls through to the first
+  // prompt or an agent-label guess — only what Claude itself wrote as
+  // `custom-title` or `ai-title` (custom winning), or nothing at all.
+  snapshot.accumulator.explicitTitle = snapshot.accumulator.title || snapshot.generatedTitle || null
   // Every session's sibling subagent transcripts are counted (one readdir):
   // the row UI shows the count without expanding details, and for zero-turn
   // transcripts it doubles as the recoverable-content signal. The sibling dir

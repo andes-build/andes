@@ -1,18 +1,28 @@
 import { ShieldQuestion } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { ChatApproval } from './native-chat-interactive-prompt'
+
+/** What the card draws. Every field is a field of the permission itself; nothing here is read off
+ *  a terminal screen. */
+export type NativeChatApprovalCardPrompt = {
+  title: string
+  detail?: string
+  options: { id: string; label: string }[]
+}
 
 export type NativeChatApprovalCardProps = {
-  approval: ChatApproval
-  /** Send the chosen option's literal string to the agent's PTY. */
-  onChoose: (send: string) => void
+  approval: NativeChatApprovalCardPrompt
+  /** Reports the id of the option the person picked. What that id means to the agent belongs to
+   *  the caller, which is what keeps this card free of any one transport. */
+  onChoose: (optionId: string) => void
 }
 
 /**
- * Native renderer for an agent tool-approval (PermissionRequest) as an
- * Allow/Deny card. Each button writes its option's literal `send` string back
- * to the agent (a number to allow; ESC to deny). The first option reads as the
- * affirmative action and gets the primary styling.
+ * Native renderer for an agent tool-approval as an Allow/Deny card.
+ *
+ * The card answers with the chosen option's id and nothing else. Until spec 012 it sent a literal
+ * keystroke instead, which is what made it an imitation of a card rather than one: the buttons were
+ * typing into a hidden terminal. The first option reads as the affirmative action and gets the
+ * primary styling.
  */
 export function NativeChatApprovalCard({
   approval,
@@ -34,19 +44,19 @@ export function NativeChatApprovalCard({
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {approval.options.map((opt, i) => (
+            {approval.options.map((option, index) => (
               <button
-                key={`${opt.label}-${i}`}
+                key={`${option.id}-${index}`}
                 type="button"
-                onClick={() => onChoose(opt.send)}
+                onClick={() => onChoose(option.id)}
                 className={cn(
                   'rounded-md px-4 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  i === 0
+                  index === 0
                     ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                     : 'border border-border bg-background text-foreground hover:bg-accent'
                 )}
               >
-                {opt.label}
+                {option.label}
               </button>
             ))}
           </div>

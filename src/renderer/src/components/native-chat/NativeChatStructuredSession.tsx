@@ -154,8 +154,8 @@ export function NativeChatStructuredSession(props: {
             title: prompt.body.title,
             ...(prompt.body.detail ? { detail: prompt.body.detail } : {}),
             options: prompt.body.options.map((option) => ({
-              label: option.label,
-              send: option.id
+              id: option.id,
+              label: option.label
             }))
           }}
           onChoose={(optionId) => void controller.respond(prompt, optionId)}

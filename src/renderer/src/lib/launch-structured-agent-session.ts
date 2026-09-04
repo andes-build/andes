@@ -17,10 +17,14 @@ import {
 } from '@/runtime/web-session-focus-intent'
 import { LOCAL_STRUCTURED_SESSION_OWNER } from '@/runtime/local-structured-session-tabs-sync'
 
+/** Providers with a lane on the structured wire. Adding one here is not enough on its own: the
+ *  host needs its adapter too (`structured-agent-session-adapter-router.ts`). */
+export type StructuredAgentSessionProvider = 'codex' | 'claude'
+
 type StructuredAgentSessionCreateParams = {
   envelope: AgentSessionMutationEnvelope
   worktree: string
-  agent: 'codex'
+  agent: StructuredAgentSessionProvider
 }
 
 export type StructuredAgentSessionLaunchIntent = {
@@ -31,11 +35,12 @@ export type StructuredAgentSessionLaunchIntent = {
 
 export class StructuredAgentSessionCreateRefusalError extends Error {}
 
-export function createStructuredCodexSessionLaunchIntent(
-  worktreeId: string
+export function createStructuredAgentSessionLaunchIntent(
+  worktreeId: string,
+  agent: StructuredAgentSessionProvider
 ): StructuredAgentSessionLaunchIntent {
-  const sessionId = `codex_${crypto.randomUUID().replaceAll('-', '_')}`
-  const fields = { worktree: toRuntimeWorktreeSelector(worktreeId), agent: 'codex' as const }
+  const sessionId = `${agent}_${crypto.randomUUID().replaceAll('-', '_')}`
+  const fields = { worktree: toRuntimeWorktreeSelector(worktreeId), agent }
   const state = useAppStore.getState()
   recordWebSessionFocusIntent(
     { environmentId: LOCAL_STRUCTURED_SESSION_OWNER },
@@ -73,7 +78,7 @@ export function abandonStructuredAgentSessionLaunchIntent(
   )
 }
 
-export async function launchStructuredCodexSession(
+export async function launchStructuredAgentSession(
   intent: StructuredAgentSessionLaunchIntent
 ): Promise<string> {
   const result = await callStructuredAgentSession<

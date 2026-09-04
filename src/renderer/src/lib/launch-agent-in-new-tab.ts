@@ -31,7 +31,8 @@ import { getConnectionIdFromState } from '@/lib/connection-context'
 import { resolveInitialNativeChatSessionOptions } from '@/components/native-chat/native-chat-launch-session-options'
 import { seedNativeChatAppliedSessionOptions } from '@/components/native-chat/native-chat-session-option-cache'
 import { canUseStructuredNativeChat } from '@/lib/structured-native-chat-availability'
-import { startStructuredCodexLaunch } from '@/lib/structured-agent-session-launch'
+import { startStructuredAgentLaunch } from '@/lib/structured-agent-session-launch'
+import type { StructuredAgentSessionProvider } from '@/lib/launch-structured-agent-session'
 
 export type LaunchAgentInNewTabArgs = {
   agent: TuiAgent
@@ -193,13 +194,17 @@ export function launchAgentInNewTab(args: LaunchAgentInNewTabArgs): LaunchAgentI
     }
   }
 
+  // Why these two and no others: they are the providers the host has a lane for. Everything else
+  // still launches into a terminal — spec 012.
+  const structuredAgent =
+    agent === 'codex' || agent === 'claude' ? (agent as StructuredAgentSessionProvider) : null
   const launchDirectStructuredChat =
-    agent === 'codex' &&
+    structuredAgent !== null &&
     !hasPrompt &&
     store.settings?.experimentalNativeChat === true &&
     canUseStructuredNativeChat(store, worktreeId)
-  if (launchDirectStructuredChat) {
-    startStructuredCodexLaunch(worktreeId)
+  if (launchDirectStructuredChat && structuredAgent) {
+    startStructuredAgentLaunch(worktreeId, structuredAgent)
     return {
       tabId: null,
       startupPlan,

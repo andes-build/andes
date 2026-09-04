@@ -14,11 +14,11 @@ vi.mock('sonner', () => ({
   }
 }))
 
-vi.mock('@/lib/launch-structured-codex-session', () => {
+vi.mock('@/lib/launch-structured-agent-session', () => {
   class StructuredAgentSessionCreateRefusalError extends Error {}
   return {
-    createStructuredCodexSessionLaunchIntent: mocks.createIntent,
-    launchStructuredCodexSession: mocks.launch,
+    createStructuredAgentSessionLaunchIntent: mocks.createIntent,
+    launchStructuredAgentSession: mocks.launch,
     StructuredAgentSessionCreateRefusalError
   }
 })
@@ -34,9 +34,9 @@ vi.mock('@/i18n/i18n', () => ({
 import {
   StructuredAgentSessionCreateRefusalError,
   type StructuredAgentSessionLaunchIntent
-} from '@/lib/launch-structured-codex-session'
+} from '@/lib/launch-structured-agent-session'
 import { refreshLocalStructuredSessionTabs } from '@/runtime/local-structured-session-tabs-sync'
-import { startStructuredCodexLaunch } from './structured-agent-session-launch'
+import { startStructuredAgentLaunch } from './structured-agent-session-launch'
 
 function launchIntent(
   worktreeId: string,
@@ -85,7 +85,7 @@ async function flushLaunchSettlement(): Promise<void> {
   }
 }
 
-describe('startStructuredCodexLaunch', () => {
+describe('startStructuredAgentLaunch', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.createIntent.mockImplementation((worktreeId: string) => launchIntent(worktreeId))
@@ -100,7 +100,7 @@ describe('startStructuredCodexLaunch', () => {
       publishedSnapshot(worktreeId, intent.sessionId)
     ])
 
-    startStructuredCodexLaunch(worktreeId)
+    startStructuredAgentLaunch(worktreeId, 'codex')
     await flushLaunchSettlement()
 
     expect(mocks.launch).toHaveBeenCalledOnce()
@@ -121,8 +121,8 @@ describe('startStructuredCodexLaunch', () => {
       publishedSnapshot(worktreeId, intent.sessionId)
     ])
 
-    startStructuredCodexLaunch(worktreeId)
-    startStructuredCodexLaunch(worktreeId)
+    startStructuredAgentLaunch(worktreeId, 'codex')
+    startStructuredAgentLaunch(worktreeId, 'codex')
 
     expect(mocks.createIntent).toHaveBeenCalledOnce()
     expect(mocks.launch).toHaveBeenCalledOnce()
@@ -140,7 +140,7 @@ describe('startStructuredCodexLaunch', () => {
       publishedSnapshot(worktreeId, intent.sessionId)
     ])
 
-    startStructuredCodexLaunch(worktreeId)
+    startStructuredAgentLaunch(worktreeId, 'codex')
     await flushLaunchSettlement()
 
     expect(mocks.createIntent).toHaveBeenCalledOnce()
@@ -159,7 +159,7 @@ describe('startStructuredCodexLaunch', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([publishedSnapshot(worktreeId, intent.sessionId)])
 
-    startStructuredCodexLaunch(worktreeId)
+    startStructuredAgentLaunch(worktreeId, 'codex')
     await flushLaunchSettlement()
 
     expect(mocks.launch).toHaveBeenCalledTimes(2)
@@ -176,14 +176,14 @@ describe('startStructuredCodexLaunch', () => {
     mocks.launch.mockRejectedValue(new Error('offline'))
     vi.mocked(refreshLocalStructuredSessionTabs).mockResolvedValue([])
 
-    startStructuredCodexLaunch(worktreeId)
+    startStructuredAgentLaunch(worktreeId, 'codex')
     await flushLaunchSettlement()
     expect(toast.error).toHaveBeenCalledOnce()
 
     vi.mocked(refreshLocalStructuredSessionTabs).mockResolvedValue([
       publishedSnapshot(worktreeId, intent.sessionId)
     ])
-    startStructuredCodexLaunch(worktreeId)
+    startStructuredAgentLaunch(worktreeId, 'codex')
     await flushLaunchSettlement()
 
     expect(mocks.createIntent).toHaveBeenCalledOnce()
@@ -203,9 +203,9 @@ describe('startStructuredCodexLaunch', () => {
       publishedSnapshot(worktreeId, second.sessionId)
     ])
 
-    startStructuredCodexLaunch(worktreeId)
+    startStructuredAgentLaunch(worktreeId, 'codex')
     await flushLaunchSettlement()
-    startStructuredCodexLaunch(worktreeId)
+    startStructuredAgentLaunch(worktreeId, 'codex')
     await flushLaunchSettlement()
 
     expect(mocks.createIntent).toHaveBeenCalledTimes(2)

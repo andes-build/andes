@@ -194,6 +194,7 @@ describe('launchAgentInNewTab', () => {
       launchAgent: 'codex'
     })
   })
+
   it('keeps Floating Workspace authority on native Windows beside an active WSL project', async () => {
     store.projects = [
       {

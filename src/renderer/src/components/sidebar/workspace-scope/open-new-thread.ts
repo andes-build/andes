@@ -14,9 +14,10 @@ import {
  * agent on the active folder and show its conversation.
  *
  * Spec 015 made this path launch the agent instead of only tagging the tab.
- * Spec 016 fixes what it launched: the agent came from the machine default
- * (`resolveDefaultAgentForNewTab`), so a machine whose default is Antigravity
- * opened a raw terminal — simple mode draws a conversation only for the agents
+ * Spec 016 fixes what it launched: the agent came from the shared new-tab
+ * picker, which honours the machine default, so a machine defaulting to
+ * Antigravity opened a raw terminal — simple mode draws a conversation only
+ * for the agents
  * of `NATIVE_CHAT_SUPPORTED_AGENT_LIST` — and it carried the profile's default
  * launch arguments, which are the permission-bypass ones
  * (`DEFAULT_TUI_AGENT_ARGS = YOLO_TUI_AGENT_ARGS`). Both rules live in

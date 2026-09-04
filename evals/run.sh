@@ -1103,6 +1103,84 @@ spec015_criterio7_codigo_sano() {
   fi
 }
 
+# --- specs/done/016-el-hilo-usa-el-agente-correcto.md ---
+
+spec016_unit() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/open-new-thread.test.ts \
+    src/renderer/src/lib/simple-mode-thread-launch.test.ts \
+    src/renderer/src/lib/worktree-activation-simple-mode-terminal.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec016#1 en modo simple el hilo lanza solo un agente con conversación, nunca el agente por omisión de la máquina"
+    ok "spec016#2 en modo simple el comando lanzado no lleva ningún argumento de omisión de permisos"
+    ok "spec016#3 sin agente con conversación el hilo avisa con una acción y no abre ninguna pestaña"
+    ok "spec016#4 el aviso de falta de carpeta lleva la acción que abre una"
+    ok "spec016#5 en modo simple activar una carpeta no abre una terminal sola"
+  else
+    ko "spec016#1 en modo simple el hilo lanza solo un agente con conversación, nunca el agente por omisión de la máquina"
+    ko "spec016#2 en modo simple el comando lanzado no lleva ningún argumento de omisión de permisos"
+    ko "spec016#3 sin agente con conversación el hilo avisa con una acción y no abre ninguna pestaña"
+    ko "spec016#4 el aviso de falta de carpeta lleva la acción que abre una"
+    ko "spec016#5 en modo simple activar una carpeta no abre una terminal sola"
+    ev "vitest en rojo sobre open-new-thread.test.ts / simple-mode-thread-launch.test.ts / worktree-activation-simple-mode-terminal.test.ts"
+  fi
+}
+
+spec016_criterio6_modo_desarrollo_intacto() {
+  local defaults_line test_ok=1
+  defaults_line=$(grep -c "export const DEFAULT_TUI_AGENT_ARGS: Partial<Record<TuiAgent, string>> = YOLO_TUI_AGENT_ARGS" src/shared/tui-agent-launch-defaults.ts)
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/onboarding/onboarding-folder-agent-startup.test.ts \
+    -t "spec016#6" >/dev/null 2>&1 || test_ok=0
+  if [ "$defaults_line" = "1" ] && [ "$test_ok" = "1" ]; then
+    ok "spec016#6 en modo desarrollo no cambia nada: los valores por omisión de lanzamiento siguen siendo los de Orca"
+  else
+    ko "spec016#6 en modo desarrollo no cambia nada: los valores por omisión de lanzamiento siguen siendo los de Orca"
+    ev "DEFAULT_TUI_AGENT_ARGS = YOLO_TUI_AGENT_ARGS=$defaults_line (debe ser 1) · pruebas spec016#6 en verde=$test_ok"
+  fi
+}
+
+spec016_criterio7_8_pruebas_de_interfaz() {
+  local spec_file bypass_assert notice_assert
+  spec_file=tests/e2e/simple-mode-thread-agent.spec.ts
+  bypass_assert=$(grep -c "bypassFound" "$spec_file" 2>/dev/null)
+  notice_assert=$(grep -c "Claude Code is not installed" "$spec_file" 2>/dev/null)
+  if [ -f "$spec_file" ] && [ "$bypass_assert" -ge 1 ] && [ "$notice_assert" -ge 1 ]; then
+    ok "spec016#7 prueba de interfaz: el comando lanzado en modo simple no contiene ningún argumento de omisión de permisos"
+    ok "spec016#8 prueba de interfaz: con un agente sin conversación no se abre terminal sino el aviso"
+    ev "e2e ($spec_file) corrido aparte con --workers=1 — evidencia pegada en la spec archivada."
+  else
+    ko "spec016#7 prueba de interfaz: el comando lanzado en modo simple no contiene ningún argumento de omisión de permisos"
+    ko "spec016#8 prueba de interfaz: con un agente sin conversación no se abre terminal sino el aviso"
+    ev "e2e=$spec_file · aserciones de omisión de permisos=$bypass_assert (>=1) · del aviso=$notice_assert (>=1)"
+  fi
+}
+
+spec016_criterio9_codigo_sano() {
+  local legacy_picker strip_uses
+  legacy_picker=$(grep -c "resolveDefaultAgentForNewTab" src/renderer/src/components/sidebar/workspace-scope/open-new-thread.ts 2>/dev/null)
+  strip_uses=$(grep -c "resolveSimpleModeThreadAgentArgs" src/renderer/src/components/sidebar/workspace-scope/open-new-thread.ts 2>/dev/null)
+  if [ "$legacy_picker" = "0" ] && [ "$strip_uses" -ge 1 ]; then
+    ok "spec016#9 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+  else
+    ko "spec016#9 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+    ev "elección de agente sin filtrar en open-new-thread.ts=$legacy_picker (debe ser 0) · limpieza de argumentos=$strip_uses (>=1)"
+  fi
+}
+
+spec016_criterio10_chequeo_funcional() {
+  local shots
+  shots=$(find docs/research -type d -name '*chequeo-funcional-spec-016' -exec find {} -name '*.png' \; 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$shots" -ge 6 ]; then
+    ok "spec016#10 chequeo funcional en la app real: seis pasos recorridos con una captura cada uno"
+  else
+    ko "spec016#10 chequeo funcional en la app real: seis pasos recorridos con una captura cada uno"
+    ev "capturas en docs/research/<fecha>-chequeo-funcional-spec-016/=$shots (deben ser 6 o más)"
+  fi
+}
+
 spec014_criterio1_sin_archivos_de_marca_visual() {
   local name_hits svg_content_hits
   name_hits=$(find resources -type f \( -iname '*.png' -o -iname '*.icns' -o -iname '*.ico' -o -iname '*.svg' \) -iname '*orca*' | wc -l | tr -d ' ')
@@ -1177,6 +1255,11 @@ spec014_criterio5_verificacion_visual
 spec015_unit
 spec015_criterio5_prueba_de_interfaz
 spec015_criterio7_codigo_sano
+spec016_unit
+spec016_criterio6_modo_desarrollo_intacto
+spec016_criterio7_8_pruebas_de_interfaz
+spec016_criterio9_codigo_sano
+spec016_criterio10_chequeo_funcional
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

@@ -510,13 +510,28 @@ Dos gates distintos decidían esto y a los dos había que enseñarles `interface
   `experimentalNativeChat === true || interfaceMode === 'simple'`. Sin este segundo gate, una
   pestaña podía nacer con `viewMode: 'chat'` y renderizarse igual como terminal cruda.
 
-**El permiso sigue por teclas, no por datos** (ver `specs/done/011-el-hilo.md`, criterio 0 y
-criterio 2b diferido): el único adaptador de sesión estructurada (canal de datos) que existe hoy es
-para Codex (`src/main/codex/codex-structured-session-adapter.ts`;
-`structured-agent-session-provider-support.ts:14` sólo habilita `agent === 'codex'`). Para Claude,
-`NativeChatBridgeView` sigue siendo el único camino, y `NativeChatInteractiveCard.tsx` sigue
-escribiendo la cadena literal de la opción a la PTY del agente. Construir el canal de datos para
-Claude queda como spec aparte.
+**El canal de datos de Claude existe; la interfaz todavía no llega a él** (spec 012).
+
+- **Los dos carriles**: `src/main/codex/` (Codex, sobre su app-server JSON-RPC) y `src/main/claude/`
+  (Claude, sobre `stream-json` y el canal de control del propio binario). Los dos cumplen
+  `StructuredAgentSessionAdapter`.
+- **El argumento que abre el canal de Claude** es `--permission-prompt-tool stdio`, con el saludo
+  `control_request` de subtipo `initialize`; el permiso llega como `can_use_tool` y se contesta con
+  un `control_response`. Solo cambian los argumentos del binario de la persona.
+- **Un solo host, dos carriles**:
+  `src/main/native-chat/agent-session-wire/structured-agent-session-adapter-router.ts` enruta por el
+  carril que adquirió cada sesión.
+- **La tarjeta de permiso ya no escribe teclas**:
+  `NativeChatApprovalCard.tsx` contesta con el id de la opción. El camino viejo
+  (`NativeChatInteractiveCard.tsx`, modo desarrollo) mapea ese id a su tecla en su propio llamador,
+  así que la terminal cruda no cambió.
+- **Lo que falta para que la persona lo vea**: el "New thread" del modo simple manda siempre un
+  primer mensaje (el del alcance, spec 019) y el portón de `launch-agent-in-new-tab.ts` exige que no
+  haya ninguno, porque `agentSession.create` no tiene ranura para él. Hasta que eso se decida, el
+  hilo del modo simple sigue por la PTY con la tarjeta imitada. Detalle en
+  `docs/research/2026-09-04-chequeo-funcional-spec-012/`.
+- **Lo que el carril de Claude declara en vez de simular**: subagentes, preguntas, opciones de
+  sesión y diffs — cabecera de `src/main/claude/claude-structured-session-adapter.ts`.
 
 Diferido de esta spec, sin implementar: la tarjeta de subagente, los estados incómodos (sin
 sesión, caída a mitad, respuesta vacía), la revisión de jerga, que el hilo nazca con el alcance del

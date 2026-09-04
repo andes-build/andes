@@ -16745,7 +16745,7 @@
       "scrollMessageToTop": "Scroll this message to top",
       "threadScope": {
         "root": "My work",
-        "workspace": "Workspace · Focus: {{value0}}"
+        "workspace": "Focus: {{value0}}"
       },
       "threadHeader": {
         "newThread": "New thread"

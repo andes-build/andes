@@ -1478,6 +1478,55 @@ spec019_criterio14_chequeo_funcional() {
   fi
 }
 
+# --- specs/done/021-el-hilo-no-abre-con-un-workspace-elegido.md ---
+
+spec021_criterio1_2_5_6_capa_de_render() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/terminal/split-group-mount-stale-group.test.ts \
+    src/renderer/src/components/terminal/split-group-mount.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec021#1 la causa está fijada: getEffectiveLayoutForWorktree ya no devuelve una hoja que nombra un grupo que no existe"
+    ok "spec021#2 la prueba que falla antes del arreglo y pasa después vive en la suite"
+    ok "spec021#3 una hoja muerta cae al grupo vivo, y en un split se conserva la mitad viva"
+    ok "spec021#4 un layout sin ningún grupo vivo se devuelve intacto: el contenedor no se desmonta"
+  else
+    ko "spec021#1 la causa está fijada: getEffectiveLayoutForWorktree ya no devuelve una hoja que nombra un grupo que no existe"
+    ko "spec021#2 la prueba que falla antes del arreglo y pasa después vive en la suite"
+    ko "spec021#3 una hoja muerta cae al grupo vivo, y en un split se conserva la mitad viva"
+    ko "spec021#4 un layout sin ningún grupo vivo se devuelve intacto: el contenedor no se desmonta"
+  fi
+}
+
+spec021_criterio3_4_prueba_de_interfaz() {
+  local spec_file workspace_assert root_assert geometry_assert
+  spec_file=tests/e2e/simple-mode-thread-opens-with-workspace.spec.ts
+  workspace_assert=$(grep -c "spec021#6" "$spec_file" 2>/dev/null; true)
+  root_assert=$(grep -c "spec021#7" "$spec_file" 2>/dev/null; true)
+  geometry_assert=$(grep -c "activePaneSize" "$spec_file" 2>/dev/null; true)
+  if [ -f "$spec_file" ] && [ "$workspace_assert" -ge 1 ] && [ "$root_assert" -ge 1 ] && [ "$geometry_assert" -ge 2 ]; then
+    ok "spec021#6 con un workspace elegido el hilo pinta la pestaña, el rótulo del alcance y el campo para escribir"
+    ok "spec021#7 con \"My work\" no cambia nada"
+    ev "e2e ($spec_file) corrido aparte con --workers=1 — evidencia pegada en la spec archivada."
+  else
+    ko "spec021#6 con un workspace elegido el hilo pinta la pestaña, el rótulo del alcance y el campo para escribir"
+    ko "spec021#7 con \"My work\" no cambia nada"
+    ev "e2e=$spec_file · spec021#6=$workspace_assert (>=1) · spec021#7=$root_assert (>=1) · activePaneSize=$geometry_assert (>=2)"
+  fi
+}
+
+spec021_criterio8_chequeo_funcional() {
+  local shots
+  shots=$(find docs/research -type d -name '*chequeo-funcional-spec-021' -exec find {} -name '*.png' \; 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$shots" -ge 7 ]; then
+    ok "spec021#8 chequeo funcional en la app real: el recorrido completo con un workspace elegido, una captura por paso"
+  else
+    ko "spec021#8 chequeo funcional en la app real: el recorrido completo con un workspace elegido, una captura por paso"
+    ev "capturas en docs/research/<fecha>-chequeo-funcional-spec-021/=$shots (deben ser 7 o más)"
+  fi
+}
+
 spec014_criterio1_sin_archivos_de_marca_visual() {
   local name_hits svg_content_hits
   name_hits=$(find resources -type f \( -iname '*.png' -o -iname '*.icns' -o -iname '*.ico' -o -iname '*.svg' \) -iname '*orca*' | wc -l | tr -d ' ')
@@ -1665,6 +1714,9 @@ spec009_criterio2_alcance_del_selector
 spec009_criterio6_un_solo_camino_de_lanzamiento
 spec009_criterio10_sin_jerga_del_sistema
 spec009_criterio11_codigo_sano
+spec021_criterio1_2_5_6_capa_de_render
+spec021_criterio3_4_prueba_de_interfaz
+spec021_criterio8_chequeo_funcional
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

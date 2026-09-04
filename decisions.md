@@ -1423,3 +1423,30 @@ el rótulo del alcance, y el elemento del panel mide 0x0 con `display: flex`. Lo
 parecían contradecirse son uno solo: la tira de pestañas vacía y el panel en blanco son las dos
 caras de la misma hoja de layout muerta.
 **La invalidaría**: un caso de panel en blanco donde el store no tenga la pestaña.
+
+## 2026-09-04 · [spec 012] El canal de datos de Claude se abre con `--permission-prompt-tool stdio`
+
+**Qué se decide**: Andes lanza el binario propio de la persona con
+`--output-format stream-json --verbose --input-format stream-json --permission-prompt-tool stdio`,
+manda un `control_request` de subtipo `initialize` como saludo, y a partir de ahí el permiso llega
+como `control_request` de subtipo `can_use_tool` y se contesta con un `control_response`.
+**Por qué**: `--permission-mode manual` por sí solo no entrega nada — el CLI contesta su propio
+pedido y emite `system/permission_denied` (probado el 2026-09-04,
+`docs/research/2026-09-04-permiso-de-claude-como-dato/`). El argumento que decide es
+`--permission-prompt-tool stdio`, que es el que el SDK oficial pasa cuando el anfitrión trae su
+propio `canUseTool`. Se descartó depender del paquete `@anthropic-ai/claude-agent-sdk`, que fue con
+lo que se probó el camino en `tsk-182`: trae su propia copia del CLI, y usarla sería empaquetar el
+binario en vez de correr el de la persona.
+**La invalidaría**: que una versión de Claude Code deje de aceptar `stdio` como destino del pedido
+de permiso, o que entregue el permiso sin ese argumento.
+
+## 2026-09-04 · [spec 012] La tarjeta de permiso se dibuja con los campos del pedido
+
+**Qué se decide**: el título de la tarjeta sale de `title`, y si no viene, de `display_name`, y si
+no, de `tool_name`. El detalle sale de `description` y es nulo cuando el pedido no lo trae. Ninguna
+función del camino lee el transcripto de la terminal.
+**Por qué**: el pedido ya trae los campos escritos para mostrarse
+(`src/main/claude/claude-structured-stream-protocol.ts`), y
+la tarjeta vieja los reconstruía leyendo la pantalla porque no tenía otra fuente. Leer la pantalla
+es lo que hacía que la tarjeta fuera una imitación.
+**La invalidaría**: un pedido de permiso cuyo texto para la persona no viaje en el propio pedido.

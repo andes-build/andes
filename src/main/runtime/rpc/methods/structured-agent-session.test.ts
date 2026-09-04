@@ -292,6 +292,68 @@ describe('method routing', () => {
     )
   })
 
+  /** Spec 012: the create is the only emitter of the thread's first message. A second call from the
+   *  client would race whatever the person types next. */
+  it('turns the create first message into the session first turn', async () => {
+    const worktree = 'id:workspace-1'
+    const fields = { worktree, agent: 'claude', firstMessage: 'trabaja en el alcance X' }
+    const created = await call(
+      'agentSession.create',
+      {
+        envelope: envelope({
+          expectedRuntimeFence: null,
+          payloadFingerprint: computeAgentSessionPayloadFingerprint({
+            method: 'agentSession.create',
+            sessionId: SESSION,
+            fields
+          })
+        }),
+        ...fields
+      },
+      STRUCTURED_CLIENT
+    )
+
+    expect(created).toMatchObject({ ok: true, result: { ok: true } })
+    expect(hostCalls.send).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        body: {
+          kind: 'message',
+          role: 'user',
+          blocks: [{ type: 'text', text: 'trabaja en el alcance X' }]
+        },
+        envelope: expect.objectContaining({ expectedRuntimeFence: 1 })
+      })
+    )
+  })
+
+  /** The message is part of what the call DOES, so a fingerprint that leaves it out is a different
+   *  call wearing the same id. */
+  it('refuses a create whose fingerprint ignores the first message', async () => {
+    const worktree = 'id:workspace-1'
+    const created = await call(
+      'agentSession.create',
+      {
+        envelope: envelope({
+          expectedRuntimeFence: null,
+          payloadFingerprint: computeAgentSessionPayloadFingerprint({
+            method: 'agentSession.create',
+            sessionId: SESSION,
+            fields: { worktree, agent: 'claude' }
+          })
+        }),
+        worktree,
+        agent: 'claude',
+        firstMessage: 'otra cosa'
+      },
+      STRUCTURED_CLIENT
+    )
+
+    expect(created).toMatchObject({ ok: true, result: { ok: false } })
+    expect(hostCalls.attach).not.toHaveBeenCalled()
+    expect(hostCalls.send).not.toHaveBeenCalled()
+  })
+
   it('separates create from ensure by the fence the client may declare', async () => {
     const created = await call('agentSession.create', attachParams())
     expect(created).toMatchObject({ ok: true })
@@ -366,22 +428,46 @@ describe('parameter validation', () => {
     )
   })
 
-  it('rejects Claude structured create shapes', async () => {
-    await rejects('agentSession.createSupport', {
-      worktree: 'id:workspace-1',
-      agent: 'claude'
-    })
+  /** Spec 012 criterion 2: Claude comes in through the same gate as Codex, and a provider with no
+   *  lane in the host stays outside it. */
+  it('admits Claude create shapes and still refuses a provider with no lane', async () => {
+    const support = await call(
+      'agentSession.createSupport',
+      { worktree: 'id:workspace-1', agent: 'claude' },
+      STRUCTURED_CLIENT
+    )
+    expect(support).toMatchObject({ ok: true })
+
     const fields = { worktree: 'id:workspace-1', agent: 'claude' }
+    const created = await call(
+      'agentSession.create',
+      {
+        envelope: envelope({
+          expectedRuntimeFence: null,
+          payloadFingerprint: computeAgentSessionPayloadFingerprint({
+            method: 'agentSession.create',
+            sessionId: SESSION,
+            fields
+          })
+        }),
+        ...fields
+      },
+      STRUCTURED_CLIENT
+    )
+    expect(created).toMatchObject({ ok: true, result: { ok: true } })
+
+    await rejects('agentSession.createSupport', { worktree: 'id:workspace-1', agent: 'aider' })
+    const outsiderFields = { worktree: 'id:workspace-1', agent: 'aider' }
     await rejects('agentSession.create', {
       envelope: envelope({
         expectedRuntimeFence: null,
         payloadFingerprint: computeAgentSessionPayloadFingerprint({
           method: 'agentSession.create',
           sessionId: SESSION,
-          fields
+          fields: outsiderFields
         })
       }),
-      ...fields
+      ...outsiderFields
     })
   })
 

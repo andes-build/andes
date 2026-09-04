@@ -115,7 +115,10 @@ export async function openNewThread(options: OpenNewThreadOptions = {}): Promise
     agentArgs: resolveSimpleModeThreadAgentArgs(agent, store.settings),
     threadScope,
     prompt: buildThreadFirstMessage(threadScope, options.seedMessage),
-    promptDelivery: 'auto-submit'
+    promptDelivery: 'auto-submit',
+    // Spec 012: this prompt is the thread's birth message, so the structured lane may carry it on
+    // `agentSession.create` instead of pasting it into a terminal.
+    promptIsThreadFirstMessage: true
   })
   if (!launched) {
     toast.error(

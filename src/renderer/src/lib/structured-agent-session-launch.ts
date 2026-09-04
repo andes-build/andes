@@ -106,7 +106,8 @@ async function reconcileUnknownLaunch(state: StructuredLaunchState): Promise<str
 
 function launchStructuredAgentSessionOnce(
   worktreeId: string,
-  agent: StructuredAgentSessionProvider
+  agent: StructuredAgentSessionProvider,
+  firstMessage?: string
 ): Promise<string> {
   const existing = pendingStructuredLaunchesByWorktree.get(worktreeId)
   if (existing) {
@@ -117,7 +118,7 @@ function launchStructuredAgentSessionOnce(
     return existing.promise
   }
   const state: StructuredLaunchState = {
-    intent: createStructuredAgentSessionLaunchIntent(worktreeId, agent),
+    intent: createStructuredAgentSessionLaunchIntent(worktreeId, agent, firstMessage),
     promise: Promise.resolve(''),
     visibilityUnknown: false
   }
@@ -129,9 +130,10 @@ function launchStructuredAgentSessionOnce(
 
 export function startStructuredAgentLaunch(
   worktreeId: string,
-  agent: StructuredAgentSessionProvider
+  agent: StructuredAgentSessionProvider,
+  firstMessage?: string
 ): void {
-  void launchStructuredAgentSessionOnce(worktreeId, agent).catch((error) => {
+  void launchStructuredAgentSessionOnce(worktreeId, agent, firstMessage).catch((error) => {
     toast.error(
       translate('components.native-chat.structuredSessionLaunchFailed', 'Could not open chat'),
       { description: error instanceof Error ? error.message : String(error) }

@@ -1489,3 +1489,47 @@ decisiones de producto que la spec 012 no tomó. El chequeo funcional quedó reg
 incompleto en `docs/research/2026-09-04-chequeo-funcional-spec-012/`.
 **La invalidaría**: una decisión sobre cómo el carril estructurado recibe el primer mensaje de un
 hilo.
+
+## 2026-09-04 · [spec 012] El primer mensaje del hilo viaja en `agentSession.create`
+
+**Qué se decide**: `agentSession.create` acepta un campo `firstMessage` opcional. El host, después
+de que el `attach` sale bien, lo convierte en el primer turno de la sesión con un `send` propio, con
+la valla que devolvió el `attach` y un id de operación derivado del de la creación. La huella del
+sobre cubre el mensaje; una creación sin mensaje hace exactamente la misma huella que antes, porque
+el canonicalizador descarta las claves ausentes. Del lado de la interfaz, solo un mensaje que quien
+llama declara como el de nacimiento del hilo (`promptIsThreadFirstMessage`) toma el carril nuevo:
+el mensaje de un comando rápido sigue yendo a la terminal como siempre.
+**Por qué**: el modo simple siempre manda un primer mensaje —el del alcance, obligatorio desde la
+spec 019— y el portón estructurado exigía que no hubiera ninguno, así que el modo simple nunca podía
+llegar al carril nuevo. Mandarlo como un turno posterior a la creación pondría dos emisores sobre la
+misma sesión y nada garantizaría el orden contra lo que la persona escriba enseguida; acá la
+creación es el único emisor y recién termina cuando el turno quedó admitido. Y es lo que dice el
+dominio: desde la spec 019 un hilo nace con su alcance, así que el alcance viaja en el nacimiento.
+Se descartó dejar el modo simple en la terminal y usar el carril nuevo solo en modo desarrollo:
+dejaría la tarjeta de permiso imitada exactamente donde la persona la ve, que es lo único que esta
+spec existe para arreglar.
+**La invalidaría**: un carril cuyo `attach` no devuelva una valla utilizable para el primer turno.
+
+## 2026-09-04 · [spec 012] El portón de la creación deja pasar a Claude, y la pestaña se publica
+
+**Qué se decide**: `CreateIntentParams` y `CreateSupportParams` pasan de `agent: 'codex'` a
+`agent: 'codex' | 'claude'`; la publicación de la pestaña después de crear deja de estar condicionada
+a Codex; y la restauración de pestañas al arrancar deja de saltear las sesiones de Claude. Un
+proveedor sin carril en el host —`aider`, por ejemplo— sigue rechazado en el sobre.
+**Por qué**: la rama traía el adaptador de Claude y el enrutador, pero el borde RPC seguía escrito
+para un solo proveedor. Con esas tres puertas cerradas, una sesión de Claude o no se creaba, o se
+creaba sin pestaña que la mostrara, o desaparecía al reiniciar. Es la misma forma que el defecto de
+la spec 021 —un carril apuntando a algo muerto, sin error en consola— con otra cara.
+**La invalidaría**: un proveedor con adaptador en el host que no deba aparecer como pestaña.
+
+## 2026-09-04 · [spec 012] El hilo estructurado no lleva todavía la insignia de alcance
+
+**Qué se decide**: se declara, no se construye. La insignia de alcance de la spec 019
+(`ThreadScopeBadge`) se dibuja con el campo `threadScope` de una pestaña de terminal, y una sesión
+estructurada es otro tipo de pestaña, publicada por el host y no por la interfaz. El alcance sí
+llega al agente, porque va escrito adentro del primer mensaje.
+**Por qué**: llevar el alcance hasta la pestaña estructurada es trabajo de la superficie de la spec
+019 sobre un carril que no existía cuando se escribió, y esta spec no lo tomó. Simularlo del lado de
+la interfaz sería una segunda fuente para el mismo dato.
+**La invalidaría**: que la persona no pueda saber el alcance de un hilo estructurado por ningún otro
+camino.

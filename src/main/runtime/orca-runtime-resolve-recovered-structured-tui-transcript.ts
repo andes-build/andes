@@ -48,7 +48,7 @@ export class OrcaRuntimeWithResolveRecoveredStructuredTuiTranscript extends Orca
 
   async getStructuredAgentSessionCreateSupport(
     worktreeSelector: string,
-    agent: 'codex'
+    agent: 'codex' | 'claude'
   ): Promise<{ supported: boolean; reason?: 'agent' | 'remote' | 'wsl' }> {
     const location = await this.resolveStructuredAgentSessionLocation(worktreeSelector)
     await this.ensureStructuredAgentSessionHost()

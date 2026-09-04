@@ -133,7 +133,11 @@ describe('structured chat adoption guard on the launch path', () => {
       focusAfterMenuClose: 'structured-session'
     })
     expect(shouldQueueTerminalFocusAfterMenuClose(result!)).toBe(false)
-    expect(mockCreateStructuredAgentSessionLaunchIntent).toHaveBeenCalledWith('wt-1', 'codex')
+    expect(mockCreateStructuredAgentSessionLaunchIntent).toHaveBeenCalledWith(
+      'wt-1',
+      'codex',
+      undefined
+    )
     expect(mockLaunchStructuredAgentSession).toHaveBeenCalledWith(
       expect.objectContaining({ worktreeId: 'wt-1' })
     )
@@ -254,6 +258,44 @@ describe('structured chat adoption guard on the launch path', () => {
     expect(mockCreateStructuredAgentSessionLaunchIntent).toHaveBeenCalledTimes(2)
     expect(mockLaunchStructuredAgentSession).toHaveBeenCalledTimes(3)
     expect(mockLaunchStructuredAgentSession.mock.calls[2]?.[0]).toBe(secondIntent)
+  })
+
+  /** Spec 012: simple mode's new thread always carries the scope message (spec 019). It rides on
+   *  `agentSession.create` so the create stays the only emitter on a session nobody typed into. */
+  it('carries the thread first message into the structured create', async () => {
+    const { launchAgentInNewTab } = await import('./launch-agent-in-new-tab')
+
+    const result = launchAgentInNewTab({
+      agent: 'claude',
+      worktreeId: 'wt-1',
+      prompt: '  trabaja en el alcance X  ',
+      promptDelivery: 'auto-submit',
+      promptIsThreadFirstMessage: true
+    })
+
+    expect(result).toMatchObject({ tabId: null, focusAfterMenuClose: 'structured-session' })
+    expect(mockCreateStructuredAgentSessionLaunchIntent).toHaveBeenCalledWith(
+      'wt-1',
+      'claude',
+      'trabaja en el alcance X'
+    )
+    expect(mockCreateTab).not.toHaveBeenCalled()
+  })
+
+  /** A quick command's prompt is a prompt, not the message a thread is born with. Without the
+   *  caller declaring it, a prompted launch keeps exactly the terminal path it had. */
+  it('keeps a prompted launch on the terminal when it is not a thread first message', async () => {
+    const { launchAgentInNewTab } = await import('./launch-agent-in-new-tab')
+
+    const result = launchAgentInNewTab({
+      agent: 'claude',
+      worktreeId: 'wt-1',
+      prompt: 'start this task',
+      promptDelivery: 'auto-submit'
+    })
+
+    expect(result?.tabId).toBe('tab-1')
+    expect(mockCreateStructuredAgentSessionLaunchIntent).not.toHaveBeenCalled()
   })
 
   it('keeps prompted Codex on the ordinary terminal launch path', async () => {

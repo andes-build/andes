@@ -25,6 +25,9 @@ type StructuredAgentSessionCreateParams = {
   envelope: AgentSessionMutationEnvelope
   worktree: string
   agent: StructuredAgentSessionProvider
+  /** Spec 012: the message the thread is born with. The host turns it into the first turn as part
+   *  of the create, so this call stays the only emitter on a session nobody has typed into yet. */
+  firstMessage?: string
 }
 
 export type StructuredAgentSessionLaunchIntent = {
@@ -37,10 +40,18 @@ export class StructuredAgentSessionCreateRefusalError extends Error {}
 
 export function createStructuredAgentSessionLaunchIntent(
   worktreeId: string,
-  agent: StructuredAgentSessionProvider
+  agent: StructuredAgentSessionProvider,
+  firstMessage?: string
 ): StructuredAgentSessionLaunchIntent {
   const sessionId = `${agent}_${crypto.randomUUID().replaceAll('-', '_')}`
-  const fields = { worktree: toRuntimeWorktreeSelector(worktreeId), agent }
+  const trimmedFirstMessage = firstMessage?.trim()
+  // Undefined is dropped by the canonicalizer on both peers, so a create with no first message
+  // hashes exactly as it did before spec 012.
+  const fields = {
+    worktree: toRuntimeWorktreeSelector(worktreeId),
+    agent,
+    ...(trimmedFirstMessage ? { firstMessage: trimmedFirstMessage } : {})
+  }
   const state = useAppStore.getState()
   recordWebSessionFocusIntent(
     { environmentId: LOCAL_STRUCTURED_SESSION_OWNER },

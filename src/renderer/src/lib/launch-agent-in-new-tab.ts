@@ -54,6 +54,10 @@ export type LaunchAgentInNewTabArgs = {
   launchPlatform?: NodeJS.Platform
   /** Called after the prompt is actually delivered to the agent input path. */
   onPromptDelivered?: () => void
+  /** Spec 012: this prompt is the message the thread is born with, not a prompt typed into an
+   *  agent that is already running. Only such a prompt may ride on `agentSession.create`; every
+   *  other prompted launch keeps the terminal path. Set by simple mode's new-thread flow. */
+  promptIsThreadFirstMessage?: boolean
   /** Spec 019: the scope this thread was born with, captured by the caller
    *  before this call — never re-read later. Stamped on the created tab so
    *  the thread screen can show it (see `ThreadScopeBadge`). Omitted for
@@ -102,6 +106,7 @@ export function launchAgentInNewTab(args: LaunchAgentInNewTabArgs): LaunchAgentI
     quickCommandLabel,
     launchPlatform,
     onPromptDelivered,
+    promptIsThreadFirstMessage,
     threadScope
   } = args
   const store = useAppStore.getState()
@@ -198,13 +203,22 @@ export function launchAgentInNewTab(args: LaunchAgentInNewTabArgs): LaunchAgentI
   // still launches into a terminal — spec 012.
   const structuredAgent =
     agent === 'codex' || agent === 'claude' ? (agent as StructuredAgentSessionProvider) : null
+  // Spec 012: a prompt used to send every launch to a terminal, and simple mode always carries one
+  // — the thread's scope, mandatory since spec 019 — so simple mode could never reach the
+  // structured lane. A prompt the caller declares as the thread's birth message rides on
+  // `agentSession.create` instead. Every other prompted launch keeps the terminal path it had:
+  // a quick command's prompt is a prompt, not the message a thread is born with.
+  const structuredFirstMessage = hasPrompt && promptIsThreadFirstMessage ? trimmedPrompt : undefined
   const launchDirectStructuredChat =
     structuredAgent !== null &&
-    !hasPrompt &&
+    (!hasPrompt || structuredFirstMessage !== undefined) &&
     store.settings?.experimentalNativeChat === true &&
     canUseStructuredNativeChat(store, worktreeId)
   if (launchDirectStructuredChat && structuredAgent) {
-    startStructuredAgentLaunch(worktreeId, structuredAgent)
+    startStructuredAgentLaunch(worktreeId, structuredAgent, structuredFirstMessage)
+    if (structuredFirstMessage) {
+      onPromptDelivered?.()
+    }
     return {
       tabId: null,
       startupPlan,

@@ -66,7 +66,13 @@ export const STRUCTURED_AGENT_SESSION_METHODS: RpcAnyMethod[] = [
         const intentFingerprint = computeAgentSessionPayloadFingerprint({
           method: 'agentSession.create',
           sessionId: params.envelope.sessionId,
-          fields: { worktree: params.worktree, agent: params.agent }
+          fields: {
+            worktree: params.worktree,
+            agent: params.agent,
+            // Undefined is dropped by the canonicalizer, so a create without a
+            // first message hashes exactly as it did before spec 012.
+            firstMessage: params.firstMessage
+          }
         })
         const conflict = agentSessionFingerprintConflict(params.envelope, intentFingerprint)
         if (conflict) {
@@ -90,13 +96,40 @@ export const STRUCTURED_AGENT_SESSION_METHODS: RpcAnyMethod[] = [
           ...resolved,
           envelope: { ...params.envelope, payloadFingerprint: hostFingerprint }
         })
-        if (result.ok && resolved.agent === 'codex') {
+        if (result.ok) {
           await ctx.runtime.publishStructuredAgentSessionTab({
             workspaceId: resolved.location.workspaceId,
             sessionId: result.value.sessionId,
-            agent: 'codex',
+            agent: params.agent,
             activate: true
           })
+        }
+        if (result.ok && params.firstMessage) {
+          // Spec 012: the create IS the emitter of the first message. Sending it from the renderer
+          // as a separate turn would put two emitters on one session and race whatever the person
+          // types next; here the create resolves only once the turn is admitted.
+          const body = {
+            kind: 'message' as const,
+            role: 'user' as const,
+            blocks: [{ type: 'text' as const, text: params.firstMessage }]
+          }
+          const firstMessageEnvelope = {
+            sessionId: result.value.sessionId,
+            clientOperationId: `${params.envelope.clientOperationId}-first-message`,
+            expectedRuntimeFence: result.value.fence,
+            payloadFingerprint: computeAgentSessionPayloadFingerprint({
+              method: 'agentSession.send',
+              sessionId: result.value.sessionId,
+              fields: { body }
+            })
+          }
+          const sent = await requireHost(ctx).send(callerFor(ctx), {
+            envelope: firstMessageEnvelope,
+            body
+          })
+          if (!sent.ok) {
+            return sent
+          }
         }
         return result
       }

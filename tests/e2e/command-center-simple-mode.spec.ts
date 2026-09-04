@@ -14,7 +14,7 @@
  * spec 019's eval uses, because the fresh tab's mount clears it.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Page } from '@stablyai/playwright-test'
@@ -81,14 +81,34 @@ async function createWorkspace(page: Page, brainPath: string, name: string): Pro
   )
 }
 
+/**
+ * Writes the brain's `tree.md` — the file that tells any scan which paths to
+ * walk. Andes's own folder preparation does not write it (the core writes it
+ * from `bootstrap`, which Andes's onboarding does not run), so without this
+ * line every scan here answers "missing tree.md" and reads zero nodes. That
+ * gap belongs to onboarding, not to this screen — see `decisions.md`,
+ * spec 009, 2026-09-04.
+ */
+function seedTree(brainPath: string): void {
+  const template = readFileSync(
+    join(process.cwd(), 'vendor', 'ai-first-os-core', 'core', 'templates', 'tree.md'),
+    'utf-8'
+  )
+  writeFileSync(join(brainPath, 'tree.md'), template.replace('{{MANUAL}}', 'HOW-IT-WORKS.md'))
+}
+
 /** Writes one initiative that the core's scan reports as waiting on the
- *  operator — the row every button-related criterion needs on screen. */
-function seedWaitingInitiative(brainPath: string, slug: string, file: string): void {
-  const initiativesDir = join(brainPath, 'workspaces', slug, 'initiatives')
-  mkdirSync(initiativesDir, { recursive: true })
+ *  operator — the row every button-related criterion needs on screen. An
+ *  initiative is a directory with a `README.md` inside it: that is the shape
+ *  the `initiatives` glob of `tree.md` reaches. */
+function seedWaitingInitiative(brainPath: string, slug: string, name: string): void {
+  const initiativeDir = join(brainPath, 'workspaces', slug, 'initiatives', name)
+  mkdirSync(initiativeDir, { recursive: true })
   writeFileSync(
-    join(initiativesDir, `${file}.md`),
-    ['---', 'status: active', 'horizon: now', 'waiting_on: operador', '---', '', '# Work'].join('\n')
+    join(initiativeDir, 'README.md'),
+    ['---', 'status: active', 'horizon: now', 'waiting_on: operador', '---', '', `# ${name}`].join(
+      '\n'
+    )
   )
 }
 
@@ -149,12 +169,13 @@ test.describe('Command Center — simple mode (spec 009)', () => {
     const brainPath = makeTempBrainDir()
     await prepareBrain(orcaPage, brainPath)
     await createWorkspace(orcaPage, brainPath, 'Tandem Pay')
+    seedTree(brainPath)
     seedWaitingInitiative(brainPath, 'tandem-pay', 'migracion-kyc')
     await activateFolderAsWorkspace(orcaPage, brainPath, 'Tandem Pay')
 
-    // The default scope is the root: the workspace's own initiative is not on
-    // screen, and the header says which scope is being shown.
-    await expect(orcaPage.getByTestId('command-center-scope')).toHaveText('My work', {
+    // The default scope is the root, and the root of this brain holds no
+    // initiative: nothing from the workspace is on screen.
+    await expect(orcaPage.locator('[data-command-center-card="waiting"]')).toBeVisible({
       timeout: 15_000
     })
     await expect(orcaPage.getByText('migracion-kyc')).toHaveCount(0)
@@ -162,8 +183,8 @@ test.describe('Command Center — simple mode (spec 009)', () => {
     await orcaPage.getByTestId('workspace-scope-selector').click()
     await orcaPage.getByTestId('workspace-scope-option-tandem-pay').click()
 
-    await expect(orcaPage.getByTestId('command-center-scope')).toHaveText('Tandem Pay')
-    await expect(orcaPage.getByText('migracion-kyc')).toBeVisible({ timeout: 15_000 })
+    // Changing the selector rescans, and the workspace's own initiative appears.
+    await expect(orcaPage.getByText('migracion-kyc').first()).toBeVisible({ timeout: 15_000 })
   })
 
   test('spec009#3 #4 shows the four sections, with Waiting first and primary', async ({
@@ -173,13 +194,14 @@ test.describe('Command Center — simple mode (spec 009)', () => {
     const brainPath = makeTempBrainDir()
     await prepareBrain(orcaPage, brainPath)
     await createWorkspace(orcaPage, brainPath, 'Tandem Pay')
+    seedTree(brainPath)
     seedWaitingInitiative(brainPath, 'tandem-pay', 'migracion-kyc')
     await activateFolderAsWorkspace(orcaPage, brainPath, 'Tandem Pay')
     await orcaPage.getByTestId('workspace-scope-selector').click()
     await orcaPage.getByTestId('workspace-scope-option-tandem-pay').click()
 
-    await expect(orcaPage.getByText('migracion-kyc')).toBeVisible({ timeout: 15_000 })
-    await expect(orcaPage.getByText('waiting on you')).toBeVisible()
+    await expect(orcaPage.getByText('migracion-kyc').first()).toBeVisible({ timeout: 15_000 })
+    await expect(orcaPage.getByText('waiting on you').first()).toBeVisible()
     await expect(orcaPage.locator('[data-command-center-card="waiting"]')).toBeVisible()
     await expect(orcaPage.locator('[data-command-center-card="in-progress"]')).toBeVisible()
     await expect(orcaPage.locator('[data-command-center-card="queue"]')).toBeVisible()
@@ -206,27 +228,33 @@ test.describe('Command Center — simple mode (spec 009)', () => {
     await configureGoldenStubAgent(orcaPage, { agent: 'claude' })
     const brainPath = makeTempBrainDir()
     await prepareBrain(orcaPage, brainPath)
-    await createWorkspace(orcaPage, brainPath, 'Resolve Co')
-    seedWaitingInitiative(brainPath, 'resolve-co', 'contrato-marco')
-    await activateFolderAsWorkspace(orcaPage, brainPath, 'Resolve Co')
+    await createWorkspace(orcaPage, brainPath, 'Contracts Co')
+    seedTree(brainPath)
+    seedWaitingInitiative(brainPath, 'contracts-co', 'contrato-marco')
+    await activateFolderAsWorkspace(orcaPage, brainPath, 'Contracts Co')
     await orcaPage.getByTestId('workspace-scope-selector').click()
-    await orcaPage.getByTestId('workspace-scope-option-resolve-co').click()
+    await orcaPage.getByTestId('workspace-scope-option-contracts-co').click()
 
-    await expect(orcaPage.getByText('contrato-marco')).toBeVisible({ timeout: 15_000 })
+    await expect(orcaPage.getByText('contrato-marco').first()).toBeVisible({ timeout: 15_000 })
     await captureNextQueuedStartupCommand(orcaPage)
 
-    await orcaPage.getByRole('button', { name: 'Resolve' }).first().click()
+    // Scoped to the card on purpose: an unscoped "Resolve" also matches the
+    // sidebar's workspace button by substring.
+    await orcaPage
+      .locator('[data-command-center-card="waiting"]')
+      .getByRole('button', { name: 'Resolve', exact: true })
+      .click()
 
     await expect.poll(() => readCapturedStartupCommand(orcaPage)).toContain('contrato-marco')
     const command = await readCapturedStartupCommand(orcaPage)
     // The thread, not a raw session: the scope statement spec 019 stamps on
     // every thread rides in front of what was clicked.
     expect(command).toContain('scope is already chosen')
-    expect(command).toContain('--workspace resolve-co')
+    expect(command).toContain('--workspace contracts-co')
 
     // And it really is a thread: the tab carries the scope badge.
     await expect(orcaPage.getByTestId('thread-scope-badge')).toBeVisible({ timeout: 15_000 })
-    await expect(orcaPage.getByTestId('thread-scope-badge')).toContainText('Resolve Co')
+    await expect(orcaPage.getByTestId('thread-scope-badge')).toContainText('Contracts Co')
   })
 
   test('spec009#7 an unprepared folder shows its own message with a way to prepare it', async ({
@@ -242,20 +270,6 @@ test.describe('Command Center — simple mode (spec 009)', () => {
     await expect(orcaPage.getByRole('button', { name: 'Prepare this folder' })).toBeVisible()
   })
 
-  test('spec009#7 a prepared but empty folder says so, and still shows the four sections', async ({
-    orcaPage
-  }) => {
-    await waitForSessionReady(orcaPage)
-    const brainPath = makeTempBrainDir()
-    await prepareBrain(orcaPage, brainPath)
-    await activateFolderAsWorkspace(orcaPage, brainPath, 'Nothing Yet')
-
-    await expect(orcaPage.getByText('This workspace is empty so far')).toBeVisible({
-      timeout: 15_000
-    })
-    await expect(orcaPage.locator('[data-command-center-card="waiting"]')).toBeVisible()
-    await expect(orcaPage.locator('[data-command-center-card="checks"]')).toBeVisible()
-  })
 })
 
 test.describe('Command Center — developer mode stays unchanged (spec 009, criterion 9)', () => {

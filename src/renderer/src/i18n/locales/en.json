@@ -17288,8 +17288,7 @@
   },
   "commandCenter": {
     "header": {
-      "title": "Command Center",
-      "rootScope": "My work"
+      "title": "Command Center"
     },
     "actionLine": {
       "empty": "Nothing urgent. Open a thread whenever you want.",

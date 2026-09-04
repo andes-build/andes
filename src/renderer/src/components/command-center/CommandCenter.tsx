@@ -44,11 +44,6 @@ export function CommandCenter({ brainPath }: CommandCenterProps): React.JSX.Elem
     selectorScope.kind === 'root'
       ? ({ type: 'root' } as const)
       : ({ type: 'workspace', slug: selectorScope.slug } as const)
-  const scopeName =
-    selectorScope.kind === 'root'
-      ? translate('commandCenter.header.rootScope', 'My work')
-      : selectorScope.name
-
   const { state, retry } = useCommandCenterStartup({ brainPath, scope })
   const [preparing, setPreparing] = useState(false)
 
@@ -74,14 +69,12 @@ export function CommandCenter({ brainPath }: CommandCenterProps): React.JSX.Elem
       data-testid="command-center"
       className="scrollbar-sleek flex h-full min-h-0 flex-col gap-4 overflow-y-auto px-8 py-6"
     >
-      <div className="flex flex-col gap-0.5">
-        <h1 className="text-2xl font-semibold">
-          {translate('commandCenter.header.title', 'Command Center')}
-        </h1>
-        <p data-testid="command-center-scope" className="text-sm text-muted-foreground">
-          {scopeName}
-        </p>
-      </div>
+      {/* No scope label here on purpose: the sidebar selector right beside
+          this screen already names the scope, and repeating it would be the
+          same words twice on one screen. */}
+      <h1 className="text-2xl font-semibold">
+        {translate('commandCenter.header.title', 'Command Center')}
+      </h1>
 
       {state.status === 'loading' ? (
         <CommandCenterLoadingState slow={state.slow} onRetry={retry} />

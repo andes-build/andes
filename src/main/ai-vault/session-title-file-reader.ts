@@ -55,7 +55,8 @@ async function readOneTitle(
     const title = {
       agent: request.agent,
       sessionId: request.sessionId,
-      title: session.title.trim()
+      title: session.title.trim(),
+      explicitTitle: session.explicitTitle?.trim() || null
     }
     cache?.set(title)
     return title

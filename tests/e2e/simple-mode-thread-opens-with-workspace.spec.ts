@@ -77,8 +77,11 @@ test.describe('Simple mode — el hilo abre con un workspace elegido (spec 021)'
 
     await orcaPage.getByTestId('simple-mode-nav-new-thread').click()
 
-    // The tab is in the strip.
-    await expect(orcaPage.getByTestId('sortable-tab').first()).toBeVisible({ timeout: 15_000 })
+    // The thread is selected in the sidebar (spec 013: simple mode has no
+    // tab strip — the sidebar's "Recent threads" row is the equivalent).
+    await expect(orcaPage.getByTestId('recent-thread-row').first()).toBeVisible({
+      timeout: 15_000
+    })
 
     // The scope is on screen, and it is the workspace's.
     await expect(orcaPage.getByTestId('thread-scope-badge')).toBeVisible({ timeout: 15_000 })
@@ -99,7 +102,9 @@ test.describe('Simple mode — el hilo abre con un workspace elegido (spec 021)'
     // Root ("My work") is the default selector state — nothing to click.
     await orcaPage.getByTestId('simple-mode-nav-new-thread').click()
 
-    await expect(orcaPage.getByTestId('sortable-tab').first()).toBeVisible({ timeout: 15_000 })
+    await expect(orcaPage.getByTestId('recent-thread-row').first()).toBeVisible({
+      timeout: 15_000
+    })
     await expect(orcaPage.getByTestId('thread-scope-badge')).toBeVisible({ timeout: 15_000 })
     await expect(orcaPage.getByTestId('thread-scope-badge')).toContainText('My work')
     await expect

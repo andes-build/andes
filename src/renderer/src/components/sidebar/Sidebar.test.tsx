@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import { cleanup, render, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getDefaultSettings } from '../../../../shared/constants'
+import { INTERFACE_MODE_DEVELOPER } from '../../../../shared/interface-mode'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 
 const mocks = vi.hoisted(() => ({
@@ -102,6 +103,9 @@ vi.mock('./useWorkspaceBoardPanel', () => ({
 
 import Sidebar from './index'
 
+// Why: these tests assert the developer sidebar (nav, worktree list, setup
+// script card, board drawer). Simple mode is the default since spec 011 and
+// renders a different body, so the mode is declared here instead of inherited.
 function setSidebarState(settings: GlobalSettings, statusBarVisible = true): void {
   mocks.state = {
     activeModal: null,
@@ -110,7 +114,7 @@ function setSidebarState(settings: GlobalSettings, statusBarVisible = true): voi
     fetchAllWorktrees: vi.fn(),
     repos: [],
     setSidebarWidth: vi.fn(),
-    settings,
+    settings: { ...settings, interfaceMode: INTERFACE_MODE_DEVELOPER },
     sidebarOpen: true,
     sidebarWidth: 320,
     statusBarVisible

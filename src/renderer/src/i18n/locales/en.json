@@ -16692,6 +16692,16 @@
         "usedOneSummary": "Used 1 tool",
         "usedManySummary": "Used {{toolCount}} tools"
       },
+      "activity": {
+        "reading": "Reading a file",
+        "readingSubject": "Reading the {{value0}}",
+        "writing": "Writing a file",
+        "writingSubject": "Writing the {{value0}}",
+        "searching": "Searching the files",
+        "runningCommand": "Running a command",
+        "delegating": "Delegating a task",
+        "hitAProblem": "Ran into a problem"
+      },
       "providerFrame": {
         "byteLength": "{{value0}} bytes"
       },
@@ -16735,7 +16745,10 @@
       "scrollMessageToTop": "Scroll this message to top",
       "threadScope": {
         "root": "My work",
-        "workspace": "{{value0}}"
+        "workspace": "Focus: {{value0}}"
+      },
+      "threadHeader": {
+        "newThread": "New thread"
       },
       "loadingEarlier": "Loading…",
       "loadEarlier": "Load earlier messages",
@@ -16762,7 +16775,17 @@
       },
       "structuredSessionCloseFailed": "Could not close this Codex chat",
       "structuredSessionLaunchFailed": "Could not open Codex chat",
-      "structuredSessionCloseFailedDescription": "The terminal stayed open so the provider remains recoverable."
+      "structuredSessionCloseFailedDescription": "The terminal stayed open so the provider remains recoverable.",
+      "permission": {
+        "read": "Read a file?",
+        "readSubject": "Read the {{value0}}?",
+        "write": "Write a file?",
+        "writeSubject": "Write the {{value0}}?",
+        "search": "Search the files?",
+        "runCommand": "Run a command?",
+        "delegate": "Delegate a task?",
+        "generic": "Allow this action?"
+      }
     },
     "tab": {
       "bar": {

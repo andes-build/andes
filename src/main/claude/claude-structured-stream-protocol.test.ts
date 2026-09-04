@@ -63,6 +63,25 @@ describe('the approval item the conversation draws', () => {
     expect(item.options.map((option) => option.id)).toEqual(['allow', 'deny'])
     expect(item.resolution.state).toBe('pending')
   })
+
+  // Spec 012 criterion 4: the item names the tool so the screen can word the ask in person
+  // language. Without this the card had only the CLI's title and description to show, which is
+  // how the raw command reached it.
+  it('names the tool the ask is about', () => {
+    const request = readClaudeStructuredPermissionRequest(
+      frame({
+        tool_name: 'Bash',
+        title: 'Allow Bash?',
+        description: '.os/core/lib/session-start.sh --brain . --root',
+        input: { command: '.os/core/lib/session-start.sh --brain . --root' }
+      })
+    )
+    const item = claudeStructuredApprovalItem(request!)
+    expect(item.tool).toEqual({
+      name: 'Bash',
+      input: { command: '.os/core/lib/session-start.sh --brain . --root' }
+    })
+  })
 })
 
 describe('the answer that goes back', () => {

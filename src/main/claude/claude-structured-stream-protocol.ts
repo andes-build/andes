@@ -99,6 +99,7 @@ export function claudeStructuredApprovalItem(
       { id: CLAUDE_APPROVAL_ALLOW_OPTION_ID, label: 'Allow' },
       { id: CLAUDE_APPROVAL_DENY_OPTION_ID, label: 'Deny' }
     ],
+    tool: { name: request.toolName, input: request.input },
     resolution: { state: 'pending', selectedOptionId: null, resolvedBy: null, resolvedAt: null }
   }
 }

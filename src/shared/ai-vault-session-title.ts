@@ -7,6 +7,10 @@ export type AiVaultSessionTitle = {
   agent: Extract<AiVaultAgent, 'claude' | 'codex'>
   sessionId: string
   title: string
+  /** Spec 013: only a title the CLI itself wrote (`custom-title`/`ai-title`),
+   *  never a first-prompt or agent-label guess — `null` when the CLI wrote
+   *  none. The thread header resolves from this, not from `title`. */
+  explicitTitle?: string | null
 }
 
 export type AiVaultSessionTitleRequest = {

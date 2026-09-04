@@ -139,6 +139,7 @@ function RightSidebarInner(): React.JSX.Element {
   return (
     <div
       ref={containerRef}
+      data-testid="right-sidebar"
       className={cn(
         'relative flex-shrink-0 flex flex-row',
         // Why: overflow-visible is needed when open so the resize handle

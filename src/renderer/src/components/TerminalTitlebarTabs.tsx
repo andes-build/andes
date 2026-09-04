@@ -1,6 +1,8 @@
 import { createPortal } from 'react-dom'
 import type { TerminalTab } from '../../../shared/terminal-tab-types'
 import { useAppStore } from '../store'
+import { useInterfaceMode } from '@/hooks/useInterfaceMode'
+import { INTERFACE_MODE_SIMPLE } from '../../../shared/interface-mode'
 import TabBar from './tab-bar/TabBar'
 import type { TerminalController } from './use-terminal-controller'
 
@@ -20,6 +22,10 @@ export function TerminalTitlebarTabs({
 }: {
   controller: TerminalController
 }): React.JSX.Element | null {
+  // Spec 013, criterion 1: simple mode never shows the tab bar — threads
+  // live in the sidebar's "Recent threads" instead. Developer mode is
+  // unaffected (criterion 9).
+  const isSimpleMode = useInterfaceMode() === INTERFACE_MODE_SIMPLE
   const {
     activeBrowserTabId,
     activeFileId,
@@ -58,7 +64,7 @@ export function TerminalTitlebarTabs({
     worktreeClientHostedBrowserRows,
     worktreeFiles
   } = controller
-  if (!renderedActiveWorktreeId || effectiveActiveLayout || !titlebarTabsTarget) {
+  if (isSimpleMode || !renderedActiveWorktreeId || effectiveActiveLayout || !titlebarTabsTarget) {
     return null
   }
   return createPortal(

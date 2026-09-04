@@ -14,7 +14,11 @@ import {
 
 // Bump when the persisted entry layout or cached session semantics change; a
 // mismatched file is discarded whole.
-const SCHEMA_VERSION = 2
+// v3 (spec 013): AiVaultSession gained `explicitTitle` (a title the CLI
+// itself wrote, distinct from `title`'s first-prompt/agent-label fallback
+// chain) — a v2 cache predates the field and must not be replayed as if it
+// had already computed it.
+const SCHEMA_VERSION = 3
 // Debounce so back-to-back scans (desktop IPC + runtime RPC) collapse into one write.
 const SAVE_DEBOUNCE_MS = 1_500
 // The payload contains transcript-derived preview text; keep it user-only

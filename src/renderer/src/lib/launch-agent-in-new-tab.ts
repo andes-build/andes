@@ -60,7 +60,7 @@ export type LaunchAgentInNewTabArgs = {
   promptIsThreadFirstMessage?: boolean
   /** Spec 019: the scope this thread was born with, captured by the caller
    *  before this call — never re-read later. Stamped on the created tab so
-   *  the thread screen can show it (see `ThreadScopeBadge`). Omitted for
+   *  the thread screen can show it (see `ThreadHeader`). Omitted for
    *  launches outside simple mode's sidebar new-thread flow. */
   threadScope?: ThreadScope
 }

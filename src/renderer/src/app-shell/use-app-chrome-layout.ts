@@ -5,6 +5,7 @@ import { canShowRightSidebarForView } from '@/lib/right-sidebar-visibility'
 import { resolveLeftSidebarStyleVariables } from '@/lib/left-sidebar-appearance'
 import { resolveLeftTitlebarChromeLayout } from '@/lib/titlebar-left-chrome'
 import { shouldShowWorktreeCreationSurface } from '@/lib/worktree-creation-surface'
+import { INTERFACE_MODE_SIMPLE } from '../../../shared/interface-mode'
 import { useAppStore } from '../store'
 import { selectActiveTerminalChromeState } from '../store/active-terminal-chrome-selector'
 import { useSystemPrefersDark } from '../components/terminal-pane/use-system-prefers-dark'
@@ -134,7 +135,12 @@ export function useAppChromeLayout() {
     shouldMountTerminalWorkbench,
     showSidebar,
     // Full-page navigation surfaces own the whole content area, so suppress right-sidebar controls.
-    showRightSidebarControls: !creationLayoutActive && canShowRightSidebarForView(activeView),
+    // Spec 013, criterion 8: simple mode never shows the right files panel —
+    // Files (spec 010) is where its content lives there.
+    showRightSidebarControls:
+      !creationLayoutActive &&
+      (settings?.interfaceMode ?? INTERFACE_MODE_SIMPLE) !== INTERFACE_MODE_SIMPLE &&
+      canShowRightSidebarForView(activeView),
     showTitlebarAppName: settings?.showTitlebarAppName !== false,
     showTitlebarExpandButton: workspaceChromeActive && !hasTabBar && effectiveActiveTabExpanded,
     sidebarOpen,

@@ -532,7 +532,7 @@ describe('resolveAiVaultSessionTitles host routing', () => {
         executionHostScope: 'ssh:dev-box',
         requests
       })
-    ).resolves.toEqual(titles)
+    ).resolves.toEqual({ titles: [{ ...titles.titles[0], explicitTitle: null }] })
 
     expect(mocks.requestActiveSshAiVaultSessionTitles).toHaveBeenCalledWith('dev-box', {
       requests

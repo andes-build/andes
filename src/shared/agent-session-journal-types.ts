@@ -119,6 +119,11 @@ export type AgentJournalApprovalItem = {
   detail: string | null
   options: AgentJournalPromptOption[]
   resolution: AgentJournalResolution
+  /** The tool the ask is about, so a client can word the question in person language instead of
+   *  printing the provider's own title and description — which is where a raw command reaches the
+   *  screen (spec 012, criterion 4). A provider that does not name a tool leaves this out and the
+   *  client keeps whatever it already showed. */
+  tool?: { name: string; input: unknown }
 }
 
 export type AgentJournalQuestionItem = {

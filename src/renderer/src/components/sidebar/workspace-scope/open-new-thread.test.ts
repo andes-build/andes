@@ -51,6 +51,8 @@ const store = {
   },
   allWorktrees: vi.fn(() => store.worktreesByRepo['repo-1']),
   tabsByWorktree: { 'wt-1': [{ id: 'tab-1' }] } as Record<string, { id: string }[]>,
+  activeWorkspaceScopeSlug: null as string | null,
+  workspaceScopeOptions: [] as { slug: string; name: string; path: string }[],
   openFiles: [] as { id: string; worktreeId: string }[],
   browserTabsByWorktree: {} as Record<string, { id: string }[]>,
   tabBarOrderByWorktree: {} as Record<string, string[]>,
@@ -111,6 +113,8 @@ describe('openNewThread (spec 015)', () => {
     }
     store.tabsByWorktree = { 'wt-1': [{ id: 'tab-1' }] }
     store.tabBarOrderByWorktree = {}
+    store.activeWorkspaceScopeSlug = null
+    store.workspaceScopeOptions = []
     mockCreateTab.mockReturnValue({ id: 'tab-1' })
     mockEnsureDetectedAgents.mockResolvedValue(['claude'])
   })
@@ -138,6 +142,7 @@ describe('openNewThread (spec 015)', () => {
     expect(mockCreateTab).toHaveBeenCalledWith('wt-1', undefined, undefined, {
       launchAgent: 'claude',
       quickCommandLabel: undefined,
+      threadScope: { kind: 'root' },
       viewMode: 'chat'
     })
   })
@@ -186,6 +191,8 @@ describe('openNewThread — el agente correcto y sin omisión de permisos (spec 
     }
     store.tabsByWorktree = { 'wt-1': [{ id: 'tab-1' }] }
     store.tabBarOrderByWorktree = {}
+    store.activeWorkspaceScopeSlug = null
+    store.workspaceScopeOptions = []
     mockCreateTab.mockReturnValue({ id: 'tab-1' })
     mockEnsureDetectedAgents.mockResolvedValue(['claude'])
   })
@@ -245,5 +252,84 @@ describe('openNewThread — el agente correcto y sin omisión de permisos (spec 
     expect(options.action.label).toBe('Open folder')
     options.action.onClick()
     expect(mockAddRepo).toHaveBeenCalled()
+  })
+})
+
+describe('openNewThread — el hilo nace con el alcance del selector (spec 019)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    store.activeWorktreeId = 'wt-1'
+    store.detectedAgentIds = ['claude']
+    store.settings = {
+      agentCmdOverrides: {},
+      agentDefaultArgs: {},
+      agentDefaultEnv: {},
+      activeRuntimeEnvironmentId: null,
+      interfaceMode: 'simple',
+      defaultTuiAgent: undefined,
+      disabledTuiAgents: undefined
+    }
+    store.tabsByWorktree = { 'wt-1': [{ id: 'tab-1' }] }
+    store.tabBarOrderByWorktree = {}
+    store.activeWorkspaceScopeSlug = null
+    store.workspaceScopeOptions = []
+    mockCreateTab.mockReturnValue({ id: 'tab-1' })
+    mockEnsureDetectedAgents.mockResolvedValue(['claude'])
+  })
+
+  it('spec019#1 with the root selected, the thread starts with a message naming the root — not a workspace', async () => {
+    const { openNewThread } = await import('./open-new-thread')
+
+    await openNewThread()
+
+    const [, startup] = mockQueueTabStartupCommand.mock.calls[0]
+    expect(String(startup.command)).toContain('the root')
+    expect(String(startup.command)).toContain('--root')
+    expect(mockCreateTab).toHaveBeenCalledWith('wt-1', undefined, undefined, {
+      launchAgent: 'claude',
+      quickCommandLabel: undefined,
+      threadScope: { kind: 'root' },
+      viewMode: 'chat'
+    })
+  })
+
+  it('spec019#2 with a workspace selected, the thread starts with a message naming that workspace by slug', async () => {
+    store.activeWorkspaceScopeSlug = 'tandem-pay'
+    store.workspaceScopeOptions = [
+      { slug: 'tandem-pay', name: 'Tandem Pay', path: '/repo/workspaces/tandem-pay' }
+    ]
+    const { openNewThread } = await import('./open-new-thread')
+
+    await openNewThread()
+
+    const [, startup] = mockQueueTabStartupCommand.mock.calls[0]
+    expect(String(startup.command)).toContain('tandem-pay')
+    expect(String(startup.command)).toContain('--workspace tandem-pay')
+    expect(mockCreateTab).toHaveBeenCalledWith('wt-1', undefined, undefined, {
+      launchAgent: 'claude',
+      quickCommandLabel: undefined,
+      threadScope: {
+        kind: 'workspace',
+        slug: 'tandem-pay',
+        name: 'Tandem Pay',
+        path: '/repo/workspaces/tandem-pay'
+      },
+      viewMode: 'chat'
+    })
+  })
+
+  it('spec019#3 a selector slug that no longer exists on disk falls back to the root, same as Files (spec 010)', async () => {
+    store.activeWorkspaceScopeSlug = 'ghost-workspace'
+    store.workspaceScopeOptions = []
+    const { openNewThread } = await import('./open-new-thread')
+
+    await openNewThread()
+
+    expect(mockCreateTab).toHaveBeenCalledWith('wt-1', undefined, undefined, {
+      launchAgent: 'claude',
+      quickCommandLabel: undefined,
+      threadScope: { kind: 'root' },
+      viewMode: 'chat'
+    })
   })
 })

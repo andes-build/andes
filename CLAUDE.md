@@ -76,6 +76,15 @@ hasta que se reabra la traducción — ver `specs/done/008-un-solo-idioma.md`.
 
 - `evals/run.sh` llama scripts de `pnpm`: sin `pnpm install` en el checkout, los criterios que los
   usan fallan aunque el código esté bien (pasó en el Gate 2 de la spec 001, 2026-09-02).
+- `ORCA_DEV_USER_DATA_PATH` con una ruta larga rompe el arranque de `pnpm dev`: el daemon local
+  escucha en un socket Unix bajo esa carpeta, y macOS limita esas rutas a ~104 caracteres. Síntoma:
+  modal "Andes couldn't start its local command transport" con `listen EINVAL`. Usar una ruta corta
+  (`/tmp/<algo-corto>`), nunca un directorio de scratchpad de sesión (spec 019, 2026-09-04).
+- Dos instancias de desarrollo comparten `build.andes.dev` como identificador de paquete: nunca
+  activar la ventana propia con clics o `System Events` durante un chequeo funcional — puede robarle
+  el foco a la ventana de otra persona sin que las herramientas lo distingan. Manejar la instancia
+  propia solo por su puerto de depuración (`chromium.connectOverCDP`), y cerrarla apenas termine el
+  chequeo (spec 019, 2026-09-04).
 
 ## Convenciones de código heredadas de Orca
 

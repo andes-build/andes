@@ -24,14 +24,14 @@ function findThreadHeaderTab(
 export function threadScopeLabel(scope: ThreadScope): string {
   return scope.kind === 'root'
     ? translate('components.native-chat.threadScope.root', 'My work')
-    : translate('components.native-chat.threadScope.workspace', 'Workspace · Focus: {{value0}}', {
+    : translate('components.native-chat.threadScope.workspace', 'Focus: {{value0}}', {
         value0: scope.name
       })
 }
 
 /**
  * Spec 013, criterion 4: above the conversation, the thread's title and
- * (below it) its scope — "My work" at the root, "Workspace · Focus: <name>"
+ * (below it) its scope — "My work" at the root, "Focus: <name>"
  * inside a workspace. Supersedes spec 019's `ThreadScopeBadge`, which drew
  * only the scope line; the scope logic itself (`threadScopeLabel`, reading
  * `tab.threadScope` — captured once at launch, never the sidebar selector's

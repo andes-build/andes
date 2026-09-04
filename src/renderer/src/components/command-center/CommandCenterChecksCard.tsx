@@ -30,9 +30,12 @@ export function CommandCenterChecksCard({
           </p>
         ) : (
           section.rows.map((row) => (
-            <div key={row} className="flex items-center justify-between gap-3">
-              <p className="min-w-0 truncate text-sm">{row}</p>
-              <Button size="sm" variant="outline" onClick={() => onView(row)}>
+            <div key={row} className="flex items-start justify-between gap-3">
+              {/* Wraps on purpose: a check finding is a sentence, and
+                  truncating it to a stub hides the very thing the row is
+                  there to report (spec 009, criterion 2 — shown as it came). */}
+              <p className="min-w-0 flex-1 text-sm leading-snug break-words">{row}</p>
+              <Button size="sm" variant="outline" className="shrink-0" onClick={() => onView(row)}>
                 {translate('commandCenter.checks.view', 'View')}
               </Button>
             </div>

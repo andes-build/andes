@@ -67,7 +67,7 @@ export function CommandCenter({ brainPath }: CommandCenterProps): React.JSX.Elem
   return (
     <div
       data-testid="command-center"
-      className="scrollbar-sleek flex h-full min-h-0 flex-col gap-4 overflow-y-auto px-8 py-6"
+      className="scrollbar-sleek flex h-full min-h-0 flex-col gap-4 overflow-y-auto bg-background px-8 py-6"
     >
       {/* No scope label here on purpose: the sidebar selector right beside
           this screen already names the scope, and repeating it would be the

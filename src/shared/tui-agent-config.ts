@@ -1,5 +1,5 @@
 import type { TuiAgent } from './tui-agent'
-import { getOrcaCliCommandNameForPlatform } from './orca-cli-command-name'
+import { getAndesCliCommandNameForPlatform } from './andes-cli-command-name'
 
 export type AgentPromptInjectionMode =
   | 'argv'
@@ -74,17 +74,24 @@ const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
     draftPromptFlag: '--prefill'
   },
   'claude-agent-teams': {
-    // Why: an Orca-provided launch mode, not a separate binary; detection follows the Orca CLI.
+    // Why: an Andes-provided launch mode, not a separate binary; detection follows the Andes CLI.
+    // Why 'orca' as the base detectCmd (not 'andes'): the SSH relay shim is always deployed as
+    // `orca` regardless of the local platform's real command name (spec 007 renamed macOS's local
+    // command to `andes`, but did not touch the relay — see getTuiAgentLaunchCommand's isRemote
+    // carve-out below). 'andes' covers the local macOS process; the rest cover dev/Linux/relay.
     detectCmd: 'orca',
-    detectCmdAliases: ['orca-dev', 'orca-ide'],
-    // Why: require Claude too so fresh installs (Orca shim always present) don't report Agent Teams without an agent CLI.
+    detectCmdAliases: ['andes', 'andes-dev', 'orca-ide'],
+    // Why: require Claude too so fresh installs (Andes shim always present) don't report Agent Teams without an agent CLI.
     detectRequiredCommands: ['claude'],
-    // Why: Windows/WSL use Claude's in-process Agent Teams fallback, not this Orca native-pane/tmux-shim wrapper.
+    // Why: Windows/WSL use Claude's in-process Agent Teams fallback, not this Andes native-pane/tmux-shim wrapper.
     detectUnsupportedRuntimes: ['win32', 'wsl'],
+    // Why 'orca' here and not 'andes': this is also the fallback used for the Linux SSH-remote
+    // relay shim (always `orca`, see getTuiAgentLaunchCommand) — macOS gets its own entry below.
     launchCmd: 'orca claude-teams',
     launchCmdByPlatform: {
-      linux: `${getOrcaCliCommandNameForPlatform('linux')} claude-teams`,
-      win32: `${getOrcaCliCommandNameForPlatform('win32')} claude-teams`
+      darwin: 'andes claude-teams',
+      linux: `${getAndesCliCommandNameForPlatform('linux')} claude-teams`,
+      win32: `${getAndesCliCommandNameForPlatform('win32')} claude-teams`
     },
     expectedProcess: 'claude',
     promptInjectionMode: 'stdin-after-start'

@@ -54,6 +54,8 @@ export function SimpleModeNav(): React.JSX.Element {
   const openFilesPage = useAppStore((s) => s.openFilesPage)
   const openSkillsPage = useAppStore((s) => s.openSkillsPage)
   const openSettings = useAppStore((s) => s.openSettingsPage)
+  const showCommandCenter = useAppStore((s) => s.showCommandCenter)
+  const commandCenterRequested = useAppStore((s) => s.commandCenterRequested)
 
   return (
     <nav
@@ -75,8 +77,13 @@ export function SimpleModeNav(): React.JSX.Element {
           'auto.components.workspaceScope.SimpleModeNav.commandCenter',
           'Command Center'
         )}
-        active={activeView === 'terminal'}
-        onClick={() => setActiveView('terminal')}
+        active={activeView === 'terminal' && commandCenterRequested}
+        onClick={() => {
+          // Spec 009: the flag is what brings the home screen back once a
+          // thread already owns the terminal view.
+          showCommandCenter()
+          setActiveView('terminal')
+        }}
       />
       <SimpleModeNavItem
         testId="simple-mode-nav-files"

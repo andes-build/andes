@@ -1,0 +1,35 @@
+Waiting for your decision
+  migracion-kyc — waiting on you
+  onboarding-clientes — waiting gate-2
+  contrato-marco — waiting on you
+  renovacion-seguro — waiting gate-1
+  auditoria-anual — waiting on you
+  and 3 more
+
+In progress
+  checkout-link · now · active
+  migracion-kyc · now · blocked · blocked: la definición del nuevo umbral de verificación es de Legal
+  onboarding-clientes · next · active · waiting on Legal
+  contrato-marco · now · active
+  renovacion-seguro · now · active
+  auditoria-anual · next · active
+  reporte-fiscal · next · active
+  soporte-nivel-2 · now · active
+  migracion-datos · next · active
+  landing-v2 · now · active
+  and 4 more
+
+Queued
+  next 12 · later 7
+  backlog: 3 ready of 9 pending
+  inbox: 5 unclassified
+
+Checks
+  identity 22/40 · resolver 6 rows
+  3 files unsaved
+  2 routes in the table are unreachable
+  capability not installed: position role "cto"
+  and 2 more
+
+active-role: cpo · roles/cpo.md
+40 nodes · 1.2s · v1.3.0

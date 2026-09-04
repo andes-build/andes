@@ -1,4 +1,4 @@
-import { mkdir, readFile, readlink, symlink, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, readFile, readlink, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -65,10 +65,10 @@ describe('CliInstaller', () => {
     async () => {
       const fixture = await makeFixture()
       const commandDir = join(fixture.root, 'bin')
-      const installPath = join(commandDir, 'orca')
+      const installPath = join(commandDir, 'andes')
       const resourcesPath = join(fixture.root, 'Current.app', 'Contents', 'Resources')
-      const launcherPath = join(resourcesPath, 'bin', 'orca')
-      const oldLauncherPath = join(fixture.root, 'Old.app', 'Contents', 'Resources', 'bin', 'orca')
+      const launcherPath = join(resourcesPath, 'bin', 'andes')
+      const oldLauncherPath = join(fixture.root, 'Old.app', 'Contents', 'Resources', 'bin', 'andes')
       await mkdir(commandDir, { recursive: true })
       await mkdir(join(resourcesPath, 'bin'), { recursive: true })
       await writeFile(launcherPath, '#!/usr/bin/env bash\n', 'utf8')
@@ -91,6 +91,43 @@ describe('CliInstaller', () => {
     }
   )
 
+  // Why: spec 007 (criterion 3) — a machine that already had the pre-rename `orca`
+  // command registered must end up with `andes` installed and the old `orca` symlink
+  // gone, never two commands pointing at the same app.
+  it.skipIf(process.platform === 'win32')(
+    'removes a legacy mac orca symlink when installing andes',
+    async () => {
+      const fixture = await makeFixture()
+      const commandDir = join(fixture.root, 'bin')
+      const installPath = join(commandDir, 'andes')
+      const resourcesPath = join(fixture.root, 'Current.app', 'Contents', 'Resources')
+      const launcherPath = join(resourcesPath, 'bin', 'andes')
+      const legacyLauncherPath = join(resourcesPath, 'bin', 'orca')
+      const legacyCommandPath = join(commandDir, 'orca')
+      await mkdir(commandDir, { recursive: true })
+      await mkdir(join(resourcesPath, 'bin'), { recursive: true })
+      await writeFile(launcherPath, '#!/usr/bin/env bash\n', 'utf8')
+      await writeFile(legacyLauncherPath, '#!/usr/bin/env bash\n', 'utf8')
+      await symlink(legacyLauncherPath, legacyCommandPath)
+
+      const installer = new CliInstaller({
+        platform: 'darwin',
+        isPackaged: true,
+        resourcesPath,
+        userDataPath: fixture.userDataPath,
+        appPath: fixture.appPath,
+        defaultMacCommandPath: installPath,
+        processPathEnv: commandDir
+      })
+
+      const installed = await installer.install()
+      expect(installed.commandPath).toBe(installPath)
+      expect(installed.state).toBe('installed')
+      await expect(readlink(installPath)).resolves.toBe(launcherPath)
+      await expect(lstat(legacyCommandPath)).rejects.toMatchObject({ code: 'ENOENT' })
+    }
+  )
+
   // Why: old dev/package experiments wrote a generated Orca launcher file
   // directly into /usr/local/bin/orca. That broke profiling because Settings
   // treated the regular file as a hard conflict and would not self-heal it.
@@ -99,9 +136,9 @@ describe('CliInstaller', () => {
     async () => {
       const fixture = await makeFixture()
       const commandDir = join(fixture.root, 'bin')
-      const installPath = join(commandDir, 'orca')
+      const installPath = join(commandDir, 'andes')
       const resourcesPath = join(fixture.root, 'Current.app', 'Contents', 'Resources')
-      const launcherPath = join(resourcesPath, 'bin', 'orca')
+      const launcherPath = join(resourcesPath, 'bin', 'andes')
       const oldCliPath = join(fixture.root, 'OldWorktree', 'out', 'cli', 'index.js')
       await mkdir(commandDir, { recursive: true })
       await mkdir(join(resourcesPath, 'bin'), { recursive: true })
@@ -145,7 +182,7 @@ describe('CliInstaller', () => {
     async () => {
       const fixture = await makeFixture()
       const commandDir = join(fixture.root, 'bin')
-      const installPath = join(commandDir, 'orca')
+      const installPath = join(commandDir, 'andes')
       const resourcesPath = await createPackagedMacLauncher(fixture.root)
       await mkdir(commandDir, { recursive: true })
       await writeFile(
@@ -177,13 +214,13 @@ describe('CliInstaller', () => {
     'replaces stale sibling dev launcher symlinks from packaged installs',
     async () => {
       const fixture = await makeFixture()
-      for (const devLauncherName of ['orca', 'orca-dev']) {
+      for (const devLauncherName of ['andes', 'andes-dev']) {
         const caseRoot = join(fixture.root, devLauncherName)
         const commandDir = join(caseRoot, 'bin')
-        const installPath = join(commandDir, 'orca')
-        const userDataPath = join(caseRoot, 'orca')
+        const installPath = join(commandDir, 'andes')
+        const userDataPath = join(caseRoot, 'andes')
         const resourcesPath = join(caseRoot, 'Current.app', 'Contents', 'Resources')
-        const launcherPath = join(resourcesPath, 'bin', 'orca')
+        const launcherPath = join(resourcesPath, 'bin', 'andes')
         const devLauncherPath = join(`${userDataPath}-dev`, 'cli', 'bin', devLauncherName)
         await mkdir(commandDir, { recursive: true })
         await mkdir(join(resourcesPath, 'bin'), { recursive: true })

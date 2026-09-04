@@ -196,19 +196,25 @@ describe('bundled skill guide generator', () => {
   })
 
   it('keeps CLI guide examples safe across shells and Linux command names', async () => {
-    for (const name of ['orca-cli', 'computer-use']) {
+    // Why per-file placeholders: andes-cli was renamed off the `orca`/`ORCA` binary in
+    // spec 007; the other guides still teach the unrenamed binary (out of that spec's scope).
+    const expectations = {
+      'andes-cli': { placeholder: 'ANDES', devCommand: 'andes-dev', bareCommand: 'andes' },
+      'computer-use': { placeholder: 'ORCA', devCommand: 'orca-dev', bareCommand: 'orca' }
+    }
+    for (const [name, { placeholder, devCommand, bareCommand }] of Object.entries(expectations)) {
       const source = await readFile(path.join(projectDir, 'skill-guides', `${name}.md`), 'utf8')
 
       expect(source).toContain('ORCA_CLI_COMMAND')
-      expect(source).toContain('orca-dev')
+      expect(source).toContain(devCommand)
       expect(source).toContain('orca-ide')
       expect(source).toContain('PowerShell')
       expect(source).toContain('cmd.exe')
-      expect(source).toMatch(/^ORCA .+--json$/mu)
+      expect(source).toMatch(new RegExp(`^${placeholder} .+--json$`, 'mu'))
       // Why: bare command lines can launch GNOME Orca, while shell variables make
       // the same guide unusable from PowerShell and cmd.exe.
-      expect(source).not.toMatch(/^orca /mu)
-      expect(source).not.toMatch(/\$ORCA(?:_|\b)/u)
+      expect(source).not.toMatch(new RegExp(`^${bareCommand} `, 'mu'))
+      expect(source).not.toMatch(new RegExp(`\\$${placeholder}(?:_|\\b)`, 'u'))
     }
   })
 

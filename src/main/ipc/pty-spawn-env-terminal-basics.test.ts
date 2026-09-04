@@ -74,7 +74,7 @@ describe('registerPtyHandlers', () => {
           }
         )
 
-        expect(env.BROWSER).toBe('orca open-url --url %s')
+        expect(env.BROWSER).toBe('andes open-url --url %s')
       } finally {
         if (inheritedBrowser === undefined) {
           delete process.env.BROWSER

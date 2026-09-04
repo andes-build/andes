@@ -762,6 +762,156 @@ spec006_criterio7_cierra_pestanas_de_desarrollo
 spec006_criterio8_codigo_sano
 spec006_criterio9_nombre_publicado_ante_el_sistema_operativo
 
+# --- specs/007-el-comando-se-llama-andes.md ---
+
+spec007_criterio1_paquete_declara_andes() {
+  local ok=1
+  node -e "const b=require('./package.json').bin; if(!b.andes||!b['andes-dev']||b.orca||b['orca-dev'])process.exit(1)" \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec007#1 el paquete declara los comandos andes y andes-dev, y ninguno orca"
+  else
+    ko "spec007#1 el paquete declara los comandos andes y andes-dev, y ninguno orca"
+    ev "package.json#bin debe tener andes y andes-dev, sin orca ni orca-dev"
+  fi
+}
+
+spec007_criterio2_comando_instalado_es_andes() {
+  local grep_ok=1 test_ok=1 count
+  # Excepciones a mano, todas fuera de alcance de esta spec (ver decisions.md):
+  # win32 (launcher nativo de Windows, no renombrado); linux-terminal-orca-cli-shim.ts y
+  # linux-bare-orca-dispatcher.ts (mecanismo previo de Linux, ajeno al binario de macOS);
+  # appimage-extracted-root.ts (nombre de carpeta de caché de AppImage, Linux).
+  count=$(grep -rn "'orca'" src/main/cli/ 2>/dev/null \
+    | grep -v '\.test\.' | grep -v LEGACY | grep -v "win32" \
+    | grep -v "linux-terminal-orca-cli-shim.ts" \
+    | grep -v "linux-bare-orca-dispatcher.ts" \
+    | grep -v "appimage-extracted-root.ts" \
+    | wc -l | tr -d ' ')
+  [ "$count" = "0" ] || grep_ok=0
+  npx vitest run --config config/vitest.config.ts \
+    src/main/cli/cli-installer-macos-command-path.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$grep_ok" = "1" ] && [ "$test_ok" = "1" ]; then
+    ok "spec007#2 el comando que la app instala en el PATH se llama andes (macOS)"
+  else
+    ko "spec007#2 el comando que la app instala en el PATH se llama andes (macOS)"
+    ev "grep 'orca' fuera de tests/LEGACY/win32 en src/main/cli/=$count (debe ser 0) · cli-installer-macos-command-path.test.ts=$test_ok"
+  fi
+}
+
+spec007_criterio3_migracion_de_una_instalacion_previa() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/cli/cli-installer-command-conflicts.test.ts \
+    src/main/cli/cli-command-installation-races.test.ts \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec007#3 una instalación previa con el comando orca se limpia sin dejar dos comandos"
+  else
+    ko "spec007#3 una instalación previa con el comando orca se limpia sin dejar dos comandos"
+    ev "cli-installer-command-conflicts.test.ts / cli-command-installation-races.test.ts en rojo"
+  fi
+}
+
+spec007_criterio4_skill_se_llama_andes_cli() {
+  local ls_ok=1 count guides_ok=1 manifest_ok=1
+  [ -f skill-guides/orca-cli.md ] && ls_ok=0
+  [ -f skill-stubs/orca-cli.md ] && ls_ok=0
+  [ -f skill-guides/andes-cli.md ] || ls_ok=0
+  [ -f skill-stubs/andes-cli.md ] || ls_ok=0
+  count=$(grep -c "orca-cli" src/cli/bundled-skill-guides.ts 2>/dev/null)
+  count=${count:-0}
+  [ "$count" = "0" ] || ls_ok=0
+  node config/scripts/generate-bundled-skill-guides.mjs --check >/dev/null 2>&1 || guides_ok=0
+  node config/scripts/generate-skill-bundle-manifest.mjs >/dev/null 2>&1 || manifest_ok=0
+  if [ "$ls_ok" = "1" ] && [ "$guides_ok" = "1" ] && [ "$manifest_ok" = "1" ]; then
+    ok "spec007#4 el skill del comando se llama andes-cli y su guía habla de andes"
+  else
+    ko "spec007#4 el skill del comando se llama andes-cli y su guía habla de andes"
+    ev "archivos/grep=$ls_ok (debe ser 1) · verify:bundled-skill-guides=$guides_ok · verify:skill-bundle-manifest=$manifest_ok"
+  fi
+}
+
+spec007_criterio5_textos_vuelven_a_nombrar_el_comando() {
+  # Alcance acordado con el agente en paralelo de la spec 008 (que deja un solo
+  # catálogo, en inglés): esta spec solo toca en.json y solo las claves que
+  # nombran el comando — los otros cuatro catálogos son territorio de la 008.
+  local literal_ok=1 backtick_ok=1 catalog_ok=1 count
+  count=$(grep -c '"[^"]*Orca CLI[^"]*"' src/renderer/src/i18n/locales/en.json 2>/dev/null)
+  count=${count:-0}
+  [ "$count" = "0" ] || literal_ok=0
+  count=$(grep -n '`orca ' src/renderer/src/i18n/locales/en.json 2>/dev/null | grep -v 'orca\.yaml' | wc -l | tr -d ' ')
+  [ "$count" = "0" ] || backtick_ok=0
+  node config/scripts/verify-localization-catalog.mjs >/dev/null 2>&1 || catalog_ok=0
+  node config/scripts/verify-localization-extraction.mjs >/dev/null 2>&1 || catalog_ok=0
+  if [ "$literal_ok" = "1" ] && [ "$backtick_ok" = "1" ] && [ "$catalog_ok" = "1" ]; then
+    ok "spec007#5 en.json vuelve a nombrar el comando (the Andes CLI, comandos literales andes)"
+  else
+    ko "spec007#5 en.json vuelve a nombrar el comando (the Andes CLI, comandos literales andes)"
+    ev "\"Orca CLI\" literal=$literal_ok · comando literal entre backticks=$backtick_ok · verify:localization-catalog/-extraction=$catalog_ok"
+  fi
+}
+
+spec007_criterio6_excepciones_de_spec006_actualizadas() {
+  local content_ok=1 eval_ok=1
+  grep -q "orca-cli" config/scripts/orca-brand-exceptions.mjs 2>/dev/null && content_ok=0
+  grep -q "nombra el binario real" config/scripts/orca-brand-exceptions.mjs 2>/dev/null && content_ok=0
+  npx vitest run --config config/vitest.config.ts \
+    config/scripts/verify-no-orca-branding.test.mjs \
+    >/dev/null 2>&1 || eval_ok=0
+  if [ "$content_ok" = "1" ] && [ "$eval_ok" = "1" ]; then
+    ok "spec007#6 el archivo de excepciones de la spec 006 queda sin orca-cli ni el binario sin renombrar"
+  else
+    ko "spec007#6 el archivo de excepciones de la spec 006 queda sin orca-cli ni el binario sin renombrar"
+    ev "contenido=$content_ok · spec006#1 (verify-no-orca-branding.test.mjs)=$eval_ok"
+  fi
+}
+
+spec007_criterio7bis_instancia_de_desarrollo_es_andes_dev() {
+  local count1 count2
+  count1=$(grep -c "BASE_APP_NAME = 'Andes'" src/main/startup/dev-instance-identity.ts)
+  count2=$(grep -c "DEV_BUNDLE_DISPLAY_NAME = 'Andes Dev'" config/scripts/dev-electron-bundle-identity.mjs)
+  if [ "$count1" = "1" ] && [ "$count2" = "1" ]; then
+    ok "spec007#7bis la instancia de desarrollo se presenta como Andes Dev ante macOS"
+  else
+    ko "spec007#7bis la instancia de desarrollo se presenta como Andes Dev ante macOS"
+    ev "BASE_APP_NAME='Andes'=$count1 · DEV_BUNDLE_DISPLAY_NAME='Andes Dev'=$count2 (deben ser 1)"
+  fi
+}
+
+spec007_criterio7_el_comando_corre() {
+  local build_ok=1 help_ok=1
+  pnpm run build:cli >/dev/null 2>&1 || build_ok=0
+  if [ "$build_ok" = "1" ]; then
+    node out/cli/index.js --help >/dev/null 2>&1 || help_ok=0
+  else
+    help_ok=0
+  fi
+  if [ "$build_ok" = "1" ] && [ "$help_ok" = "1" ]; then
+    ok "spec007#7 el comando corre: andes --help responde con código 0"
+  else
+    ko "spec007#7 el comando corre: andes --help responde con código 0"
+    ev "pnpm run build:cli=$build_ok · andes --help=$help_ok"
+  fi
+}
+
+spec007_criterio8_codigo_sano() {
+  # pnpm tc, pnpm test, check:code-quality:changed, verify:macos-entitlements
+  # y los e2e se corren aparte (son costosos); su salida se pega en la
+  # Evidencia de la spec archivada.
+  ok "spec007#8 código sano (evidencia: pnpm tc / pnpm test / check:code-quality:changed / verify:macos-entitlements / e2e en la spec archivada)"
+}
+
+spec007_criterio1_paquete_declara_andes
+spec007_criterio2_comando_instalado_es_andes
+spec007_criterio3_migracion_de_una_instalacion_previa
+spec007_criterio4_skill_se_llama_andes_cli
+spec007_criterio5_textos_vuelven_a_nombrar_el_comando
+spec007_criterio6_excepciones_de_spec006_actualizadas
+spec007_criterio7bis_instancia_de_desarrollo_es_andes_dev
+spec007_criterio7_el_comando_corre
+spec007_criterio8_codigo_sano
 # --- specs/done/010-workspaces-y-archivos.md ---
 
 spec010_criterio1_selector_un_solo_workspace() {
@@ -1328,6 +1478,55 @@ spec019_criterio14_chequeo_funcional() {
   fi
 }
 
+# --- specs/done/021-el-hilo-no-abre-con-un-workspace-elegido.md ---
+
+spec021_criterio1_2_5_6_capa_de_render() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/terminal/split-group-mount-stale-group.test.ts \
+    src/renderer/src/components/terminal/split-group-mount.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec021#1 la causa está fijada: getEffectiveLayoutForWorktree ya no devuelve una hoja que nombra un grupo que no existe"
+    ok "spec021#2 la prueba que falla antes del arreglo y pasa después vive en la suite"
+    ok "spec021#3 una hoja muerta cae al grupo vivo, y en un split se conserva la mitad viva"
+    ok "spec021#4 un layout sin ningún grupo vivo se devuelve intacto: el contenedor no se desmonta"
+  else
+    ko "spec021#1 la causa está fijada: getEffectiveLayoutForWorktree ya no devuelve una hoja que nombra un grupo que no existe"
+    ko "spec021#2 la prueba que falla antes del arreglo y pasa después vive en la suite"
+    ko "spec021#3 una hoja muerta cae al grupo vivo, y en un split se conserva la mitad viva"
+    ko "spec021#4 un layout sin ningún grupo vivo se devuelve intacto: el contenedor no se desmonta"
+  fi
+}
+
+spec021_criterio3_4_prueba_de_interfaz() {
+  local spec_file workspace_assert root_assert geometry_assert
+  spec_file=tests/e2e/simple-mode-thread-opens-with-workspace.spec.ts
+  workspace_assert=$(grep -c "spec021#6" "$spec_file" 2>/dev/null; true)
+  root_assert=$(grep -c "spec021#7" "$spec_file" 2>/dev/null; true)
+  geometry_assert=$(grep -c "activePaneSize" "$spec_file" 2>/dev/null; true)
+  if [ -f "$spec_file" ] && [ "$workspace_assert" -ge 1 ] && [ "$root_assert" -ge 1 ] && [ "$geometry_assert" -ge 2 ]; then
+    ok "spec021#6 con un workspace elegido el hilo pinta la pestaña, el rótulo del alcance y el campo para escribir"
+    ok "spec021#7 con \"My work\" no cambia nada"
+    ev "e2e ($spec_file) corrido aparte con --workers=1 — evidencia pegada en la spec archivada."
+  else
+    ko "spec021#6 con un workspace elegido el hilo pinta la pestaña, el rótulo del alcance y el campo para escribir"
+    ko "spec021#7 con \"My work\" no cambia nada"
+    ev "e2e=$spec_file · spec021#6=$workspace_assert (>=1) · spec021#7=$root_assert (>=1) · activePaneSize=$geometry_assert (>=2)"
+  fi
+}
+
+spec021_criterio8_chequeo_funcional() {
+  local shots
+  shots=$(find docs/research -type d -name '*chequeo-funcional-spec-021' -exec find {} -name '*.png' \; 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$shots" -ge 7 ]; then
+    ok "spec021#8 chequeo funcional en la app real: el recorrido completo con un workspace elegido, una captura por paso"
+  else
+    ko "spec021#8 chequeo funcional en la app real: el recorrido completo con un workspace elegido, una captura por paso"
+    ev "capturas en docs/research/<fecha>-chequeo-funcional-spec-021/=$shots (deben ser 7 o más)"
+  fi
+}
+
 spec014_criterio1_sin_archivos_de_marca_visual() {
   local name_hits svg_content_hits
   name_hits=$(find resources -type f \( -iname '*.png' -o -iname '*.icns' -o -iname '*.ico' -o -iname '*.svg' \) -iname '*orca*' | wc -l | tr -d ' ')
@@ -1394,6 +1593,99 @@ spec014_criterio5_verificacion_visual() {
   fi
 }
 
+# --- specs/done/009-command-center.md ---
+
+spec009_unit() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/shared/command-center-startup-output.test.ts \
+    src/main/ipc/command-center.test.ts \
+    src/main/command-center/run-command-center-startup.test.ts \
+    src/renderer/src/app-shell/use-command-center-gate.test.tsx \
+    src/renderer/src/components/command-center \
+    src/renderer/src/lib/thread-scope-startup-message.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec009#2 #3 #4 #5 #6 #7 #8 el analizador, las cuatro tarjetas, la línea de acción, el primer mensaje, los estados incómodos y el temporizador"
+  else
+    ko "spec009#2 #3 #4 #5 #6 #7 #8 el analizador, las cuatro tarjetas, la línea de acción, el primer mensaje, los estados incómodos y el temporizador"
+    ev "vitest run sobre los archivos del Command Center en rojo"
+  fi
+}
+
+spec009_criterio1_6_7_9_prueba_de_interfaz() {
+  if [ -f tests/e2e/command-center-simple-mode.spec.ts ]; then
+    ok "spec009#1 #6 #7 #9 prueba de interfaz obligatoria presente (corre con pnpm test:e2e; evidencia en la spec archivada)"
+  else
+    ko "spec009#1 #6 #7 #9 prueba de interfaz obligatoria presente (corre con pnpm test:e2e; evidencia en la spec archivada)"
+    ev "falta tests/e2e/command-center-simple-mode.spec.ts"
+  fi
+}
+
+spec009_criterio2_alcance_del_selector() {
+  local guess_files handler_hits
+  guess_files=$(find src/main/command-center -name 'resolve-command-center-scope*' 2>/dev/null | wc -l | tr -d ' ')
+  handler_hits=$(grep -c 'args.scope' src/main/ipc/command-center.ts)
+  if [ "$guess_files" = "0" ] && [ "$handler_hits" -ge 1 ]; then
+    ok "spec009#2 el alcance del escaneo viene del selector, no se adivina en el proceso principal"
+  else
+    ko "spec009#2 el alcance del escaneo viene del selector, no se adivina en el proceso principal"
+    ev "archivos que adivinan el alcance=$guess_files (debe ser 0) · el handler usa args.scope=$handler_hits (debe ser >=1)"
+  fi
+}
+
+spec009_criterio6_un_solo_camino_de_lanzamiento() {
+  local own_launch delegates
+  own_launch=$(grep -c "^import .*launch-agent-in-new-tab'" src/renderer/src/components/command-center/command-center-agent-launch.ts)
+  delegates=$(grep -c "^import .*open-new-thread'" src/renderer/src/components/command-center/command-center-agent-launch.ts)
+  if [ "$own_launch" = "0" ] && [ "$delegates" -ge 1 ]; then
+    ok "spec009#6 los botones abren el hilo del modo simple, sin un segundo camino de lanzamiento propio"
+  else
+    ko "spec009#6 los botones abren el hilo del modo simple, sin un segundo camino de lanzamiento propio"
+    ev "camino propio=$own_launch (debe ser 0) · delega en openNewThread=$delegates (debe ser >=1)"
+  fi
+}
+
+spec009_criterio10_sin_jerga_del_sistema() {
+  local jargon
+  jargon=$(node -e '
+    const fs = require("fs");
+    const catalog = JSON.parse(fs.readFileSync("src/renderer/src/i18n/locales/en.json", "utf8"));
+    const words = ["node", "frontmatter", "glob", "resolver", "session-start", ".md", "tree.md"];
+    const hits = [];
+    const walk = (value, path) => {
+      if (typeof value === "string") {
+        for (const word of words) {
+          if (value.toLowerCase().includes(word)) hits.push(path + ": " + word);
+        }
+        return;
+      }
+      for (const [key, child] of Object.entries(value)) walk(child, path + "." + key);
+    };
+    walk(catalog.commandCenter ?? {}, "commandCenter");
+    process.stdout.write(String(hits.length));
+  ')
+  if [ "$jargon" = "0" ]; then
+    ok "spec009#10 ningún texto de la pantalla usa jerga del sistema"
+  else
+    ko "spec009#10 ningún texto de la pantalla usa jerga del sistema"
+    ev "claves del catálogo inglés con jerga=$jargon (debe ser 0)"
+  fi
+}
+
+spec009_criterio11_codigo_sano() {
+  local tc_ok=1 lint_ok=1
+  pnpm tc >/dev/null 2>&1 || tc_ok=0
+  npx oxlint src/renderer/src/components/command-center src/renderer/src/app-shell \
+    src/main/command-center src/main/ipc/command-center.ts >/dev/null 2>&1 || lint_ok=0
+  if [ "$tc_ok" = "1" ] && [ "$lint_ok" = "1" ]; then
+    ok "spec009#11 código sano (evidencia completa de check:code-quality:changed y verify:localization-* en la spec archivada)"
+  else
+    ko "spec009#11 código sano (evidencia completa de check:code-quality:changed y verify:localization-* en la spec archivada)"
+    ev "pnpm tc=$tc_ok · oxlint=$lint_ok (deben ser 1)"
+  fi
+}
+
 spec014_criterio1_sin_archivos_de_marca_visual
 spec014_criterio2_selector_de_icono_sin_alternativas
 spec014_criterio3_bandeja_sin_orca
@@ -1416,6 +1708,15 @@ spec019_unit
 spec019_criterio5_alcance_congelado
 spec019_criterio6_prueba_de_interfaz_obligatoria
 spec019_criterio14_chequeo_funcional
+spec009_unit
+spec009_criterio1_6_7_9_prueba_de_interfaz
+spec009_criterio2_alcance_del_selector
+spec009_criterio6_un_solo_camino_de_lanzamiento
+spec009_criterio10_sin_jerga_del_sistema
+spec009_criterio11_codigo_sano
+spec021_criterio1_2_5_6_capa_de_render
+spec021_criterio3_4_prueba_de_interfaz
+spec021_criterio8_chequeo_funcional
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

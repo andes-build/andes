@@ -1,0 +1,13 @@
+Waiting for your decision
+  nothing is waiting on you
+
+In progress
+  nothing in progress
+
+Queued
+  next 0 · later 0
+
+Checks
+  identity 40/40 · resolver 3 rows
+  no findings
+2 nodes · 0.1s · v1.3.0

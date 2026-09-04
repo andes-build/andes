@@ -1,6 +1,6 @@
 ---
 status: pendiente
-depends_on: [009]
+depends_on: [009, 021]
 ---
 
 # 013 · El hilo se ve como un hilo
@@ -14,7 +14,10 @@ rastro de comandos y nombres de herramienta.
 ## Estado previo
 
 `main` en `d97c8cc07c`. El agente corre `git log d97c8cc07c..main --stat` antes de empezar. Se
-implementa **después** de que la spec 009 esté en `main`: las dos tocan la barra lateral.
+implementa **después de la spec 021**, no solo de la 009. La 009 ya está en `main` (merge
+`632c0be2`). La 021 arregla que, con un workspace elegido, el hilo no abre y el panel queda en
+blanco: hasta que eso esté arreglado, el chequeo funcional que esta spec necesita —abrir un hilo
+con un workspace elegido y mirar su cabecera— no se puede hacer.
 
 - "New thread" (`SimpleModeNav.tsx:69`) llama a `openNewThread()`, que en `open-new-thread.ts:97-105`
   lanza `launchAgentInNewTab`, y esa función crea una **pestaña** en
@@ -51,8 +54,9 @@ implementa **después** de que la spec 009 esté en `main`: las dos tocan la bar
 | 5 | El título sale del CLI: `custom-title` gana sobre `ai-title`; sin ninguno el hilo se llama "New thread". Renombrar a mano gana sobre los dos | Test unitario de la resolución con las cuatro combinaciones |
 | 6 | Un CLI que no escribe título se degrada declarándolo: no se inventa un título | Test unitario con una sesión sin registro de título |
 | 7 | La conversación no muestra nombres de herramienta, comandos ni rutas: va una línea de actividad en lenguaje de persona, y si el evento no se puede redactar así dice "Working…" y nada más | Eval de texto sobre el redactor con Bash, Read, Write, Grep y Task: ninguna salida contiene un nombre de herramienta, una ruta con `/`, ni acento grave. Rúbrica de la redacción: verbo en presente + qué se está mirando o escribiendo, sin nombre propio de archivo (bien: "leyendo la decisión del proveedor de pagos"; mal: "leyendo decisions.md") |
-| 8 | En modo desarrollo no cambia nada: pestañas y línea de herramientas como hoy | e2e en modo desarrollo |
-| 9 | Código sano | `pnpm tc` · `check:code-quality:changed` · `verify:localization-*` y los tests nuevos en verde |
+| 8 | El panel de archivos de la derecha no aparece en modo simple: los archivos se ven en su pantalla, que es donde la spec 010 los puso | e2e en modo simple: el panel derecho no está en el árbol; e2e en modo desarrollo: sigue estando |
+| 9 | En modo desarrollo no cambia nada: pestañas, panel derecho y línea de herramientas como hoy | e2e en modo desarrollo |
+| 10 | Código sano | `pnpm tc` · `check:code-quality:changed` · `verify:localization-*` y los tests nuevos en verde |
 
 ## Decisiones
 
@@ -96,4 +100,5 @@ Ninguno.
   recuperar un hilo que cerró.
 - Los archivos del hilo, el botón "Archivos del hilo · 2" de la maqueta: se reactiva cuando el hilo
   adjunte archivos.
-- La tarjeta de subagente, diferida desde la spec 011.
+- La tarjeta de subagente, diferida desde la spec 011: se reactiva cuando la spec 012 entregue el
+  ítem de subagente.

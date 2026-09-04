@@ -50,6 +50,7 @@ import { createTaskCreationDraftsSlice } from './task-creation-drafts'
 import { createRemoteServerUpdatesSlice } from './remote-server-updates'
 import { createTerminalQuickCommandHostsSlice } from './terminal-quick-command-hosts'
 import { createWorkspaceScopeSlice } from './workspace-scope'
+import { createCommandCenterViewSlice } from './command-center-view'
 import { translate } from '@/i18n/i18n'
 
 export const TEST_REPO = {
@@ -105,7 +106,8 @@ export function createTestStore() {
     ...createTaskCreationDraftsSlice(...a),
     ...createRemoteServerUpdatesSlice(...a),
     ...createTerminalQuickCommandHostsSlice(...a),
-    ...createWorkspaceScopeSlice(...a)
+    ...createWorkspaceScopeSlice(...a),
+    ...createCommandCenterViewSlice(...a)
   }))
 }
 

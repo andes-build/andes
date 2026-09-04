@@ -123,7 +123,7 @@ describe('onboarding feature setup runner', () => {
 
     expect(text).toBe(ALL_SKILL_INSTALL_COMMAND)
     expect(text).toBe(
-      'npx skills add https://github.com/andes-build/andes --skill orca-cli --skill computer-use --skill orchestration --global'
+      'npx skills add https://github.com/andes-build/andes --skill andes-cli --skill computer-use --skill orchestration --global'
     )
   })
 

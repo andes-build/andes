@@ -38,7 +38,7 @@ describe('terminal agent prompt send RPC', () => {
         text: 'review this change',
         enter: true,
         agentPrompt: true,
-        client: { id: 'orca-cli', type: 'desktop' }
+        client: { id: 'andes-cli', type: 'desktop' }
       })
     )
 
@@ -73,7 +73,7 @@ describe('terminal agent prompt send RPC', () => {
         text: 'echo x',
         enter: true,
         agentPrompt: true,
-        client: { id: 'orca-cli', type: 'desktop' }
+        client: { id: 'andes-cli', type: 'desktop' }
       })
     )
 
@@ -106,7 +106,7 @@ describe('terminal agent prompt send RPC', () => {
         terminal: 'terminal-1',
         text: 'echo x',
         enter: true,
-        client: { id: 'orca-cli', type: 'desktop' }
+        client: { id: 'andes-cli', type: 'desktop' }
       }),
       { signal: controller.signal }
     )

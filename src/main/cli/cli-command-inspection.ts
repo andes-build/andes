@@ -89,8 +89,11 @@ export class CliCommandInspection extends CliInstallLocation {
     }
   }
 
-  protected isManagedSymlinkTarget(resolvedTarget: string, launcherPath: string): boolean {
-    const expectedName = basename(launcherPath)
+  protected isManagedSymlinkTarget(
+    resolvedTarget: string,
+    launcherPath: string,
+    expectedName: string = basename(launcherPath)
+  ): boolean {
     if (this.isPackaged && this.isSiblingDevLauncherTarget(resolvedTarget, expectedName)) {
       return true
     }

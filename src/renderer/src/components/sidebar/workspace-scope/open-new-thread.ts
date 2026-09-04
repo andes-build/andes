@@ -8,7 +8,7 @@ import {
   resolveSimpleModeThreadAgent,
   resolveSimpleModeThreadAgentArgs
 } from '@/lib/simple-mode-thread-launch'
-import { buildThreadScopeStartupMessage } from '@/lib/thread-scope-startup-message'
+import { buildThreadFirstMessage } from '@/lib/thread-scope-startup-message'
 import { resolveActiveWorkspaceScope } from '@/store/slices/workspace-scope'
 
 /**
@@ -35,8 +35,20 @@ import { resolveActiveWorkspaceScope } from '@/store/slices/workspace-scope'
  * root. It rides in as this thread's first message
  * (`buildThreadScopeStartupMessage`), so the agent already knows the scope
  * the session contract asks for and never asks which one to use.
+ *
+ * Spec 009: the Command Center's buttons open a thread through this same
+ * function, passing `seedMessage` — what the person clicked on, in words.
+ * It is appended to the scope message so one thread starts already scoped
+ * *and* already knowing what it is about; nothing below is duplicated on the
+ * Command Center's side, and no launch path but this one opens a thread.
  */
-export async function openNewThread(): Promise<void> {
+export type OpenNewThreadOptions = {
+  /** Extra text appended after the scope message as part of this thread's
+   *  first message — what the operator clicked on (spec 009, criterion 6). */
+  seedMessage?: string
+}
+
+export async function openNewThread(options: OpenNewThreadOptions = {}): Promise<boolean> {
   const state = useAppStore.getState()
   const worktreeId = state.activeWorktreeId
   if (!worktreeId) {
@@ -55,7 +67,7 @@ export async function openNewThread(): Promise<void> {
         }
       }
     )
-    return
+    return false
   }
   const detectedAgentIds = await state.ensureDetectedAgents(worktreeId)
   const settings = useAppStore.getState().settings
@@ -83,7 +95,7 @@ export async function openNewThread(): Promise<void> {
         }
       }
     )
-    return
+    return false
   }
   const store = useAppStore.getState()
   // Spec 019: capture the scope the sidebar selector had *right now* — never
@@ -93,6 +105,8 @@ export async function openNewThread(): Promise<void> {
     store.activeWorkspaceScopeSlug,
     store.workspaceScopeOptions
   )
+  // Spec 009: opening a thread leaves the Command Center home screen.
+  store.leaveCommandCenter()
   store.setActiveView('terminal')
   const launched = launchAgentInNewTab({
     agent,
@@ -100,7 +114,7 @@ export async function openNewThread(): Promise<void> {
     launchSource: 'sidebar',
     agentArgs: resolveSimpleModeThreadAgentArgs(agent, store.settings),
     threadScope,
-    prompt: buildThreadScopeStartupMessage(threadScope),
+    prompt: buildThreadFirstMessage(threadScope, options.seedMessage),
     promptDelivery: 'auto-submit'
   })
   if (!launched) {
@@ -110,5 +124,7 @@ export async function openNewThread(): Promise<void> {
         'The thread could not be started. Check the agent in Settings and try again.'
       )
     )
+    return false
   }
+  return true
 }

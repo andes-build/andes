@@ -80,13 +80,13 @@ afterEach(async () => {
 })
 
 async function createMacCommandFixture() {
-  const root = await mkdtemp(join(tmpdir(), 'orca-cli-command-race-'))
+  const root = await mkdtemp(join(tmpdir(), 'andes-cli-command-race-'))
   createdRoots.push(root)
   const commandDirectory = join(root, 'bin')
-  const commandPath = join(commandDirectory, 'orca')
+  const commandPath = join(commandDirectory, 'andes')
   const resourcesPath = join(root, 'Current.app', 'Contents', 'Resources')
-  const launcherPath = join(resourcesPath, 'bin', 'orca')
-  const staleLauncherPath = join(root, 'Old.app', 'Contents', 'Resources', 'bin', 'orca')
+  const launcherPath = join(resourcesPath, 'bin', 'andes')
+  const staleLauncherPath = join(root, 'Old.app', 'Contents', 'Resources', 'bin', 'andes')
   await mkdir(commandDirectory, { recursive: true })
   await mkdir(dirname(launcherPath), { recursive: true })
   await writeFile(launcherPath, '#!/usr/bin/env bash\n', { mode: 0o755 })
@@ -133,12 +133,12 @@ function createMacInstaller(
 
 async function recoveryPath(commandDirectory: string): Promise<string> {
   const transactionName = (await readdir(commandDirectory)).find((name) =>
-    name.startsWith('.orca-cli-')
+    name.startsWith('.andes-cli-')
   )
   if (!transactionName) {
     throw new Error('Expected a preserved CLI command transaction.')
   }
-  return join(commandDirectory, transactionName, 'orca')
+  return join(commandDirectory, transactionName, 'andes')
 }
 
 async function rejectionFrom(operation: Promise<unknown>): Promise<Error> {
@@ -197,7 +197,7 @@ describe.skipIf(process.platform === 'win32')('CLI command filesystem races', ()
     await expect(installer.install()).rejects.toThrow('Refusing to replace non-Orca command')
     await expect(readlink(fixture.commandPath)).resolves.toBe(foreignTarget)
     expect(
-      (await readdir(fixture.commandDirectory)).some((name) => name.startsWith('.orca-cli-'))
+      (await readdir(fixture.commandDirectory)).some((name) => name.startsWith('.andes-cli-'))
     ).toBe(false)
   })
 
@@ -301,7 +301,7 @@ describe.skipIf(process.platform === 'win32')('CLI command filesystem races', ()
   })
 
   it('keeps a foreign legacy Linux command when readlink loses the inspection race', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'orca-cli-legacy-race-'))
+    const root = await mkdtemp(join(tmpdir(), 'andes-cli-legacy-race-'))
     createdRoots.push(root)
     const homePath = join(root, 'home')
     const commandDirectory = join(homePath, '.local', 'bin')
@@ -333,7 +333,7 @@ describe.skipIf(process.platform === 'win32')('CLI command filesystem races', ()
   })
 
   it('keeps a foreign legacy Linux command whose quarantined inode is reused', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'orca-cli-legacy-identity-race-'))
+    const root = await mkdtemp(join(tmpdir(), 'andes-cli-legacy-identity-race-'))
     createdRoots.push(root)
     const homePath = join(root, 'home')
     const commandDirectory = join(homePath, '.local', 'bin')

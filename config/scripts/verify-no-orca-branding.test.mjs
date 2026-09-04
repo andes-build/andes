@@ -77,9 +77,9 @@ describe('stripLocaleExceptions (spec006#6 — single source of truth)', () => {
     }
   })
 
-  it('strips a literal orca command but leaves the rest of the sentence intact', () => {
-    const stripped = stripLocaleExceptions('Andes could not run `orca worktree create` here.')
-    expect(stripped).not.toContain('`orca worktree create`')
-    expect(stripped).toContain('Andes could not run')
+  it('strips orca.yaml but leaves the rest of the sentence intact', () => {
+    const stripped = stripLocaleExceptions('Add an `orca.yaml` file to enable shared setup.')
+    expect(stripped).not.toContain('orca.yaml')
+    expect(stripped).toContain('Add an')
   })
 })

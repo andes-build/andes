@@ -26,3 +26,16 @@ export function buildThreadScopeStartupMessage(scope: ThreadScope): string {
     `Run the startup scan and the startup read with --workspace ${scope.slug}. Do not ask which scope to use.`
   )
 }
+
+/**
+ * Spec 009. The whole first message of a thread: the scope line above, and —
+ * when the thread was opened from a Command Center button — what the person
+ * clicked on, appended after a blank line. The scope always comes first: an
+ * agent that reads only the opening of the message still learns the scope
+ * before anything else asks it to act.
+ */
+export function buildThreadFirstMessage(scope: ThreadScope, seedMessage?: string): string {
+  const scopeMessage = buildThreadScopeStartupMessage(scope)
+  const seed = seedMessage?.trim()
+  return seed ? `${scopeMessage}\n\n${seed}` : scopeMessage
+}

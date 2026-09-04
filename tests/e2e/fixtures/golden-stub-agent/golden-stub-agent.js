@@ -14,7 +14,7 @@ const keyboardProtocolMode = process.argv.includes('--keyboard-protocol')
 // conversation without spending credit on a live session.
 function readFlag(name) {
   const index = process.argv.indexOf(name)
-  return index >= 0 ? process.argv[index + 1] : undefined
+  return index === -1 ? undefined : process.argv[index + 1]
 }
 const transcriptPath = readFlag('--transcript')
 const transcriptSessionId = readFlag('--session') ?? 'golden-stub-session'

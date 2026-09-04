@@ -985,3 +985,48 @@ para borrar la rama muerta de persistencia del ícono personalizado en vez de de
 
 **La invalidaría**: que Andes vuelva a ofrecer más de un ícono de aplicación, momento en el que
 `AppIconSelector` recupera las flechas y `app-icon.ts` recupera la rama de ícono personalizado.
+
+## 2026-09-03 · [spec 015] Crear un hilo se lanza con `launchAgentInNewTab`, nunca con `createTab` crudo
+
+**Qué se decide**: toda superficie que abra un hilo con un agente pasa por
+`src/renderer/src/lib/launch-agent-in-new-tab.ts`. `createTab` con la opción `launchAgent` solo
+etiqueta la pestaña; el binario del agente lo lanza el comando de arranque que encola
+`queueTabStartupCommand`, y ese comando lo arma únicamente `launchAgentInNewTab`.
+
+**Por qué**: "New thread" en modo simple llamaba a `createTab` directo y la pestaña levantaba un
+shell de login con la conversación montada encima: lo que el operador escribía iba a `zsh` y nada
+volvía, porque la conversación solo dibuja transcripciones de agente. La opción `launchAgent` se
+lee como si lanzara y no lanza, así que la regla se enuncia acá una vez en lugar de confiar en que
+la próxima superficie lo deduzca del nombre.
+
+**La invalidaría**: que `createTab` pase a encolar el comando de arranque por sí mismo cuando recibe
+`launchAgent`, momento en el que las dos rutas dejarían de ser distinguibles.
+
+## 2026-09-03 · [spec 015] Un eval de lanzamiento afirma el comando encolado, no la forma del argumento
+
+**Qué se decide**: un chequeo que dice "esta superficie lanza el agente" tiene que afirmar la
+llamada a `queueTabStartupCommand` con su comando, o verificar de punta a punta que llega una
+respuesta. Afirmar los argumentos con los que se llamó a `createTab` no cuenta como evidencia de
+lanzamiento.
+
+**Por qué**: el eval de la spec 010 afirmaba exactamente el objeto pasado a `createTab` y quedó en
+verde sobre una pestaña que abría un shell pelado. El e2e de la spec 011 tampoco lo agarró porque
+lanzaba desde el menú de la barra de pestañas y nunca tocaba el botón "New thread".
+
+**La invalidaría**: nada a la vista; es una regla sobre qué prueba un eval, no sobre una
+implementación.
+
+## 2026-09-03 · [spec 015] El agente simulado de los e2e responde escribiendo una transcripción
+
+**Qué se decide**: el stub dorado (`tests/e2e/fixtures/golden-stub-agent/golden-stub-agent.js`)
+acepta `--transcript <ruta>` y `--session <id>`: por cada línea enviada escribe el turno del usuario
+y una respuesta del asistente en formato Claude. Una prueba de conversación que quiera verificar
+que llega una respuesta usa eso, no una transcripción fija escrita por la prueba.
+
+**Por qué**: una transcripción fija prueba que la conversación dibuja un archivo, no que lo escrito
+llegue a un agente y vuelva — que es justo la mitad que faltaba cuando el hilo se montaba sobre un
+shell. El stub cierra el circuito sin gastar crédito de una sesión en vivo.
+
+**La invalidaría**: que el hilo deje de leer transcripciones y reciba los mensajes como datos del
+kit de agentes (criterio 2b de la spec 011), momento en el que el stub tendría que hablar ese
+protocolo en vez de escribir un archivo.

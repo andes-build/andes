@@ -1,4 +1,5 @@
 import type { GlobalSettings } from '../../../shared/global-settings-types'
+import type { InterfaceMode } from '../../../shared/interface-mode'
 import { normalizeDisabledTuiAgents } from '../../../shared/tui-agent-selection'
 import { resolveNestedWorkerMaxDepth } from '../../../shared/nested-worker-depth'
 import {
@@ -15,6 +16,7 @@ import { normalizeTerminalShortcutPolicy } from '../../../shared/keybindings'
 import { normalizeSourceControlGroupOrder } from '../../../shared/source-control-group-order'
 import { normalizeAppIconId } from '../../../shared/app-icon'
 import { normalizeUiLanguage } from '../../../shared/ui-language'
+import { normalizeInterfaceMode } from '../../../shared/interface-mode'
 import { normalizeWorktreeVisibilityDefaults } from '../../../shared/external-worktree-visibility'
 import { normalizePRBotAuthorOverrides } from '../../../shared/pr-bot-author-overrides'
 import type { PersistedState } from '../../../shared/persisted-state-types'
@@ -46,6 +48,8 @@ export type SettingsMutationOperations = {
     slot: Parameters<ProtectedSecretPersistence['removeRetainedBlob']>[0]
   ) => void
   scheduleSave: () => void
+  /** Records the value that belongs on disk; an explicit write outranks the launch overlay. */
+  recordPersistedInterfaceMode: (mode: InterfaceMode) => void
   notifySettingsChanged: (updates: Partial<GlobalSettings>, originWebContentsId?: number) => void
 }
 
@@ -167,6 +171,10 @@ export function updateSettings(
   }
   if ('uiLanguage' in updates) {
     sanitizedUpdates.uiLanguage = normalizeUiLanguage(updates.uiLanguage)
+  }
+  if ('interfaceMode' in updates) {
+    sanitizedUpdates.interfaceMode = normalizeInterfaceMode(updates.interfaceMode)
+    operations.recordPersistedInterfaceMode(sanitizedUpdates.interfaceMode)
   }
   if ('prBotAuthorOverrides' in updates) {
     // Why: every writer (desktop IPC, web RPC, migrations) hits this boundary, so the persisted list stays bounded and well-formed.

@@ -130,7 +130,9 @@ visibilidad, nunca una segunda implementación.
 
 - **Sin control visible.** El único selector de `Ajustes → General` no existe. La puerta oculta es
   doble: la variable de entorno `ANDES_INTERFACE_MODE=developer` al arrancar (leída una vez en
-  `normalizeLoadedGlobalSettings`, gana siempre sobre el valor persistido), o Option-clic en el
+  `normalizeLoadedGlobalSettings`, gana siempre sobre el valor persistido y **nunca se escribe en
+  disco** — `StoreRuntimeState.persistedInterfaceMode` guarda el valor que va al archivo, ver
+  `specs/done/017-el-modo-sobrevive-al-reinicio.md`), o Option-clic en el
   título de `Ajustes → Advanced` (`nextInterfaceModeOnAltClick`, en
   `settings-advanced-section-renderers.tsx`), que escribe la preferencia y aplica en caliente.
 - **Navegación de Ajustes**: los cuatro constructores (`settings-navigation-*-sections.ts`) generan
@@ -158,7 +160,9 @@ visibilidad, nunca una segunda implementación.
   dos puntos anteriores; no hay un tercer gate que agregarles.
 - **Fixture e2e**: la suite existente asume modo developer por default —
   `tests/e2e/helpers/orca-app.ts` y `orca-restart.ts` fijan `ANDES_INTERFACE_MODE=developer` en el
-  `env` de `electron.launch`, y un spec que necesite modo simple lo pisa con
+  `env` de `electron.launch` —`createRestartSession` lo apaga con
+  `{ interfaceModeEnvDoor: 'off' }` cuando la prueba mide la preferencia guardada—, y un spec que
+  necesite modo simple lo pisa con
   `test.use({ launchEnv: { ANDES_INTERFACE_MODE: 'simple' } })`
   (`tests/e2e/simple-mode-onboarding.spec.ts`, `tests/e2e/simple-mode-surfaces.spec.ts`). La corrida completa de la suite existente con este fixture quedó **verificada parcialmente** — pendiente para el Gate 2, con el hallazgo de un locale español pre-existente del sandbox que confunde el resultado (ver `decisions.md` y la sección Evidencia de `specs/done/002-modo-simple-y-modo-desarrollo.md`).
 - **Onboarding**: el paso de Integraciones (`IntegrationsStep.tsx`) ya no menciona "pull request" ni

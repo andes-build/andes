@@ -24,6 +24,7 @@ type ProfilePreferencesRuntime = Pick<
   | 'activeViewPreference'
   | 'githubCacheDirty'
   | 'githubCacheGeneration'
+  | 'persistedInterfaceMode'
   | 'protectedSecrets'
   | 'settingsChangeListeners'
   | 'state'
@@ -160,6 +161,9 @@ export function getSettingsMutationOperations(
     removeRetainedBlob: (slot) =>
       owner[profilePreferencesContext].runtime.protectedSecrets.removeRetainedBlob(slot),
     scheduleSave: () => scheduleSave(owner[profilePreferencesContext].scheduling),
+    recordPersistedInterfaceMode: (mode) => {
+      owner[profilePreferencesContext].runtime.persistedInterfaceMode = mode
+    },
     notifySettingsChanged: (updates, originWebContentsId) =>
       notifySettingsChanged(owner, updates, originWebContentsId)
   }

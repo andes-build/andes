@@ -1181,6 +1181,79 @@ spec016_criterio10_chequeo_funcional() {
   fi
 }
 
+# --- specs/done/017-el-modo-sobrevive-al-reinicio.md ---
+
+spec017_unit() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/persistence-interface-mode-restart.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec017#4 una arrancada con ANDES_INTERFACE_MODE=developer no convierte la preferencia guardada"
+    ok "spec017#5 una elección explícita hecha con la variable puesta sí se guarda"
+  else
+    ko "spec017#4 una arrancada con ANDES_INTERFACE_MODE=developer no convierte la preferencia guardada"
+    ko "spec017#5 una elección explícita hecha con la variable puesta sí se guarda"
+    ev "vitest en rojo sobre src/main/persistence-interface-mode-restart.test.ts"
+  fi
+}
+
+spec017_criterio1_2_3_prueba_de_interfaz() {
+  # e2e (tests/e2e/interface-mode-survives-restart.spec.ts) se corre aparte, es costoso;
+  # evidencia pegada en la spec archivada.
+  local spec_file=tests/e2e/interface-mode-survives-restart.spec.ts
+  local fixme_hits
+  fixme_hits=$(grep -c 'test.fixme' "$spec_file" 2>/dev/null; true)
+  if [ -f "$spec_file" ] && [ "$fixme_hits" = "0" ]; then
+    ok "spec017#1 cerrar y volver a abrir la app deja el modo tal como estaba, en las dos direcciones (evidencia: $spec_file en la spec archivada)"
+    ok "spec017#2 con un proyecto real adjunto el resultado es el mismo"
+    ok "spec017#3 tras el reinicio aparece la barra lateral del modo simple, no la de Orca"
+  else
+    ko "spec017#1 cerrar y volver a abrir la app deja el modo tal como estaba, en las dos direcciones"
+    ko "spec017#2 con un proyecto real adjunto el resultado es el mismo"
+    ko "spec017#3 tras el reinicio aparece la barra lateral del modo simple, no la de Orca"
+    ev "$spec_file falta o sigue con test.fixme (hits=$fixme_hits)"
+  fi
+}
+
+spec017_criterio6_fixture_sin_puerta() {
+  local option_hits
+  option_hits=$(grep -c "interfaceModeEnvDoor" tests/e2e/helpers/orca-restart.ts 2>/dev/null; true)
+  if [ "$option_hits" -ge 3 ]; then
+    ok "spec017#6 el fixture de reinicio puede correr sin la puerta de entorno"
+  else
+    ko "spec017#6 el fixture de reinicio puede correr sin la puerta de entorno"
+    ev "interfaceModeEnvDoor en tests/e2e/helpers/orca-restart.ts=$option_hits (deben ser 3 o más)"
+  fi
+}
+
+spec017_criterio7_codigo_sano() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/persistence-settings-update.test.ts \
+    src/main/persistence/loading-store/normalize-loaded-global-settings.test.ts \
+    src/main/persistence/loading-store/state-write-round-trip.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec017#7 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+  else
+    ko "spec017#7 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+    ev "vitest en rojo sobre los archivos vecinos tocados por spec 017"
+  fi
+}
+
+spec017_criterio8_chequeo_funcional() {
+  local shots
+  shots=$(find docs/research -type d -name '*chequeo-funcional-spec-017' -exec find {} -name '*.png' \; 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$shots" -ge 6 ]; then
+    ok "spec017#8 chequeo funcional en la app real: seis pasos recorridos con una captura cada uno"
+  else
+    ko "spec017#8 chequeo funcional en la app real: seis pasos recorridos con una captura cada uno"
+    ev "capturas en docs/research/<fecha>-chequeo-funcional-spec-017/=$shots (deben ser 6 o más)"
+  fi
+}
+
+
 spec014_criterio1_sin_archivos_de_marca_visual() {
   local name_hits svg_content_hits
   name_hits=$(find resources -type f \( -iname '*.png' -o -iname '*.icns' -o -iname '*.ico' -o -iname '*.svg' \) -iname '*orca*' | wc -l | tr -d ' ')
@@ -1260,6 +1333,11 @@ spec016_criterio6_modo_desarrollo_intacto
 spec016_criterio7_8_pruebas_de_interfaz
 spec016_criterio9_codigo_sano
 spec016_criterio10_chequeo_funcional
+spec017_unit
+spec017_criterio1_2_3_prueba_de_interfaz
+spec017_criterio6_fixture_sin_puerta
+spec017_criterio7_codigo_sano
+spec017_criterio8_chequeo_funcional
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

@@ -23,6 +23,9 @@ export type ClaudeStructuredConnection = {
   closed: boolean
   send(frame: unknown): void
   close(): Promise<void>
+  /** The child's last stderr, bounded. Acquisition puts it in the failure message: a child that
+   *  never answers says why on stderr, and without this the timeout says nothing diagnosable. */
+  readStderr?(): string
 }
 
 export type ClaudeStructuredSpawnRequest = {
@@ -87,6 +90,7 @@ export function openClaudeStructuredConnection(
     get closed() {
       return closed
     },
+    readStderr: () => stderr,
     send(frame: unknown) {
       if (closed) {
         return

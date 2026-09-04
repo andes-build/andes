@@ -37,3 +37,22 @@ export function createStructuredAgentSessionOperationId(
   }
   return `${timestamp}-${entropy}`
 }
+
+/**
+ * The durable operation id for the first turn a create carries, derived from the create's own id.
+ *
+ * It has to be derived and not minted: a retry of the same create must replay the same send row
+ * instead of writing the message twice. It also has to keep the ledger's shape —
+ * `<13-digit timestamp>-<32 hex>` — so the timestamp is the create's and only the entropy changes.
+ */
+export function structuredAgentSessionFirstMessageOperationId(createOperationId: string): string {
+  const match = /^(\d{13})-([0-9a-f]{32})$/.exec(createOperationId)
+  if (!match) {
+    throw new Error('Unable to derive the first-message operation id')
+  }
+  const bytes = sha256(new TextEncoder().encode(`first-message:${createOperationId}`))
+  const entropy = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 32)
+  return `${match[1]}-${entropy}`
+}

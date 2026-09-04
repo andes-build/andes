@@ -7,10 +7,12 @@
 // Like the Codex resolver, every input is read back from the durable record, never from the call
 // that triggered the acquire: a client that attaches twice must land in the same working directory.
 
+import { randomUUID } from 'node:crypto'
 import type { AgentSessionJournalIdentity } from '../../shared/agent-session-journal-types'
 import { agentSessionProviderHandleChainHead } from '../../shared/agent-session-provider-handle'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host'
 import { resolveClaudeCommand } from '../../shared/node-cli-command-resolution'
+import { stripPermissionBypassArgs } from '../../shared/tui-agent-permissions'
 import type { AgentSessionRecordStore } from '../runtime/agent-session-record-store'
 import { CLAUDE_STRUCTURED_LAUNCH_ARGS } from './claude-structured-stream-protocol'
 
@@ -25,6 +27,11 @@ export type ClaudeStructuredLaunch = {
   env: Record<string, string>
   /** Provider session id this session already proved, or null to start one. */
   resumeSessionId: string | null
+  /** The id the child was told to use for a session that has none yet (`--session-id`), or null on
+   *  a resume. Claude announces its own id only in `system/init`, which it emits with the first
+   *  turn and not before, so a session that has not been written to yet has no id to wait for:
+   *  Andes names it instead and the adapter verifies the child adopted it. */
+  reservedSessionId: string | null
 }
 
 export type ClaudeStructuredLaunchResolverDeps = {
@@ -32,6 +39,7 @@ export type ClaudeStructuredLaunchResolverDeps = {
   resolveWorkspacePath: (workspaceId: string) => Promise<string>
   resolveCommand?: (options?: { pathEnv?: string | null; homePath?: string }) => string
   resolveEnvironment?: () => Promise<NodeJS.ProcessEnv>
+  mintProviderSessionId?: () => string
 }
 
 export function createClaudeStructuredLaunchResolver(
@@ -62,17 +70,28 @@ export function createClaudeStructuredLaunchResolver(
     })
     const head = agentSessionProviderHandleChainHead(record.providerHandleChain)
     const resumeSessionId = head?.handle.provider === 'claude' ? head.handle.sessionId : null
+    const reservedSessionId = resumeSessionId ? null : (deps.mintProviderSessionId ?? randomUUID)()
     return {
       command,
       args: [
-        ...(record.launchArgs ?? []),
+        // Spec 016's rule, applied at this lane: no permission-bypass argument ever reaches a
+        // conversation that draws a permission card. The profile default carries one for almost
+        // every agent (`DEFAULT_TUI_AGENT_ARGS = YOLO_TUI_AGENT_ARGS`), and the record inherits it,
+        // so a thread launched here would either bypass the card this spec exists to draw or —
+        // when the default belongs to another agent — die on an unknown option.
+        ...stripPermissionBypassArgs((record.launchArgs ?? []).join(' '))
+          .split(' ')
+          .filter((token) => token.length > 0),
         ...CLAUDE_STRUCTURED_LAUNCH_ARGS,
         ...CLAUDE_ASK_PERMISSION_ARGS,
-        ...(resumeSessionId ? ['--resume', resumeSessionId] : [])
+        ...(resumeSessionId
+          ? ['--resume', resumeSessionId]
+          : ['--session-id', reservedSessionId as string])
       ],
       cwd: await deps.resolveWorkspacePath(location.workspaceId),
       env: { ...environment } as Record<string, string>,
-      resumeSessionId
+      resumeSessionId,
+      reservedSessionId
     }
   }
 }

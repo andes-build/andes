@@ -10,6 +10,7 @@ import {
   agentSessionFingerprintConflict,
   computeAgentSessionPayloadFingerprint
 } from '../../../../shared/agent-session-mutation-envelope'
+import { structuredAgentSessionFirstMessageOperationId } from '../../../../shared/structured-agent-session-mutation'
 import { defineMethod, defineStreamingMethod, type RpcAnyMethod, type RpcContext } from '../core'
 import {
   ensureStructuredHostInstalled as ensureHostInstalled,
@@ -115,7 +116,9 @@ export const STRUCTURED_AGENT_SESSION_METHODS: RpcAnyMethod[] = [
           }
           const firstMessageEnvelope = {
             sessionId: result.value.sessionId,
-            clientOperationId: `${params.envelope.clientOperationId}-first-message`,
+            clientOperationId: structuredAgentSessionFirstMessageOperationId(
+              params.envelope.clientOperationId
+            ),
             expectedRuntimeFence: result.value.fence,
             payloadFingerprint: computeAgentSessionPayloadFingerprint({
               method: 'agentSession.send',

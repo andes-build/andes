@@ -4,7 +4,10 @@
 
 import { describe, expect, it, vi } from 'vitest'
 import type { AgentSessionJournalIdentity } from '../../shared/agent-session-journal-types'
-import { ClaudeStructuredSessionAdapter } from './claude-structured-session-adapter'
+import {
+  ClaudeStructuredSessionAdapter,
+  type ClaudeStructuredSessionAdapterDeps
+} from './claude-structured-session-adapter'
 import type {
   ClaudeStructuredConnection,
   ClaudeStructuredConnectionHandlers
@@ -31,7 +34,9 @@ const permissionFrame = {
   }
 }
 
-function scriptedAdapter(): {
+const RESERVED_SESSION_ID = '11111111-2222-4333-8444-555555555555'
+
+function scriptedAdapter(overrides?: Partial<ClaudeStructuredSessionAdapterDeps>): {
   adapter: ClaudeStructuredSessionAdapter
   sent: unknown[]
   emit: (frame: Record<string, unknown>) => void
@@ -43,27 +48,41 @@ function scriptedAdapter(): {
   const connection: ClaudeStructuredConnection = {
     pid: 4242,
     closed: false,
-    send: (frame) => sent.push(frame),
+    send: (frame) => {
+      sent.push(frame)
+      // The real child answers `initialize` and nothing else until the first turn: it emits no
+      // `system/init` before one. That answer is what acquisition waits for.
+      const record = frame as { type?: string; request_id?: string; request?: { subtype?: string } }
+      if (record.type === 'control_request' && record.request?.subtype === 'initialize') {
+        queueMicrotask(() =>
+          handlers?.onFrame(
+            {
+              type: 'control_response',
+              response: { subtype: 'success', request_id: record.request_id }
+            },
+            0
+          )
+        )
+      }
+    },
     close: async () => {}
   }
   const adapter = new ClaudeStructuredSessionAdapter({
     resolveLaunch: async () => ({
       command: 'claude',
-      args: [],
+      args: ['--session-id', RESERVED_SESSION_ID],
       cwd: '/tmp',
       env: {},
-      resumeSessionId: null
+      resumeSessionId: null,
+      reservedSessionId: RESERVED_SESSION_ID
     }),
     openConnection: (_request, given) => {
       handlers = given
-      // The child announces itself the moment it is opened, the way the real one does.
-      queueMicrotask(() =>
-        given.onFrame({ type: 'system', subtype: 'init', session_id: 'claude-sdk-1' }, 0)
-      )
       return connection
     },
     readProcessStartTime: async () => 1,
-    now: () => 1000
+    now: () => 1000,
+    ...overrides
   })
   return {
     adapter,
@@ -81,8 +100,12 @@ const sink = (appended: { body: unknown }[]): never =>
   }) as never
 
 describe('acquiring a claude session', () => {
-  it('mints the handle with the session id claude announced, not the one Andes reserved', async () => {
-    const { adapter } = scriptedAdapter()
+  /** Measured against the real binary on 2026-09-04: with `--input-format stream-json` the CLI
+   *  emits `system/init` with the first turn and not before, so there is no announced id to wait
+   *  for on a session nobody has written to. Andes names it with `--session-id` instead, and the
+   *  answer to `initialize` is what proves the child is alive and speaking this wire. */
+  it('mints the handle with the session id it reserved once the child answers initialize', async () => {
+    const { adapter, sent } = scriptedAdapter()
     const acquisition = await adapter.acquire({
       identity,
       fence: 1,
@@ -90,20 +113,25 @@ describe('acquiring a claude session', () => {
     } as never)
     expect(acquisition.link.handle).toEqual({
       provider: 'claude',
-      sessionId: 'claude-sdk-1',
+      sessionId: RESERVED_SESSION_ID,
       leafUuid: null
     })
     expect(acquisition.process.pid).toBe(4242)
+    expect(sent[0]).toMatchObject({
+      type: 'control_request',
+      request: { subtype: 'initialize' }
+    })
   })
 
-  it('refuses when claude never announces a session id', async () => {
+  it('refuses when claude never answers the initialize request', async () => {
     const adapter = new ClaudeStructuredSessionAdapter({
       resolveLaunch: async () => ({
         command: 'claude',
         args: [],
         cwd: '/tmp',
         env: {},
-        resumeSessionId: null
+        resumeSessionId: null,
+        reservedSessionId: RESERVED_SESSION_ID
       }),
       openConnection: () => ({
         pid: 1,
@@ -115,7 +143,24 @@ describe('acquiring a claude session', () => {
       initTimeoutMs: 5
     })
     await expect(adapter.acquire({ identity, fence: 1, spawnToken: 't' } as never)).rejects.toThrow(
-      /never announced a session id/
+      /never answered the initialize request/
+    )
+  })
+
+  /** Every Claude item identity is keyed by the session id. A child journaling under another name
+   *  is a disagreement, and renaming the session here would hide it. */
+  it('ends the session when the child answers under a different session id', async () => {
+    const events: { type: string; reason?: string }[] = []
+    const { adapter, emit } = scriptedAdapter({ onEvent: (event) => events.push(event) })
+    await adapter.acquire({ identity, fence: 1, spawnToken: 'token-1' } as never)
+
+    emit({ type: 'system', subtype: 'init', session_id: 'otra-sesion' })
+
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        type: 'ended',
+        reason: expect.stringContaining('otra-sesion')
+      })
     )
   })
 })

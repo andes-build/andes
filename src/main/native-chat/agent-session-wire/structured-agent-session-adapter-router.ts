@@ -52,13 +52,10 @@ export class StructuredAgentSessionAdapterRouter implements StructuredAgentSessi
   setOption: StructuredAgentSessionAdapter['setOption'] = async (input) =>
     await this.laneFor(input.sessionId).setOption(input)
 
-  readOptions: StructuredAgentSessionAdapter['readOptions'] = async (input) => {
-    const lane = this.laneFor(input.sessionId)
-    if (!lane.readOptions) {
-      throw new Error(`the lane owning ${input.sessionId} reports no session options`)
-    }
-    return await lane.readOptions(input)
-  }
+  // Null, not a throw: a lane with no session options is a lane with none, and the attach path
+  // reads them on every session. Turning that into an error made every Claude attach fail.
+  readOptions: StructuredAgentSessionAdapter['readOptions'] = async (input) =>
+    (await this.laneFor(input.sessionId).readOptions?.(input)) ?? null
 
   historyFilePath: StructuredAgentSessionAdapter['historyFilePath'] = async (input) =>
     (await this.laneBySession

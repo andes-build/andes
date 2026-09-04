@@ -103,7 +103,9 @@ describe('projectSessionTabAgentStatus', () => {
     expect(capable).toBe(snapshot)
   })
 
-  it('withholds legacy Claude rows from paired structured clients', () => {
+  /** Spec 012: the rule is the lane, not the provider name. Codex and Claude both have one; a
+   *  provider without one is a row the client cannot render, so it never leaves the host. */
+  it('withholds rows whose provider has no structured lane from paired structured clients', () => {
     const snapshot = {
       ...makeSnapshot(false),
       tabs: [
@@ -122,6 +124,14 @@ describe('projectSessionTabAgentStatus', () => {
           sessionId: 'claude',
           agent: 'claude',
           isActive: false
+        },
+        {
+          type: 'agent-session',
+          id: 'agent-session:aider',
+          title: 'Aider Chat',
+          sessionId: 'aider',
+          agent: 'aider',
+          isActive: false
         }
       ],
       activeTabId: 'agent-session:codex',
@@ -132,7 +142,7 @@ describe('projectSessionTabAgentStatus', () => {
       projectSessionTabAgentStatus(snapshot, 'runtime', [
         STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY
       ]).tabs.map((tab) => tab.id)
-    ).toEqual(['agent-session:codex'])
+    ).toEqual(['agent-session:codex', 'agent-session:claude'])
   })
 
   it('withholds session boundaries from legacy paired clients', () => {

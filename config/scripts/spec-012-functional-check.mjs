@@ -53,8 +53,12 @@ function createProfile() {
             installId: '00000000-0000-4000-8000-000000000000',
             existedBeforeTelemetryRelease: false
           },
-          // The structured lane is still behind this flag; the check has to turn it on.
-          experimentalNativeChat: true
+          // The structured lane is behind these three; the check has to turn all of them on, and
+          // simple mode is the surface the criterion is about.
+          experimentalNativeChat: true,
+          experimentalStructuredNativeChat: true,
+          openAgentTabsInChatByDefault: true,
+          interfaceMode: 'simple'
         },
         onboarding: { flowVersion: 4, closedAt: 1, outcome: 'completed', lastCompletedStep: 5 },
         ui: { contextualToursAutoEligible: false, featureTipsSeenIds: [] }
@@ -117,7 +121,7 @@ async function main() {
     const shot = (name) => page.screenshot({ path: path.join(outDir, `${name}.png`) })
     await delay(8000)
     await shot('01-app-abierta')
-    console.log(JSON.stringify({ workspace, userDataDir, cdpPort }))
+    console.log(`SPEC012 ${JSON.stringify({ workspace, userDataDir, cdpPort })}`)
     // The rest of the walk is driven from the session that runs this script, so each step can be
     // read before the next one: the app stays up until it is stopped.
     await delay(1000 * 60 * 30)

@@ -3,6 +3,7 @@ import {
   STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY,
   type RuntimeCapability
 } from '../../../../shared/protocol-version'
+import { hasStructuredAgentSessionLane } from '../../../../shared/agent-session-record'
 import type {
   RuntimeMobileSessionAgentTab,
   RuntimeMobileSessionTabsResult,
@@ -23,7 +24,13 @@ export function projectSessionTabAgentStatus<TPayload extends SessionTabsPayload
       (clientCapabilities?.includes(STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY) ?? false))
   let projected = structuredVisible ? payload : projectAgentSessionTabsOut(payload, () => true)
   if (structuredVisible && clientKind !== undefined) {
-    projected = projectAgentSessionTabsOut(projected, (tab) => tab.agent !== 'codex')
+    // Hide what the client cannot render: a session tab whose provider has no structured lane in
+    // the host. Written as a single provider until spec 012, this silently hid every Claude thread
+    // — no tab, no error — while the session itself was alive and answering.
+    projected = projectAgentSessionTabsOut(
+      projected,
+      (tab) => !hasStructuredAgentSessionLane(tab.agent)
+    )
   }
   // Why: only paired runtimes have legacy `done` completion side effects; mobile must keep its row without changing the exact v2 auth shape.
   if (

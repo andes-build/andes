@@ -137,3 +137,16 @@ export function claudeStructuredDecisionForOption(optionId: string): 'allow' | '
 export function buildClaudeStructuredUserMessage(text: string): Record<string, unknown> {
   return { type: 'user', message: { role: 'user', content: text } }
 }
+
+/**
+ * The `request_id` a `control_response` answers, or null for any other frame. Acquisition uses it
+ * to tell the answer to its own `initialize` from every other control traffic on the channel.
+ */
+export function readClaudeStructuredControlResponseRequestId(frame: unknown): string | null {
+  const record = asRecord(frame)
+  if (record?.type !== 'control_response') {
+    return null
+  }
+  const response = asRecord(record.response)
+  return response ? asString(response.request_id) : null
+}

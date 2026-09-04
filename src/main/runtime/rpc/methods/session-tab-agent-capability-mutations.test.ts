@@ -67,9 +67,18 @@ describe('session tab structured capability mutations', () => {
       expect(fixture.calls[method.runtimeMethod]).toHaveBeenCalledOnce()
     })
 
-    it(`rejects ${method.name} for a legacy Claude row`, async () => {
+    // Spec 012: Claude has a structured lane, so its row is one a client can render and drive.
+    it(`accepts ${method.name} for a Claude row`, async () => {
       const fixture = createFixture([STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY])
       const response = await fixture.dispatch(method.name, method.params('claude-session'))
+
+      expect(response.ok).toBe(true)
+      expect(fixture.calls[method.runtimeMethod]).toHaveBeenCalledOnce()
+    })
+
+    it(`rejects ${method.name} for a row whose provider has no lane`, async () => {
+      const fixture = createFixture([STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY])
+      const response = await fixture.dispatch(method.name, method.params('aider-session'))
 
       expect(response.ok).toBe(false)
       expect(fixture.calls[method.runtimeMethod]).not.toHaveBeenCalled()
@@ -123,8 +132,18 @@ function agentSnapshot() {
     ...codexTab,
     id: 'claude-session',
     sessionId: 'claude-session',
-    title: 'Legacy Claude session',
+    title: 'Claude session',
     agent: 'claude',
+    isActive: false
+  }
+  // A provider with no structured lane in the host: the row a client cannot render, and so cannot
+  // mutate either.
+  const laneless = {
+    ...codexTab,
+    id: 'aider-session',
+    sessionId: 'aider-session',
+    title: 'Aider session',
+    agent: 'aider',
     isActive: false
   }
   return {
@@ -138,9 +157,9 @@ function agentSnapshot() {
       {
         id: 'group-1',
         activeTabId: 'codex-session',
-        tabOrder: ['codex-session', 'claude-session']
+        tabOrder: ['codex-session', 'claude-session', 'aider-session']
       }
     ],
-    tabs: [codexTab, claudeTab]
+    tabs: [codexTab, claudeTab, laneless]
   } as unknown as RuntimeMobileSessionTabsResult
 }

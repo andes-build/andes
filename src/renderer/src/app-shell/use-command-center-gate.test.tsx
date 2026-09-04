@@ -23,6 +23,7 @@ function setStore(options: { threads: boolean; requested: boolean }): void {
   storeState.tabsByWorktree = {
     [FOLDER_KEY]: options.threads ? [{ id: 't1', launchAgent: 'claude' }] : [{ id: 't1' }]
   }
+  storeState.unifiedTabsByWorktree = {}
   storeState.commandCenterRequested = options.requested
 }
 
@@ -47,6 +48,17 @@ describe('spec009#1 useCommandCenterGate', () => {
     storeState.tabsByWorktree = { [FOLDER_KEY]: [{ id: 't1' }, { id: 't2' }] }
     const { result } = renderHook(() => useCommandCenterGate(FOLDER_KEY))
     expect(result.current.active).toBe(true)
+  })
+
+  /** Spec 012: a thread on the structured lane is not a terminal tab. Counting only terminal tabs
+   *  left the Command Center owning the view over an open, answering conversation. */
+  it('steps aside for a structured thread, which is not a terminal tab', () => {
+    storeState.tabsByWorktree = { [FOLDER_KEY]: [{ id: 't1' }] }
+    storeState.unifiedTabsByWorktree = {
+      [FOLDER_KEY]: [{ id: 'structured-agent-session-claude_1', contentType: 'agent-session' }]
+    }
+    const { result } = renderHook(() => useCommandCenterGate(FOLDER_KEY))
+    expect(result.current.active).toBe(false)
   })
 
   it('steps aside once a thread is open', () => {

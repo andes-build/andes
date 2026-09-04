@@ -46,14 +46,19 @@ import {
   buildClaudeStructuredPermissionResponse,
   buildClaudeStructuredUserMessage,
   claudeStructuredDecisionForOption,
+  readClaudeStructuredControlResponseRequestId,
   type ClaudeStructuredPermissionRequest
 } from './claude-structured-stream-protocol'
 
 const START_TIME_READ_ATTEMPTS = 3
 
-/** How long acquisition waits for `system/init`. Claude announces its session id there, and that id
- *  is the durable handle: minting a link before it arrives would record a name the transcript never
- *  had, and the next resume would ask for a session that does not exist. */
+/** How long acquisition waits for the child to answer the `initialize` control request. That
+ *  answer is the acquisition proof: it says the child is alive and speaking this wire.
+ *
+ *  It is NOT `system/init`. Claude emits that frame with the first turn and not before, so a
+ *  session nobody has written to yet has no announced id to wait for — measured against the real
+ *  binary on 2026-09-04 (`docs/research/2026-09-04-chequeo-funcional-spec-012/`). The id is instead
+ *  the one Andes names with `--session-id`, and the first frame that carries one has to agree. */
 const INIT_FRAME_TIMEOUT_MS = 60000
 
 export type ClaudeStructuredSessionAdapterDeps = {
@@ -74,7 +79,8 @@ type ClaudeSession = {
   fence: number
   acquisitionGeneration: string
   ended: boolean
-  /** Claude's own session id, announced by `system/init`. */
+  /** The session id the transcript carries: the one Andes reserved with `--session-id`, or the one
+   *  a resume already proved. Verified against the first frame that announces one. */
   providerSessionId: string | null
   pendingPermissions: Map<string, ClaudeStructuredPermissionRequest>
 }
@@ -111,13 +117,18 @@ export class ClaudeStructuredSessionAdapter implements StructuredAgentSessionAda
       fence: input.fence,
       acquisitionGeneration: `claude-${input.fence}-${input.spawnToken}`.slice(0, 128),
       ended: false,
-      providerSessionId: launch.resumeSessionId,
+      providerSessionId: launch.resumeSessionId ?? launch.reservedSessionId,
       pendingPermissions: new Map()
     }
+    let initializeAnswered = false
     let announceInit: (() => void) | null = null
     const initAnnounced = new Promise<void>((resolve) => {
-      announceInit = resolve
+      announceInit = () => {
+        initializeAnswered = true
+        resolve()
+      }
     })
+    const initializeRequestId = `andes-init-${input.spawnToken}`
     session.translator = input.events
       ? createClaudeJournalTranslator({
           sink: input.events,
@@ -137,12 +148,29 @@ export class ClaudeStructuredSessionAdapter implements StructuredAgentSessionAda
       },
       {
         onFrame: (frame) => {
-          // The session id has to be learned before anything is journaled under it: every Claude
-          // item identity is keyed by it.
-          if (frame.type === 'system' && frame.subtype === 'init') {
-            session.providerSessionId =
-              typeof frame.session_id === 'string' ? frame.session_id : session.providerSessionId
+          // The answer to `initialize` is what proves the child speaks this wire. It carries no
+          // session id of its own, which is why the id is the reserved one and not a learned one.
+          if (
+            frame.type === 'control_response' &&
+            readClaudeStructuredControlResponseRequestId(frame) === initializeRequestId
+          ) {
             announceInit?.()
+          }
+          // Every Claude item identity is keyed by the session id, so a child that adopted a
+          // different one would journal under a name the transcript does not have. Ending the
+          // session is the only honest answer; renaming it here would hide the disagreement.
+          const announced = typeof frame.session_id === 'string' ? frame.session_id : null
+          if (announced !== null && session.providerSessionId === null) {
+            session.providerSessionId = announced
+          } else if (announced !== null && announced !== session.providerSessionId) {
+            this.handleExit(
+              sessionId,
+              session,
+              new Error(
+                `claude answered as session ${announced}, not the ${session.providerSessionId} it was given`
+              )
+            )
+            return
           }
           session.translator?.handle(frame)
         },
@@ -150,7 +178,7 @@ export class ClaudeStructuredSessionAdapter implements StructuredAgentSessionAda
       }
     )
     session.connection = connection
-    connection.send(buildClaudeStructuredInitializeRequest(`andes-init-${input.spawnToken}`))
+    connection.send(buildClaudeStructuredInitializeRequest(initializeRequestId))
     const pid = connection.pid
     if (pid === undefined) {
       await connection.close()
@@ -171,7 +199,6 @@ export class ClaudeStructuredSessionAdapter implements StructuredAgentSessionAda
       await connection.close()
       throw new Error(`claude start time for pid ${pid} could not be read`)
     }
-    // The handle has to name the session Claude actually opened, never the one Andes reserved.
     const timeout = this.deps.initTimeoutMs ?? INIT_FRAME_TIMEOUT_MS
     let timer: NodeJS.Timeout | undefined
     await Promise.race([
@@ -181,9 +208,14 @@ export class ClaudeStructuredSessionAdapter implements StructuredAgentSessionAda
       })
     ]).finally(() => clearTimeout(timer))
     const provenSessionId = session.providerSessionId
-    if (provenSessionId === null) {
+    if (provenSessionId === null || !initializeAnswered) {
+      const stderr = connection.readStderr?.().trim()
       await connection.close()
-      throw new Error(`claude never announced a session id within ${timeout}ms`)
+      throw new Error(
+        `claude never answered the initialize request within ${timeout}ms${
+          stderr ? `: ${stderr}` : ''
+        }`
+      )
     }
     this.sessions.set(sessionId, session)
     return {

@@ -1,5 +1,6 @@
 import type { AiVaultSessionTitle } from './ai-vault-session-title'
 import type { TuiAgent } from './tui-agent'
+import type { ThreadScope } from './workspace-scope-types'
 
 // ─── Terminal Tab (legacy — used by persistence and TerminalContentSlice) ─
 export type TerminalTab = {
@@ -43,6 +44,12 @@ export type TerminalTab = {
    *  hook status overrides this once the agent does anything. Plain terminals
    *  and manually-started agents omit it. */
   launchAgent?: TuiAgent
+  /** Spec 019: the scope (a workspace, or the root) this thread was born
+   *  with, captured once at launch time from the sidebar selector. Never
+   *  re-derived from the selector's live value — that is what lets the
+   *  selector change without contaminating an already-open thread. Absent
+   *  for tabs opened outside simple mode's sidebar new-thread flow. */
+  threadScope?: ThreadScope
   /** Why: when `setActiveWorktree` bumps generation on all-dead tabs to drive a
    *  TerminalPane remount, the fresh PTY that results is caused by navigation,
    *  not by the user doing work. Without this flag the resulting

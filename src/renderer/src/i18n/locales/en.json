@@ -1444,7 +1444,7 @@
         "76a95f7f47": "Create",
         "f05d237049": "Add a project first",
         "f9eaa9e12d": "Add Project",
-        "6ca6ff404e": "ORCA",
+        "6ca6ff404e": "Andes",
         "520304a067": "Andes logo",
         "ce44fad849": "Missing dependencies",
         "c1cf168479": "Hide",
@@ -1869,7 +1869,7 @@
         "92b0f9d921": "is authenticated and try again.",
         "cd8c34aac1": "gh",
         "cf82170065": "Could not star the repo. Make sure",
-        "30c36231c1": "Andes is open source. If it helped today, a GitHub star helps other developers find it.",
+        "30c36231c1": "Andes is open source. If it helped today, a GitHub star helps more people find it.",
         "b5e685e4d9": "Dismiss",
         "5f6df21046": "Enjoying Andes?",
         "2d67b6c849": "Star on GitHub",
@@ -8798,12 +8798,9 @@
           "search": {
             "9a115966d3": "Minimize to Tray on Close",
             "4d5b9427b5": "When enabled, closing the window keeps Andes running in the system tray instead of quitting.",
-            "468448bba4": "watercolor",
-            "f586abfa35": "blue",
             "651f35b2c6": "switcher",
             "e5bc35d59e": "window",
             "d18b54ca90": "dock",
-            "1f2880a9d5": "orca",
             "2cfb3420c0": "app icon",
             "e80c2af428": "Choose the app icon shown in the Dock and window switcher.",
             "2b313598c6": "App Icon",
@@ -16487,6 +16484,61 @@
       "HostedReviewUnlinkMenuItem": {
         "label": "Unlink {{value0}} from workspace",
         "description": "Andes will hide {{value0}} {{value1}} details for this workspace. The {{value0}} and branch on {{value2}} won’t be changed."
+      },
+      "files": {
+        "WorkspaceNodeName": {
+          "whatThisIs": "What this is",
+          "decisions": "Decisions",
+          "learnings": "Learnings",
+          "backlog": "Backlog",
+          "initiatives": "Initiatives",
+          "research": "Research"
+        },
+        "FilesPage": {
+          "title": "Files",
+          "subtitleForWorkspace": "What lives in {{workspace}}",
+          "subtitleForRoot": "What lives in My work",
+          "emptyTree": "This workspace has no files yet.",
+          "selectFilePrompt": "Select a file to read it.",
+          "openThreadButton": "Open a thread about this file",
+          "loadError": "Could not read this file."
+        }
+      },
+      "workspaceScope": {
+        "WorkspaceScopeSelector": {
+          "rootLabel": "My work",
+          "changeLabel": "Workspace · change",
+          "newWorkspaceLabel": "New workspace",
+          "menuTitle": "Switch workspace"
+        },
+        "SimpleModeNav": {
+          "newThread": "New thread",
+          "commandCenter": "Command Center",
+          "files": "Files",
+          "agentsAndSkills": "Agents & skills",
+          "more": "More",
+          "noFolderForThread": "Open a folder before starting a thread.",
+          "noAgentForThreadAction": "Agents & skills",
+          "threadLaunchFailed": "The thread could not be started. Check the agent in Settings and try again.",
+          "noFolderForThreadAction": "Open folder",
+          "noChatAgentForThread": "Claude Code is not installed, so there is no conversation to open yet."
+        },
+        "SimpleModeMoreMenu": {
+          "settings": "Settings"
+        },
+        "RecentThreadsSection": {
+          "title": "Recent threads",
+          "viewHistory": "View history",
+          "empty": "No recent threads yet"
+        },
+        "SimpleModeSidebarEmptyStates": {
+          "noWorkspacesTitle": "No workspaces yet",
+          "noWorkspacesDescription": "This folder doesn't have a workspaces folder yet. Create one to start organizing your work.",
+          "emptyWorkspaceTitle": "This workspace is empty",
+          "emptyWorkspaceDescription": "Nothing has been written here yet.",
+          "folderNotReadyTitle": "This folder isn't set up yet",
+          "folderNotReadyDescription": "Finish onboarding to prepare this folder before opening a workspace."
+        }
       }
     },
     "i18n": {
@@ -16681,6 +16733,10 @@
         "copy": "Copy message"
       },
       "scrollMessageToTop": "Scroll this message to top",
+      "threadScope": {
+        "root": "My work",
+        "workspace": "{{value0}}"
+      },
       "loadingEarlier": "Loading…",
       "loadEarlier": "Load earlier messages",
       "question": {

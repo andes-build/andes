@@ -10,6 +10,7 @@ import { makePaneKey } from '../../../../shared/stable-pane-id'
 import { sanitizeTerminalLayoutPaneTitles } from '@/lib/terminal-pane-title-sanitization'
 import { resolveNativeChatLeafTitleAgent } from './native-chat-leaf-title-agent'
 import { canToggleNativeChat } from '../native-chat/native-chat-availability'
+import { INTERFACE_MODE_SIMPLE } from '../../../../shared/interface-mode'
 import {
   nativeChatLaunchAgentForLeaf,
   resolveNativeChatLeafRoute,
@@ -57,7 +58,13 @@ export function useTerminalPaneChatState(controller: TerminalPaneTitleController
       getCachedUnifiedTerminalTabForWorktree(store.unifiedTabsByWorktree, worktreeId, tabId)
         ?.structuredSessionId ?? null
   )
-  const nativeChatEnabled = useAppStore((store) => store.settings?.experimentalNativeChat === true)
+  // Simple mode (spec 011): the conversation is the surface on its own, no
+  // experimental opt-in needed. Developer mode keeps the old flag gate.
+  const nativeChatEnabled = useAppStore(
+    (store) =>
+      store.settings?.experimentalNativeChat === true ||
+      store.settings?.interfaceMode === INTERFACE_MODE_SIMPLE
+  )
   const effectiveChatViewMode = nativeChatEnabled && isChatViewMode
   const chatPaneDispatchStatus = useAppStore((store) =>
     chatLeafId

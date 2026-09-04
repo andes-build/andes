@@ -1,6 +1,6 @@
 import { isSkillsCliAgentKeyShaped } from './skills-cli-agent-keys'
 
-export const ORCA_SKILLS_REPOSITORY_URL = 'https://github.com/andes-build/andes'
+export const ANDES_SKILLS_REPOSITORY_URL = 'https://github.com/andes-build/andes'
 
 export const ORCA_CLI_SKILL_NAME = 'andes-cli'
 export const COMPUTER_USE_SKILL_NAME = 'computer-use'
@@ -49,7 +49,7 @@ export function buildAgentFeatureSkillInstallArgs(
   return [
     'skills',
     'add',
-    ORCA_SKILLS_REPOSITORY_URL,
+    ANDES_SKILLS_REPOSITORY_URL,
     ...skillArgs,
     ...(global ? ['--global'] : []),
     // Why: an explicit --agent stops `skills add` calling its own detection, whose

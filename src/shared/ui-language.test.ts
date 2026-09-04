@@ -1,27 +1,28 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  UI_LANGUAGE_CHINESE,
-  UI_LANGUAGE_ENGLISH,
-  UI_LANGUAGE_JAPANESE,
-  UI_LANGUAGE_KOREAN,
-  UI_LANGUAGE_SPANISH,
-  UI_LANGUAGE_SYSTEM,
-  normalizeUiLanguage
-} from './ui-language'
+import { UI_LANGUAGE_ENGLISH, UI_LANGUAGE_SYSTEM, normalizeUiLanguage } from './ui-language'
 
 describe('normalizeUiLanguage', () => {
   it('accepts supported language settings', () => {
     expect(normalizeUiLanguage(UI_LANGUAGE_SYSTEM)).toBe('system')
     expect(normalizeUiLanguage(UI_LANGUAGE_ENGLISH)).toBe('en')
-    expect(normalizeUiLanguage(UI_LANGUAGE_CHINESE)).toBe('zh')
-    expect(normalizeUiLanguage(UI_LANGUAGE_KOREAN)).toBe('ko')
-    expect(normalizeUiLanguage(UI_LANGUAGE_JAPANESE)).toBe('ja')
-    expect(normalizeUiLanguage(UI_LANGUAGE_SPANISH)).toBe('es')
   })
 
-  it('falls back unknown values to system', () => {
-    expect(normalizeUiLanguage('fr')).toBe('system')
-    expect(normalizeUiLanguage(null)).toBe('system')
+  it('accepts a plugin language pack id', () => {
+    expect(normalizeUiLanguage('plugin:orca-samples.portuguese/pt-BR')).toBe(
+      'plugin:orca-samples.portuguese/pt-BR'
+    )
+  })
+
+  it('falls back a retired built-in language to English, not to a blank UI', () => {
+    expect(normalizeUiLanguage('es')).toBe('en')
+    expect(normalizeUiLanguage('zh')).toBe('en')
+    expect(normalizeUiLanguage('ko')).toBe('en')
+    expect(normalizeUiLanguage('ja')).toBe('en')
+  })
+
+  it('falls back unknown values to English', () => {
+    expect(normalizeUiLanguage('fr')).toBe('en')
+    expect(normalizeUiLanguage(null)).toBe('en')
   })
 })

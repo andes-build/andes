@@ -188,6 +188,7 @@ export function useFullSubmitPreparation(input: FullSubmitPreparationInput) {
           {
             experimentalNativeChat: settings?.experimentalNativeChat,
             openAgentTabsInChatByDefault: settings?.openAgentTabsInChatByDefault,
+            interfaceMode: settings?.interfaceMode,
             nativeChatSessionOptions: settings?.nativeChatSessionOptions
           },
           {

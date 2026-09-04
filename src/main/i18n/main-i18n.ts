@@ -17,24 +17,23 @@ let initialized = false
 let pluginLanguagePacks: readonly PluginLanguagePackRegistration[] = []
 const registeredPluginLanguages = new Set<string>()
 
-// Why: main-process callers pass English fallbacks to translateMain(), so the
-// main bundle does not need to parse any locale catalog at cold start. Only
-// non-English users pay for their selected catalog, after i18n is awaited.
+// Why: empty while English is the only shipped catalog (specs/done/008-un-solo-idioma.md).
+// A translation pass adds a loader back here for whatever locale it targets.
 const LAZY_LOCALE_LOADERS: Record<
   Exclude<SupportedUiLocale, 'en'>,
   () => Promise<{ default: Record<string, unknown> }>
-> = {
-  es: () => import('../../renderer/src/i18n/locales/es.json'),
-  ja: () => import('../../renderer/src/i18n/locales/ja.json'),
-  ko: () => import('../../renderer/src/i18n/locales/ko.json'),
-  zh: () => import('../../renderer/src/i18n/locales/zh.json')
-}
+> = {}
 
 const lazyLocaleBackend: BackendModule = {
   type: 'backend',
   init: () => {},
   read: (language: string, _namespace: string, callback: ReadCallback) => {
-    const loader = LAZY_LOCALE_LOADERS[language as Exclude<SupportedUiLocale, 'en'>]
+    // Why: cast through Record<string, ...> — Exclude<SupportedUiLocale, 'en'> is
+    // `never` while English is the only locale, which collapses a direct index
+    // to `never` too and makes the call below fail to typecheck.
+    const loader = (
+      LAZY_LOCALE_LOADERS as Record<string, () => Promise<{ default: Record<string, unknown> }>>
+    )[language]
     if (!loader) {
       // English is intentionally represented by the empty bundled resource; its
       // user-visible copy comes from translateMain() defaultValue fallbacks.

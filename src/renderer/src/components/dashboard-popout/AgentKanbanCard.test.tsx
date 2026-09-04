@@ -334,14 +334,24 @@ describe('AgentKanbanCard', () => {
     expect(agentIconRender).toHaveBeenCalledTimes(2)
   })
 
+  // Why: English is the only shipped catalog (specs/done/008-un-solo-idioma.md),
+  // so a synthetic resource bundle stands in for a real second-locale catalog.
   it('updates the relative age when the UI language changes', async () => {
+    const SYNTHETIC_LOCALE = 'zz'
+    i18n.addResourceBundle(
+      SYNTHETIC_LOCALE,
+      'translation',
+      { dashboardPopout: { card: { time: { minutes: '{{count}} min' } } } },
+      true,
+      true
+    )
     renderCard({ card: card({ startedAt: 1_000 }), now: 121_500 })
     expect(screen.getByText('2m')).toBeInTheDocument()
 
     await act(async () => {
-      await i18n.changeLanguage('ja')
+      await i18n.changeLanguage(SYNTHETIC_LOCALE)
     })
 
-    expect(screen.getByText('2分')).toBeInTheDocument()
+    expect(screen.getByText('2 min')).toBeInTheDocument()
   })
 })

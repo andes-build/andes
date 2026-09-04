@@ -33,22 +33,6 @@ vi.mock('../../resources/icon-dev.png?asset', () => ({
   default: 'classic-dev-icon'
 }))
 
-vi.mock('../../resources/app-icons/orca-watercolor.png?asset', () => ({
-  default: 'watercolor-icon'
-}))
-
-vi.mock('../../resources/app-icons/orca-watercolor.png?asset&asarUnpack', () => ({
-  default: 'watercolor-icon-unpacked'
-}))
-
-vi.mock('../../resources/app-icons/orca-blue.png?asset', () => ({
-  default: 'blue-icon'
-}))
-
-vi.mock('../../resources/app-icons/orca-blue.png?asset&asarUnpack', () => ({
-  default: 'blue-icon-unpacked'
-}))
-
 import { applyAppIcon, getAppIconPath, persistMacDockIcon } from './app-icon'
 
 function waitForQueuedPersistence(): Promise<void> {
@@ -56,8 +40,9 @@ function waitForQueuedPersistence(): Promise<void> {
 }
 
 async function waitForQueuedPersistenceMicrotasks(): Promise<void> {
-  await Promise.resolve()
-  await Promise.resolve()
+  for (let i = 0; i < 6; i += 1) {
+    await Promise.resolve()
+  }
 }
 
 function createMockChildProcess(): EventEmitter & { kill: ReturnType<typeof vi.fn> } {
@@ -67,6 +52,28 @@ function createMockChildProcess(): EventEmitter & { kill: ReturnType<typeof vi.f
     return true
   })
   return childProcess
+}
+
+function createCompletingExecFile(): (
+  file: string,
+  args: string[],
+  optionsOrCallback: unknown,
+  callback?: (error: Error | null) => void
+) => void {
+  return vi.fn(
+    (
+      _file: string,
+      _args: string[],
+      optionsOrCallback: unknown,
+      callback?: (error: Error | null) => void
+    ) => {
+      const onComplete =
+        typeof optionsOrCallback === 'function'
+          ? (optionsOrCallback as (error: Error | null) => void)
+          : callback
+      onComplete?.(null)
+    }
+  )
 }
 
 describe('app icon selection', () => {
@@ -82,14 +89,12 @@ describe('app icon selection', () => {
     vi.useRealTimers()
   })
 
-  it('resolves classic, watercolor, blue, and invalid icon ids', () => {
+  it('resolves classic and falls back to it for an invalid icon id', () => {
     expect(getAppIconPath('classic')).toBe('classic-icon')
-    expect(getAppIconPath('watercolor')).toBe('watercolor-icon')
-    expect(getAppIconPath('blue')).toBe('blue-icon')
     expect(getAppIconPath('missing')).toBe('classic-icon')
   })
 
-  it('applies the selected icon to the dock and live windows', () => {
+  it('applies the classic icon to the dock and live windows', () => {
     const image = { isEmpty: () => false }
     createFromPathMock.mockReturnValue(image)
     browserWindowGetAllWindowsMock.mockReturnValue([
@@ -97,9 +102,9 @@ describe('app icon selection', () => {
       { isDestroyed: () => true, setIcon: vi.fn() }
     ])
 
-    applyAppIcon('watercolor')
+    applyAppIcon('classic')
 
-    expect(createFromPathMock).toHaveBeenCalledWith('watercolor-icon')
+    expect(createFromPathMock).toHaveBeenCalledWith('classic-icon')
     if (process.platform === 'darwin') {
       expect(dockSetIconMock).toHaveBeenCalledWith(image)
     } else {
@@ -108,61 +113,11 @@ describe('app icon selection', () => {
     expect(windowSetIconMock).toHaveBeenCalledWith(image)
   })
 
-  it('persists a custom macOS dock icon to the app bundle for inactive Dock pins', async () => {
-    const execFile = vi.fn(
-      (
-        _file: string,
-        _args: string[],
-        optionsOrCallback: unknown,
-        callback?: (error: Error | null) => void
-      ) => {
-        const onComplete =
-          typeof optionsOrCallback === 'function'
-            ? (optionsOrCallback as (error: Error | null) => void)
-            : callback
-        onComplete?.(null)
-      }
-    )
-
-    persistMacDockIcon('watercolor', {
-      appBundlePath: '/Applications/Orca.app',
-      execFile,
-      isDevApp: false,
-      platform: 'darwin'
-    })
-    await waitForQueuedPersistence()
-
-    expect(execFile).toHaveBeenCalledWith(
-      '/usr/bin/osascript',
-      expect.arrayContaining(['-e', expect.stringContaining('setIcon:image forFile:appPath')]),
-      expect.objectContaining({
-        env: expect.objectContaining({
-          ORCA_APP_BUNDLE_PATH: '/Applications/Orca.app',
-          ORCA_APP_ICON_PATH: 'watercolor-icon-unpacked'
-        })
-      }),
-      expect.any(Function)
-    )
-  })
-
-  it('clears the AppKit icon and Finder metadata when switching macOS back to classic', async () => {
-    const execFile = vi.fn(
-      (
-        _file: string,
-        _args: string[],
-        optionsOrCallback: unknown,
-        callback?: (error: Error | null) => void
-      ) => {
-        const onComplete =
-          typeof optionsOrCallback === 'function'
-            ? (optionsOrCallback as (error: Error | null) => void)
-            : callback
-        onComplete?.(null)
-      }
-    )
+  it('clears the AppKit icon and Finder metadata on macOS', async () => {
+    const execFile = createCompletingExecFile()
 
     persistMacDockIcon('classic', {
-      appBundlePath: '/Applications/Orca.app',
+      appBundlePath: '/Applications/Andes.app',
       execFile,
       isDevApp: false,
       platform: 'darwin'
@@ -178,7 +133,7 @@ describe('app icon selection', () => {
       ]),
       expect.objectContaining({
         env: expect.objectContaining({
-          ORCA_APP_BUNDLE_PATH: '/Applications/Orca.app'
+          ANDES_APP_BUNDLE_PATH: '/Applications/Andes.app'
         }),
         timeout: 10_000
       }),
@@ -186,7 +141,7 @@ describe('app icon selection', () => {
     )
     expect(execFile).toHaveBeenCalledWith(
       '/usr/bin/xattr',
-      ['-d', 'com.apple.FinderInfo', '/Applications/Orca.app'],
+      ['-d', 'com.apple.FinderInfo', '/Applications/Andes.app'],
       expect.objectContaining({
         timeout: 10_000
       }),
@@ -194,9 +149,35 @@ describe('app icon selection', () => {
     )
     expect(execFile).toHaveBeenCalledWith(
       '/usr/bin/xattr',
-      ['-d', 'com.apple.ResourceFork', '/Applications/Orca.app'],
+      ['-d', 'com.apple.ResourceFork', '/Applications/Andes.app'],
       expect.objectContaining({
         timeout: 10_000
+      }),
+      expect.any(Function)
+    )
+  })
+
+  it('clears the Dock icon even for a legacy id from a removed alternate icon', async () => {
+    const execFile = createCompletingExecFile()
+
+    persistMacDockIcon('watercolor', {
+      appBundlePath: '/Applications/Andes.app',
+      execFile,
+      isDevApp: false,
+      platform: 'darwin'
+    })
+    await waitForQueuedPersistence()
+
+    expect(execFile).toHaveBeenCalledWith(
+      '/usr/bin/osascript',
+      expect.arrayContaining([
+        '-e',
+        expect.stringContaining('setIcon:(missing value) forFile:appPath')
+      ]),
+      expect.objectContaining({
+        env: expect.objectContaining({
+          ANDES_APP_BUNDLE_PATH: '/Applications/Andes.app'
+        })
       }),
       expect.any(Function)
     )
@@ -224,7 +205,7 @@ describe('app icon selection', () => {
     )
 
     persistMacDockIcon('classic', {
-      appBundlePath: '/Applications/Orca.app',
+      appBundlePath: '/Applications/Andes.app',
       execFile,
       isDevApp: false,
       platform: 'darwin'
@@ -240,7 +221,7 @@ describe('app icon selection', () => {
     warnSpy.mockRestore()
   })
 
-  it('warns when the AppKit classic icon reset fails', async () => {
+  it('warns when the AppKit icon reset fails', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const execFile = vi.fn(
       (
@@ -258,7 +239,7 @@ describe('app icon selection', () => {
     )
 
     persistMacDockIcon('classic', {
-      appBundlePath: '/Applications/Orca.app',
+      appBundlePath: '/Applications/Andes.app',
       execFile,
       isDevApp: false,
       platform: 'darwin'
@@ -273,7 +254,7 @@ describe('app icon selection', () => {
     warnSpy.mockRestore()
   })
 
-  it('serializes rapid macOS dock icon persistence so the last icon request wins', async () => {
+  it('skips a superseded request instead of running its clear sequence', async () => {
     const pendingCallbacks: (() => void)[] = []
     const execFile = vi.fn(
       (
@@ -289,96 +270,44 @@ describe('app icon selection', () => {
         pendingCallbacks.push(() => onComplete?.(null))
       }
     )
-
-    persistMacDockIcon('watercolor', {
-      appBundlePath: '/Applications/Orca.app',
-      execFile,
-      isDevApp: false,
-      platform: 'darwin'
-    })
-    await waitForQueuedPersistence()
-
-    persistMacDockIcon('blue', {
-      appBundlePath: '/Applications/Orca.app',
-      execFile,
-      isDevApp: false,
-      platform: 'darwin'
-    })
-    persistMacDockIcon('classic', {
-      appBundlePath: '/Applications/Orca.app',
-      execFile,
-      isDevApp: false,
-      platform: 'darwin'
-    })
-
-    expect(execFile).toHaveBeenCalledTimes(1)
-    expect(execFile).toHaveBeenCalledWith(
-      '/usr/bin/osascript',
-      expect.any(Array),
-      expect.objectContaining({
-        env: expect.objectContaining({
-          ORCA_APP_ICON_PATH: 'watercolor-icon-unpacked'
-        })
-      }),
-      expect.any(Function)
-    )
-
-    pendingCallbacks.shift()?.()
-    await waitForQueuedPersistence()
-
-    expect(execFile).toHaveBeenCalledTimes(2)
-    expect(execFile).not.toHaveBeenCalledWith(
-      '/usr/bin/osascript',
-      expect.any(Array),
-      expect.objectContaining({
-        env: expect.objectContaining({
-          ORCA_APP_ICON_PATH: 'blue-icon-unpacked'
-        })
-      }),
-      expect.any(Function)
-    )
-    expect(execFile).toHaveBeenNthCalledWith(
-      2,
-      '/usr/bin/osascript',
-      expect.arrayContaining([
-        '-e',
-        expect.stringContaining('setIcon:(missing value) forFile:appPath')
-      ]),
-      expect.objectContaining({
-        env: expect.objectContaining({
-          ORCA_APP_BUNDLE_PATH: '/Applications/Orca.app'
-        }),
-        timeout: 10_000
-      }),
-      expect.any(Function)
-    )
-    pendingCallbacks.shift()?.()
-    await waitForQueuedPersistence()
-
-    expect(execFile).toHaveBeenCalledTimes(4)
-    expect(execFile).toHaveBeenNthCalledWith(
-      3,
-      '/usr/bin/xattr',
-      ['-d', 'com.apple.FinderInfo', '/Applications/Orca.app'],
-      expect.objectContaining({
-        timeout: 10_000
-      }),
-      expect.any(Function)
-    )
-    expect(execFile).toHaveBeenNthCalledWith(
-      4,
-      '/usr/bin/xattr',
-      ['-d', 'com.apple.ResourceFork', '/Applications/Orca.app'],
-      expect.objectContaining({
-        timeout: 10_000
-      }),
-      expect.any(Function)
-    )
-
-    for (const completeCommand of pendingCallbacks) {
-      completeCommand()
+    const runFull = (): void =>
+      persistMacDockIcon('classic', {
+        appBundlePath: '/Applications/Andes.app',
+        execFile,
+        isDevApp: false,
+        platform: 'darwin'
+      })
+    // Drains one full 3-step clear sequence (AppKit icon, then both xattrs),
+    // resolving each pending execFile call as it is issued.
+    const drainOneClearSequence = async (): Promise<void> => {
+      for (let step = 0; step < 3; step += 1) {
+        pendingCallbacks.shift()?.()
+        await waitForQueuedPersistence()
+      }
     }
+
+    runFull()
     await waitForQueuedPersistence()
+
+    // The first request's work already started (its own generation check
+    // already passed), so it is not cancellable — it runs to completion even
+    // though two more requests arrive before it finishes.
+    expect(execFile).toHaveBeenCalledTimes(1)
+
+    runFull() // superseded before its work ever starts
+    runFull() // the new winner
+
+    await drainOneClearSequence()
+
+    // The superseded (middle) request bails without calling execFile at all;
+    // the queue moves straight to the winner's own full clear sequence, whose
+    // first call may already have fired inside the same flush.
+    const callsAfterFirstSequence = execFile.mock.calls.length
+    expect(callsAfterFirstSequence).toBeGreaterThanOrEqual(3)
+
+    await drainOneClearSequence()
+    await drainOneClearSequence()
+    expect(execFile).toHaveBeenCalledTimes(6)
   })
 
   it('continues macOS dock icon persistence when a command never completes', async () => {
@@ -404,20 +333,13 @@ describe('app icon selection', () => {
       }
     )
 
-    persistMacDockIcon('watercolor', {
-      appBundlePath: '/Applications/Orca.app',
+    persistMacDockIcon('classic', {
+      appBundlePath: '/Applications/Andes.app',
       execFile,
       isDevApp: false,
       platform: 'darwin'
     })
     await waitForQueuedPersistenceMicrotasks()
-
-    persistMacDockIcon('blue', {
-      appBundlePath: '/Applications/Orca.app',
-      execFile,
-      isDevApp: false,
-      platform: 'darwin'
-    })
 
     expect(execFile).toHaveBeenCalledTimes(1)
 
@@ -430,21 +352,11 @@ describe('app icon selection', () => {
     await vi.advanceTimersByTimeAsync(1_000)
     await waitForQueuedPersistenceMicrotasks()
 
-    expect(warnSpy).toHaveBeenCalledWith('[app-icon] timed out persisting macOS dock icon')
+    expect(warnSpy).toHaveBeenCalledWith('[app-icon] timed out clearing macOS dock icon')
     expect(hungChildProcess.kill).toHaveBeenCalledTimes(1)
-    expect(execFile).toHaveBeenCalledTimes(2)
-    expect(execFile).toHaveBeenNthCalledWith(
-      2,
-      '/usr/bin/osascript',
-      expect.any(Array),
-      expect.objectContaining({
-        env: expect.objectContaining({
-          ORCA_APP_ICON_PATH: 'blue-icon-unpacked'
-        }),
-        timeout: 10_000
-      }),
-      expect.any(Function)
-    )
+    // The hung AppKit clear call gives up via its fallback, then the chain
+    // still runs both Finder xattr clears.
+    expect(execFile).toHaveBeenCalledTimes(3)
 
     warnSpy.mockRestore()
   })

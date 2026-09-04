@@ -12,7 +12,7 @@ import {
 import { ShortcutKeyCombo } from './ShortcutKeyCombo'
 import { useShortcutKeyDetails, type ShortcutKeyComboDetails } from '@/hooks/useShortcutLabel'
 import { useMountedRef } from '@/hooks/useMountedRef'
-import logo from '../../../../resources/logo.svg'
+import logo from '../../../../resources/andes-logo.png'
 import { translate } from '@/i18n/i18n'
 import { hasGitHubBackedProject, type PreflightIssue } from './landing-preflight-issues'
 import { useLandingPreflightRuntime } from './landing-preflight-runtime'
@@ -259,8 +259,8 @@ export default function Landing(): React.JSX.Element {
               className="size-12"
             />
           </div>
-          <h1 className="text-4xl font-bold text-foreground tracking-tight">
-            {translate('auto.components.Landing.6ca6ff404e', 'ORCA')}
+          <h1 className="andes-screen-title text-5xl text-foreground">
+            {translate('auto.components.Landing.6ca6ff404e', 'Andes')}
           </h1>
 
           {preflightIssues.length > 0 && <PreflightBanner issues={preflightIssues} repos={repos} />}

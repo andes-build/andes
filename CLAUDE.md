@@ -34,6 +34,11 @@ lee solo: nada de acá asume que el brain esté al alcance.
 - `ARCHITECTURE.md` actualizado si cambió; decisiones nuevas en `decisions.md`; lo que sirva para
   la próxima vez, en `learnings/`.
 - Spec archivada en `specs/done/`. Listo para PEDIR el merge — nunca autónomo.
+- **Chequeo funcional en la app real.** Ninguna rama que toque la interfaz se declara terminada sin
+  levantar la aplicación y recorrer el camino completo como lo haría una persona, con una captura
+  por paso guardada en `docs/research/` y pegada en la Evidencia. Los chequeos automáticos no
+  alcanzan: tres fallos visibles llegaron al operador con todo en verde (2026-09-03). Se hace con
+  el servidor de control de pantalla o con una prueba de interfaz que guarde capturas.
 
 ## Cómo se escribe
 
@@ -59,6 +64,11 @@ Nombres de archivo, comandos y código en inglés. La regla del idioma del produ
 sola vez, en la constitución del repo del producto que publica `.os/core` —`CLAUDE.md` en su
 raíz— y no se repite acá.
 
+## Idioma de la interfaz
+
+Todo texto nuevo de la interfaz va solo al catálogo inglés (`src/renderer/src/i18n/locales/en.json`)
+hasta que se reabra la traducción — ver `specs/done/008-un-solo-idioma.md`.
+
 ## Gotchas
 
 <!-- Lo que hace tropezar y no se deduce abriendo un archivo va acá, una línea cada cosa. Lo que
@@ -66,6 +76,15 @@ raíz— y no se repite acá.
 
 - `evals/run.sh` llama scripts de `pnpm`: sin `pnpm install` en el checkout, los criterios que los
   usan fallan aunque el código esté bien (pasó en el Gate 2 de la spec 001, 2026-09-02).
+- `ORCA_DEV_USER_DATA_PATH` con una ruta larga rompe el arranque de `pnpm dev`: el daemon local
+  escucha en un socket Unix bajo esa carpeta, y macOS limita esas rutas a ~104 caracteres. Síntoma:
+  modal "Andes couldn't start its local command transport" con `listen EINVAL`. Usar una ruta corta
+  (`/tmp/<algo-corto>`), nunca un directorio de scratchpad de sesión (spec 019, 2026-09-04).
+- Dos instancias de desarrollo comparten `build.andes.dev` como identificador de paquete: nunca
+  activar la ventana propia con clics o `System Events` durante un chequeo funcional — puede robarle
+  el foco a la ventana de otra persona sin que las herramientas lo distingan. Manejar la instancia
+  propia solo por su puerto de depuración (`chromium.connectOverCDP`), y cerrarla apenas termine el
+  chequeo (spec 019, 2026-09-04).
 
 ## Convenciones de código heredadas de Orca
 

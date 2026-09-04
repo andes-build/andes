@@ -116,3 +116,5 @@ export type TopLevelView =
   | 'skills'
   | 'artifacts'
   | 'mobile'
+  // Simple mode (spec 010): the Files screen, scoped to the active workspace.
+  | 'files'

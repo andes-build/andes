@@ -11,6 +11,11 @@ import type { SleepingAgentLaunchConfig } from '../../../shared/agent-session-re
 import type { GlobalSettings } from '../../../shared/global-settings-types'
 import type { OnboardingState } from '../../../shared/onboarding-state-types'
 import type { TuiAgent } from '../../../shared/tui-agent'
+import { INTERFACE_MODE_SIMPLE } from '../../../shared/interface-mode'
+import {
+  resolveSimpleModeThreadAgent,
+  resolveSimpleModeThreadAgentArgs
+} from '@/lib/simple-mode-thread-launch'
 import { resolveInitialNativeChatSessionOptions } from '@/components/native-chat/native-chat-launch-session-options'
 import type { SessionOptionValue } from '../../../shared/native-chat-session-options'
 
@@ -44,12 +49,30 @@ export function buildOnboardingFolderAgentStartup(
   ) {
     return undefined
   }
+  // Why (spec 016): simple mode never seeds an agent it cannot draw a
+  // conversation for — that tab would be a raw terminal — and never carries the
+  // profile's permission-bypass arguments into it.
+  const isSimpleMode = settings.interfaceMode === INTERFACE_MODE_SIMPLE
+  if (
+    isSimpleMode &&
+    resolveSimpleModeThreadAgent({
+      defaultTuiAgent: agent,
+      detectedAgentIds: [agent],
+      disabledTuiAgents: settings.disabledTuiAgents,
+      nativeChatTranscriptIsLocalReadable
+    }) !== agent
+  ) {
+    return undefined
+  }
+  const agentArgs = isSimpleMode
+    ? resolveSimpleModeThreadAgentArgs(agent, settings)
+    : resolveTuiAgentLaunchArgs(agent, settings.agentDefaultArgs)
 
   const startupPlan = buildAgentStartupPlan({
     agent,
     prompt: '',
     cmdOverrides: settings.agentCmdOverrides ?? {},
-    agentArgs: resolveTuiAgentLaunchArgs(agent, settings.agentDefaultArgs),
+    agentArgs,
     agentEnv: resolveTuiAgentLaunchEnv(agent, settings.agentDefaultEnv),
     sessionOptions: resolveInitialNativeChatSessionOptions(settings, {
       agent,

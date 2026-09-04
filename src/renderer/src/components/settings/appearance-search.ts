@@ -4,7 +4,6 @@ import { getLeftSidebarAppearanceEntry, getSidebarEntries } from './appearance-s
 import { createLocalizedCatalog } from '@/i18n/localized-catalog'
 import { translate } from '@/i18n/i18n'
 import { translateSearchKeyword } from './settings-search-keywords'
-import { SHOW_UI_LANGUAGE_SETTING } from '@/i18n/supported-languages'
 import { getStatusBarToggles } from './appearance-status-bar-search'
 import { getUsagePercentageDisplayEntry } from './appearance-usage-percentage-search'
 import { getMenuBarIconEntries, getSystemTrayEntries } from './appearance-system-presence-search'
@@ -185,18 +184,9 @@ export const getAppIconEntries = createLocalizedCatalog((): SettingsSearchEntry[
         'auto.components.settings.appearance.search.2cfb3420c0',
         'app icon'
       ),
-      ...translateSearchKeyword('auto.components.settings.appearance.search.1f2880a9d5', 'orca'),
       ...translateSearchKeyword('auto.components.settings.appearance.search.d18b54ca90', 'dock'),
       ...translateSearchKeyword('auto.components.settings.appearance.search.e5bc35d59e', 'window'),
-      ...translateSearchKeyword(
-        'auto.components.settings.appearance.search.651f35b2c6',
-        'switcher'
-      ),
-      ...translateSearchKeyword('auto.components.settings.appearance.search.f586abfa35', 'blue'),
-      ...translateSearchKeyword(
-        'auto.components.settings.appearance.search.468448bba4',
-        'watercolor'
-      )
+      ...translateSearchKeyword('auto.components.settings.appearance.search.651f35b2c6', 'switcher')
     ]
   }
 ])
@@ -224,6 +214,12 @@ type AppearancePaneSearchOptions = {
   showWarpImport?: boolean
   showSystemTray?: boolean
   showMenuBarIcon?: boolean
+  // Why: only English ships while the interface keeps changing
+  // (specs/done/008-un-solo-idioma.md) — false unless a caller with live
+  // plugin-language-pack state opts back in. Defaulting to false here (rather
+  // than threading the plugin pack count through the settings-navigation
+  // builders) keeps the Cmd+J search index a pure, non-reactive function.
+  showUiLanguageSetting?: boolean
 }
 
 function buildAppearancePaneSearchEntries(
@@ -232,7 +228,7 @@ function buildAppearancePaneSearchEntries(
   return [
     ...getAppearanceSectionEntries(),
     ...getThemeEntries(),
-    ...(SHOW_UI_LANGUAGE_SETTING ? getLanguageEntries() : []),
+    ...(options.showUiLanguageSetting ? getLanguageEntries() : []),
     ...getTypographyEntries(),
     ...getZoomEntries(),
     ...getTerminalAppearanceSearchEntries(options),
@@ -252,6 +248,7 @@ export function getAppearancePaneSearchEntries(
   return buildAppearancePaneSearchEntries({
     showWarpImport: options.showWarpImport ?? true,
     showSystemTray: options.showSystemTray,
-    showMenuBarIcon: options.showMenuBarIcon
+    showMenuBarIcon: options.showMenuBarIcon,
+    showUiLanguageSetting: options.showUiLanguageSetting ?? false
   })
 }

@@ -1,10 +1,53 @@
 #!/usr/bin/env node
 
+const fs = require('node:fs')
+
 const READY_MARKER = 'GOLDEN_STUB_AGENT_READY'
 const EXIT_MARKER = 'GOLDEN_STUB_AGENT_EXITED'
 
 const ESC = '\x1b'
 const keyboardProtocolMode = process.argv.includes('--keyboard-protocol')
+
+// Spec 015: with `--transcript <path>` the stub answers like a real agent —
+// every submitted line is appended to a Claude-format JSONL transcript
+// together with its reply, so a UI test can assert that a reply reaches the
+// conversation without spending credit on a live session.
+function readFlag(name) {
+  const index = process.argv.indexOf(name)
+  return index === -1 ? undefined : process.argv[index + 1]
+}
+const transcriptPath = readFlag('--transcript')
+const transcriptSessionId = readFlag('--session') ?? 'golden-stub-session'
+let transcriptTurn = 0
+
+function appendTranscriptTurn(text) {
+  if (!transcriptPath) {
+    return
+  }
+  transcriptTurn += 1
+  const now = new Date()
+  const lines = [
+    {
+      sessionId: transcriptSessionId,
+      uuid: `${transcriptSessionId}-user-${transcriptTurn}`,
+      type: 'user',
+      timestamp: now.toISOString(),
+      message: { role: 'user', content: [{ type: 'text', text }] }
+    },
+    {
+      sessionId: transcriptSessionId,
+      uuid: `${transcriptSessionId}-assistant-${transcriptTurn}`,
+      type: 'assistant',
+      timestamp: new Date(now.getTime() + 1).toISOString(),
+      message: {
+        role: 'assistant',
+        model: 'golden-stub',
+        content: [{ type: 'text', text: `GOLDEN_STUB_REPLY to: ${text}` }]
+      }
+    }
+  ]
+  fs.appendFileSync(transcriptPath, `${lines.map((line) => JSON.stringify(line)).join('\n')}\n`)
+}
 // Both match the bytes after ESC, so the control character stays out of the
 // pattern: a CSI/SS3 introducer still missing its final byte, and a complete
 // CSI/SS3 sequence. Shift+Enter is matched before either is consulted.
@@ -50,6 +93,7 @@ function submit() {
     return
   }
   lastSubmission = composer
+  appendTranscriptTurn(composer)
   composer = ''
   render()
 }

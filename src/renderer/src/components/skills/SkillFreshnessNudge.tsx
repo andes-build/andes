@@ -7,6 +7,8 @@ import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { skillPlacementParticipatesInGlobalFreshness } from '../../../../shared/skill-freshness'
 import { requestSkillFreshnessUpdateDialog } from './skill-freshness-update-dialog'
+import { INTERFACE_MODE_SIMPLE } from '../../../../shared/interface-mode'
+import { useInterfaceMode } from '../../hooks/useInterfaceMode'
 
 const MAX_DISMISSED_FRESHNESS_NUDGES = 512
 const NO_DISMISSED_FRESHNESS_NUDGES: string[] = []
@@ -26,6 +28,11 @@ function candidateKey(args: {
 }
 
 export function SkillFreshnessNudge(): null {
+  // Why: el aviso de skills desactualizadas es de la capa de desarrollo — nombra
+  // skills que el modo simple no ofrece y manda a correr un comando. En modo
+  // simple no se muestra (Peter, 2026-09-04).
+  const interfaceMode = useInterfaceMode()
+
   const activeSkillRuntime = useActiveProjectSkillRuntime()
   const state = useSkillFreshness(activeSkillRuntime.canUseLocalSkillFreshness)
   const settingsLoaded = useAppStore((store) => store.settings !== null)
@@ -38,7 +45,7 @@ export function SkillFreshnessNudge(): null {
   const activeNudgeRef = useRef<ActiveFreshnessNudge | null>(null)
 
   useEffect(() => {
-    if (!activeSkillRuntime.canUseLocalSkillFreshness) {
+    if (interfaceMode === INTERFACE_MODE_SIMPLE || !activeSkillRuntime.canUseLocalSkillFreshness) {
       const active = activeNudgeRef.current
       if (active) {
         active.persistDismissal = false

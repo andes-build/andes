@@ -2,6 +2,7 @@ import type { TerminalState } from './terminal-state'
 import type { Tab } from '../../../../shared/tab-types'
 import type { TerminalLayoutSnapshot, TerminalTab } from '../../../../shared/terminal-tab-types'
 import type { TuiAgent } from '../../../../shared/tui-agent'
+import type { ThreadScope } from '../../../../shared/workspace-scope-types'
 import type { WorkspaceSessionState } from '../../../../shared/workspace-session-state-types'
 import type { SetupSplitDirection } from '../../../../shared/worktree/launch-types'
 import type {
@@ -82,6 +83,8 @@ export type TerminalActions = {
       viewMode?: Tab['viewMode']
       startupCwd?: string
       forceHostRuntime?: boolean
+      /** Spec 019: the scope this thread was born with — see `TerminalTab.threadScope`. */
+      threadScope?: ThreadScope
     }
   ) => TerminalTab
   openNewTerminalTabInActiveWorkspace: (groupId: string) => Promise<void>

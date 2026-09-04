@@ -17285,5 +17285,67 @@
       "action": "Try Agents",
       "hiddenToast": "Agents tab hidden. Re-enable it in Settings → Experimental."
     }
+  },
+  "commandCenter": {
+    "header": {
+      "title": "Command Center"
+    },
+    "actionLine": {
+      "empty": "Nothing urgent. Open a thread whenever you want.",
+      "openThread": "Open thread"
+    },
+    "waiting": {
+      "title": "Waiting for your decision",
+      "empty": "Nothing is waiting on you.",
+      "resolve": "Resolve",
+      "more": "and {{count}} more"
+    },
+    "inProgress": {
+      "title": "In progress",
+      "empty": "Nothing in progress.",
+      "more": "and {{count}} more"
+    },
+    "queue": {
+      "title": "Queued",
+      "next": "next",
+      "later": "later"
+    },
+    "checks": {
+      "title": "Checks",
+      "empty": "No findings.",
+      "view": "View",
+      "more": "and {{count}} more"
+    },
+    "loading": {
+      "default": "Reading your workspace…",
+      "slow": "This is taking longer than usual.",
+      "retry": "Retry"
+    },
+    "notPrepared": {
+      "title": "This folder isn't set up yet",
+      "description": "Andes needs to prepare this folder before it can show its status.",
+      "action": "Prepare this folder",
+      "failed": "Could not prepare this folder."
+    },
+    "runError": {
+      "title": "Couldn't read your workspace",
+      "description": "Something went wrong reading the status of this workspace. You can try again.",
+      "retry": "Retry"
+    },
+    "parseError": {
+      "title": "Couldn't read your workspace",
+      "description": "The workspace scan returned something Andes doesn't recognize yet.",
+      "retry": "Retry"
+    },
+    "unavailable": {
+      "title": "This computer is missing a required tool",
+      "description": "Andes could not run the workspace scan on this computer.",
+      "retry": "Retry"
+    },
+    "emptyScan": {
+      "title": "This workspace is empty so far",
+      "description": "Nothing is waiting, running, or queued yet. Open a thread to start something.",
+      "action": "Open thread"
+    }
   }
 }

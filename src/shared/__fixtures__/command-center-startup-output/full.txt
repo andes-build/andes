@@ -1,0 +1,17 @@
+Waiting for your decision
+  migracion-kyc — waiting on you
+
+In progress
+  checkout-link · now · active
+  migracion-kyc · now · blocked · blocked: la definición del nuevo umbral de verificación es de Legal — Mariana Sosa debe el memo desde el 2026-08-01
+
+Queued
+  next 1 · later 0
+  backlog: 1 ready of 1 pending
+
+Checks
+  identity 9/40 · resolver 4 rows
+  capability not installed: position role "cpo"
+
+active-role: cpo · roles/cpo.md
+8 nodes · 0.3s · v1.3.0

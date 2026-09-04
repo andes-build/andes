@@ -15,6 +15,7 @@ import { containsPermissionBypassArgs } from '../../../../../shared/tui-agent-pe
 const mockCreateTab = vi.fn()
 const mockQueueTabStartupCommand = vi.fn()
 const mockSetActiveView = vi.fn()
+const mockLeaveCommandCenter = vi.fn()
 const mockOpenSkillsPage = vi.fn()
 const mockEnsureDetectedAgents = vi.fn()
 const mockAddRepo = vi.fn()
@@ -70,6 +71,7 @@ const store = {
   seedNativeChatLaunchDraft: vi.fn(),
   markNativeChatLaunchPromptFailed: vi.fn(),
   setActiveView: mockSetActiveView,
+  leaveCommandCenter: mockLeaveCommandCenter,
   openSkillsPage: mockOpenSkillsPage,
   ensureDetectedAgents: mockEnsureDetectedAgents,
   addRepo: mockAddRepo

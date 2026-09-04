@@ -1544,6 +1544,99 @@ spec014_criterio5_verificacion_visual() {
   fi
 }
 
+# --- specs/done/009-command-center.md ---
+
+spec009_unit() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/shared/command-center-startup-output.test.ts \
+    src/main/ipc/command-center.test.ts \
+    src/main/command-center/run-command-center-startup.test.ts \
+    src/renderer/src/app-shell/use-command-center-gate.test.tsx \
+    src/renderer/src/components/command-center \
+    src/renderer/src/lib/thread-scope-startup-message.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec009#2 #3 #4 #5 #6 #7 #8 el analizador, las cuatro tarjetas, la línea de acción, el primer mensaje, los estados incómodos y el temporizador"
+  else
+    ko "spec009#2 #3 #4 #5 #6 #7 #8 el analizador, las cuatro tarjetas, la línea de acción, el primer mensaje, los estados incómodos y el temporizador"
+    ev "vitest run sobre los archivos del Command Center en rojo"
+  fi
+}
+
+spec009_criterio1_6_7_9_prueba_de_interfaz() {
+  if [ -f tests/e2e/command-center-simple-mode.spec.ts ]; then
+    ok "spec009#1 #6 #7 #9 prueba de interfaz obligatoria presente (corre con pnpm test:e2e; evidencia en la spec archivada)"
+  else
+    ko "spec009#1 #6 #7 #9 prueba de interfaz obligatoria presente (corre con pnpm test:e2e; evidencia en la spec archivada)"
+    ev "falta tests/e2e/command-center-simple-mode.spec.ts"
+  fi
+}
+
+spec009_criterio2_alcance_del_selector() {
+  local guess_files handler_hits
+  guess_files=$(find src/main/command-center -name 'resolve-command-center-scope*' 2>/dev/null | wc -l | tr -d ' ')
+  handler_hits=$(grep -c 'args.scope' src/main/ipc/command-center.ts)
+  if [ "$guess_files" = "0" ] && [ "$handler_hits" -ge 1 ]; then
+    ok "spec009#2 el alcance del escaneo viene del selector, no se adivina en el proceso principal"
+  else
+    ko "spec009#2 el alcance del escaneo viene del selector, no se adivina en el proceso principal"
+    ev "archivos que adivinan el alcance=$guess_files (debe ser 0) · el handler usa args.scope=$handler_hits (debe ser >=1)"
+  fi
+}
+
+spec009_criterio6_un_solo_camino_de_lanzamiento() {
+  local own_launch delegates
+  own_launch=$(grep -c "^import .*launch-agent-in-new-tab'" src/renderer/src/components/command-center/command-center-agent-launch.ts)
+  delegates=$(grep -c "^import .*open-new-thread'" src/renderer/src/components/command-center/command-center-agent-launch.ts)
+  if [ "$own_launch" = "0" ] && [ "$delegates" -ge 1 ]; then
+    ok "spec009#6 los botones abren el hilo del modo simple, sin un segundo camino de lanzamiento propio"
+  else
+    ko "spec009#6 los botones abren el hilo del modo simple, sin un segundo camino de lanzamiento propio"
+    ev "camino propio=$own_launch (debe ser 0) · delega en openNewThread=$delegates (debe ser >=1)"
+  fi
+}
+
+spec009_criterio10_sin_jerga_del_sistema() {
+  local jargon
+  jargon=$(node -e '
+    const fs = require("fs");
+    const catalog = JSON.parse(fs.readFileSync("src/renderer/src/i18n/locales/en.json", "utf8"));
+    const words = ["node", "frontmatter", "glob", "resolver", "session-start", ".md", "tree.md"];
+    const hits = [];
+    const walk = (value, path) => {
+      if (typeof value === "string") {
+        for (const word of words) {
+          if (value.toLowerCase().includes(word)) hits.push(path + ": " + word);
+        }
+        return;
+      }
+      for (const [key, child] of Object.entries(value)) walk(child, path + "." + key);
+    };
+    walk(catalog.commandCenter ?? {}, "commandCenter");
+    process.stdout.write(String(hits.length));
+  ')
+  if [ "$jargon" = "0" ]; then
+    ok "spec009#10 ningún texto de la pantalla usa jerga del sistema"
+  else
+    ko "spec009#10 ningún texto de la pantalla usa jerga del sistema"
+    ev "claves del catálogo inglés con jerga=$jargon (debe ser 0)"
+  fi
+}
+
+spec009_criterio11_codigo_sano() {
+  local tc_ok=1 lint_ok=1
+  pnpm tc >/dev/null 2>&1 || tc_ok=0
+  npx oxlint src/renderer/src/components/command-center src/renderer/src/app-shell \
+    src/main/command-center src/main/ipc/command-center.ts >/dev/null 2>&1 || lint_ok=0
+  if [ "$tc_ok" = "1" ] && [ "$lint_ok" = "1" ]; then
+    ok "spec009#11 código sano (evidencia completa de check:code-quality:changed y verify:localization-* en la spec archivada)"
+  else
+    ko "spec009#11 código sano (evidencia completa de check:code-quality:changed y verify:localization-* en la spec archivada)"
+    ev "pnpm tc=$tc_ok · oxlint=$lint_ok (deben ser 1)"
+  fi
+}
+
 spec014_criterio1_sin_archivos_de_marca_visual
 spec014_criterio2_selector_de_icono_sin_alternativas
 spec014_criterio3_bandeja_sin_orca
@@ -1566,6 +1659,12 @@ spec019_unit
 spec019_criterio5_alcance_congelado
 spec019_criterio6_prueba_de_interfaz_obligatoria
 spec019_criterio14_chequeo_funcional
+spec009_unit
+spec009_criterio1_6_7_9_prueba_de_interfaz
+spec009_criterio2_alcance_del_selector
+spec009_criterio6_un_solo_camino_de_lanzamiento
+spec009_criterio10_sin_jerga_del_sistema
+spec009_criterio11_codigo_sano
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

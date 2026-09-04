@@ -97,15 +97,30 @@ const WORKSPACE_DIR_NAMES = ['workspaces', 'orgs'] as const
 /** True when the folder already has at least one workspace under
  *  `workspaces/` or `orgs/`. */
 export function hasExistingWorkspaces(folderPath: string): boolean {
-  return WORKSPACE_DIR_NAMES.some((dirName) => {
+  return listWorkspaceSlugs(folderPath).length > 0
+}
+
+/** The folder's workspace slugs — the subdirectory names under whichever of
+ *  `workspaces/`/`orgs/` exists (checked in that order, same as
+ *  `WORKSPACE_DIR_NAMES`; a brain with `orgs/` but no `workspaces/` is the
+ *  older layout). Used by the Command Center (spec 009) to pick a scope when
+ *  there is no workspace selector yet. */
+export function listWorkspaceSlugs(folderPath: string): string[] {
+  for (const dirName of WORKSPACE_DIR_NAMES) {
     const dirPath = join(folderPath, dirName)
     if (!existsSync(dirPath)) {
-      return false
+      continue
     }
     try {
-      return readdirSync(dirPath, { withFileTypes: true }).some((entry) => entry.isDirectory())
+      const slugs = readdirSync(dirPath, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+      if (slugs.length > 0) {
+        return slugs
+      }
     } catch {
-      return false
+      continue
     }
-  })
+  }
+  return []
 }

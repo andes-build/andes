@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { buildThreadScopeStartupMessage } from './thread-scope-startup-message'
+import {
+  buildThreadFirstMessage,
+  buildThreadScopeStartupMessage
+} from './thread-scope-startup-message'
 
 /**
  * Spec 019. The core session contract
@@ -35,5 +38,26 @@ describe('buildThreadScopeStartupMessage (spec 019)', () => {
     expect(
       buildThreadScopeStartupMessage({ kind: 'workspace', slug: 'x', name: 'X' })
     ).not.toContain('?')
+  })
+})
+
+describe('spec009#6 buildThreadFirstMessage — the scope, then what was clicked', () => {
+  it('is exactly the scope message when nothing was clicked (the New thread button)', () => {
+    const scope = { kind: 'root' } as const
+    expect(buildThreadFirstMessage(scope)).toBe(buildThreadScopeStartupMessage(scope))
+  })
+
+  it('puts the scope first and the clicked item after it', () => {
+    const scope = { kind: 'workspace', slug: 'tandem-pay', name: 'Tandem Pay' } as const
+    const message = buildThreadFirstMessage(scope, 'Help me resolve "migracion-kyc".')
+
+    expect(message.startsWith(buildThreadScopeStartupMessage(scope))).toBe(true)
+    expect(message).toContain('migracion-kyc')
+    expect(message).toContain('--workspace tandem-pay')
+  })
+
+  it('ignores a blank seed instead of leaving a dangling separator', () => {
+    const scope = { kind: 'root' } as const
+    expect(buildThreadFirstMessage(scope, '   ')).toBe(buildThreadScopeStartupMessage(scope))
   })
 })

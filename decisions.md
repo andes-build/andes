@@ -1325,3 +1325,57 @@ instalado (`readlink` apunta al launcher nuevo) y que `orca` deja de existir (`l
 `ENOENT`).
 
 **La invalidaría**: nada — cierra un vacío de cobertura, no reemplaza una decisión previa.
+
+## 2026-09-04 · [spec 009] El alcance del escaneo del Command Center lo elige el selector, no el proceso principal
+
+**Qué se decide**: `commandCenter:runStartup` recibe el alcance como argumento y lo usa tal cual.
+El proceso principal ya no lo adivina.
+**Por qué**: cuando se escribió la spec no existía el selector de workspace, así que el avance
+previo adivinaba el alcance en el proceso principal (`resolve-command-center-scope.ts`: un solo
+workspace lo elegía, cero o varios caían a la raíz). La spec 010 trajo el selector y lo dejó
+declarado como la única fuente de alcance en el comentario de su propio slice
+(`src/renderer/src/store/slices/workspace-scope.ts:5-8`, que nombra al Command Center entre los
+que lo tienen que leer). Adivinar en paralelo era una segunda noción de alcance que iba a
+contradecir a la que la persona ve en la barra lateral.
+**Reemplaza a**: la decisión delegada del avance del 2026-09-03 sobre resolver el alcance sin
+selector; el archivo que la implementaba se borra.
+**La invalidaría**: que el Command Center pase a cubrir varios alcances a la vez.
+
+## 2026-09-04 · [spec 009] Los botones del Command Center abren el hilo del modo simple, no una sesión cruda
+
+**Qué se decide**: cada botón llama a `openNewThread({ seedMessage })`, el mismo camino del botón
+"New thread". El primer mensaje es el del alcance (spec 019) y abajo, separado por una línea en
+blanco, lo que la persona apretó.
+**Por qué**: el criterio 6 y "Fuera de alcance" decían "una sesión de agente de las que Orca ya
+tiene, **hasta que exista el hilo**". El hilo existe y está en `main`. Un segundo camino de
+lanzamiento propio se habría salteado las tres reglas que el hilo ya tiene: el agente con
+conversación (spec 016), los argumentos sin omisión de permisos (spec 016) y el alcance estampado
+en la pestaña (spec 019). No hizo falta tocar la capa que lanza el binario: `launchAgentInNewTab`
+ya acepta `prompt`, que es por donde viaja el primer mensaje — la condición de parada de la spec
+no se disparó.
+**La invalidaría**: que el hilo deje de aceptar un primer mensaje en el lanzamiento.
+
+## 2026-09-04 · [spec 009] El ítem "Command Center" de la navegación vuelve a la pantalla con hilos abiertos
+
+**Qué se decide**: un dato propio, `commandCenterRequested`, se prende al apretar el ítem de la
+navegación y se apaga al abrir un hilo. La pantalla toma la vista cuando no hay hilo todavía
+(criterio 1) **o** cuando la persona la pidió.
+**Por qué**: la spec 010 dejó el ítem "Command Center" apuntando a la vista `terminal`, que una vez
+que hay un hilo abierto la ocupa el hilo — el ítem quedaba muerto (se ve en la evidencia de la
+spec 019, `docs/research/2026-09-04-chequeo-funcional-spec-019/01-my-work-abierto.png`, con el ítem
+marcado como activo y el panel vacío). Se eligió un dato en el store y no un valor nuevo de
+`activeView` porque `TopLevelView` viaja por la persistencia y sus sanitizadores: un valor nuevo
+obliga a migración, y el radio de acción no lo justifica.
+**La invalidaría**: que el Command Center pase a ser una vista propia de pleno derecho.
+
+## 2026-09-04 · [spec 009] Andes prepara una carpeta sin `tree.md`, y sin eso ningún escaneo lee nada
+
+**Qué se decide**: se registra el hallazgo y **no se arregla en esta rama**. El vault de prueba del
+e2e escribe `tree.md` desde la plantilla del núcleo.
+**Por qué**: `onboardingBrain.prepare` corre `install.sh` y `createWorkspace` corre
+`new-workspace.sh`; ninguno de los dos escribe `tree.md` — lo escribe `bootstrap.sh`, que el
+onboarding de Andes no corre. Sin ese archivo el escaneo contesta "missing tree.md — the scan does
+not know which paths to walk" y lee 0 nodos, en cualquier alcance. Es una dependencia del
+onboarding, no de esta pantalla: la misma forma que la primera condición de parada de la spec
+("eso es una dependencia del onboarding, no de esta pantalla").
+**La invalidaría**: que el onboarding pase a escribir `tree.md` al preparar la carpeta.

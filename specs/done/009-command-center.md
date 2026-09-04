@@ -1,5 +1,5 @@
 ---
-status: pendiente
+status: implementada
 depends_on: []
 ---
 
@@ -81,6 +81,59 @@ la spec visual del cerebro; esta spec lo construye.
 ## Efectos que escapan del sistema
 
 Ninguno. La pantalla lee; el agente solo se lanza cuando la persona aprieta un botón.
+
+## Evidencia
+
+11 criterios, evaluados con `evals/run.sh` (funciones `spec009_unit`,
+`spec009_criterio1_6_7_9_prueba_de_interfaz`, `spec009_criterio2_alcance_del_selector`,
+`spec009_criterio6_un_solo_camino_de_lanzamiento`, `spec009_criterio10_sin_jerga_del_sistema`,
+`spec009_criterio11_codigo_sano`) y con el chequeo funcional en la app real.
+
+| # | Criterio | Eval | Resultado |
+|---|---|---|---|
+| 1 | Vista principal = Command Center, no el vacío de Orca | e2e `tests/e2e/command-center-simple-mode.spec.ts:151` "replaces the empty state for a prepared folder with no thread yet" | PASS |
+| 2 | Se muestran las cuatro secciones tal como salieron, sin recalcular | Unitario `src/shared/command-center-startup-output.test.ts` (analizador, tres salidas de ejemplo) + e2e `tests/e2e/command-center-simple-mode.spec.ts:165` "scans the scope the selector has, and rescans when it changes" | PASS — 58/58 tests unitarios de la sección (ver debajo), e2e verde |
+| 3 | Waiting for your decision es la tarjeta primaria (primera, mayor, fila con botón) | Componente `src/renderer/src/components/command-center/CommandCenter.cards.test.tsx` + e2e `tests/e2e/command-center-simple-mode.spec.ts:190` "shows the four sections, with Waiting first and primary" | PASS |
+| 4 | In progress, Queued y Checks con el contenido de su sección | Componente `CommandCenter.cards.test.tsx` (una tarjeta por sección, salida de ejemplo) | PASS |
+| 5 | Línea de acción sugerida arriba, con y sin sugerencia | Componente `CommandCenterActionLine.test.tsx` | PASS |
+| 6 | Cada botón abre un hilo con primer mensaje que nombra la iniciativa/hallazgo; nunca una terminal en blanco | Unitario `command-center-first-message.test.ts` (los tres casos) + `command-center-agent-launch.test.ts` (un solo camino de lanzamiento) + e2e `tests/e2e/command-center-simple-mode.spec.ts:224` "Resolve opens a thread whose first message names the item and the scope" | PASS |
+| 7 | Estados incómodos (carpeta sin preparar, arranque que falla, arranque vacío) con su mensaje, sin pantalla en blanco ni error crudo | Componente `CommandCenter.states.test.tsx` + `command-center-scan-empty.test.ts` + e2e `tests/e2e/command-center-simple-mode.spec.ts:260` "an unprepared folder shows its own message with a way to prepare it" | PASS |
+| 8 | El arranque no bloquea la ventana; carga y, a los diez segundos, ofrece reintentar | Unitario `use-command-center-startup.test.ts` (temporizador) | PASS |
+| 9 | En modo desarrollo, sigue el vacío de Orca | e2e `tests/e2e/command-center-simple-mode.spec.ts:283` "shows the Orca empty state, never the Command Center" | PASS |
+| 10 | Ningún texto usa jerga del sistema | `spec009_criterio10_sin_jerga_del_sistema`: 0 coincidencias de node/frontmatter/glob/resolver/session-start/.md/tree.md en `commandCenter` de `en.json` | PASS — 0 hits |
+| 11 | Código sano | `pnpm tc` · `npx oxlint …` · `check:code-quality:changed` · `verify:localization-catalog` · `verify:localization-extraction` · `verify:localization-coverage` | PASS — tc exit 0; oxlint exit 0; check:code-quality:changed "0 new finding(s) across 48 changed file(s)" (React Doctor también 0); verify:localization-catalog "Verified 12530 localization key references"; verify:localization-extraction sin diffs bloqueantes (39 inline defaults son report-only); verify:localization-coverage "passed with 12 allowlisted candidates" |
+
+**Suite unitaria completa de la spec** (`spec009_unit`, vitest sobre `command-center-startup-output.test.ts`,
+`ipc/command-center.test.ts`, `run-command-center-startup.test.ts`, `use-command-center-gate.test.tsx`,
+`src/renderer/src/components/command-center/` completo, `thread-scope-startup-message.test.ts`):
+13 archivos, 58 tests, los 58 en verde (`Test Files 13 passed (13)`, `Tests 58 passed (58)`).
+
+**Chequeo funcional en la app real**: siete capturas en
+`docs/research/2026-09-04-chequeo-funcional-spec-009/` — `01-command-center-root.png`,
+`02-selector-abierto.png`, `03-command-center-tandem-pay.png`, `04-hilo-abierto-desde-resolve.png`,
+`05-vuelta-al-command-center-con-hilo-abierto.png`, y el par de comparación
+`06-comparacion-new-thread-alcance-root-pinta.png` /
+`07-comparacion-new-thread-alcance-workspace-en-blanco.png`. Encontró y corrigió, dentro de esta
+rama, que las filas de la tarjeta Checks se cortaban en un muñón ilegible (ahora envuelven).
+
+### Bloqueante encontrado, fuera de esta spec
+
+Con un workspace elegido en el selector, el panel del hilo queda en blanco. Es un defecto de
+`main`, de la superficie que dejaron las specs 010 y 019 — no de código de esta rama: el mismo
+vacío aparece con el botón "New thread" de la barra lateral, sin pasar por el Command Center.
+Probado con el par de capturas `06-comparacion-new-thread-alcance-root-pinta.png` (alcance root,
+pinta) y `07-comparacion-new-thread-alcance-workspace-en-blanco.png` (alcance workspace, en
+blanco). Decisión de Peter (Gate 1, 2026-09-04): no bloquea el merge de la 009; va a spec propia,
+que escribe la sesión supervisora.
+
+### Otros dos hallazgos, registrados en `decisions.md`
+
+- Andes prepara una carpeta sin `tree.md`: ni `onboardingBrain.prepare` (`install.sh`) ni
+  `createWorkspace` (`new-workspace.sh`) lo escriben — lo escribe `bootstrap.sh`, que el onboarding
+  de Andes no corre. Sin ese archivo, el escaneo contesta "missing tree.md" y lee 0 nodos en
+  cualquier alcance. Dependencia del onboarding, no de esta pantalla; no se arregla en esta rama.
+- Colisión preexistente entre `simple-mode-workspaces-and-files.spec.ts:17` y el sembrador de la
+  spec 019 cuando corren en el mismo worker de Playwright.
 
 ## Fuera de alcance, con condición de reactivación
 

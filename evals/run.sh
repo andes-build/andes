@@ -1704,6 +1704,12 @@ spec012_criterio2_3_4_5_unit() {
   out=$(npx vitest run --config config/vitest.config.ts \
     src/main/claude \
     src/main/native-chat/agent-session-wire/structured-agent-session-adapter-router.test.ts \
+    src/main/runtime/rpc/methods/structured-agent-session.test.ts \
+    src/main/runtime/rpc/methods/session-tab-agent-status-projection.test.ts \
+    src/main/runtime/rpc/methods/session-tab-agent-capability-mutations.test.ts \
+    src/renderer/src/app-shell/use-command-center-gate.test.tsx \
+    src/renderer/src/lib/launch-agent-structured-chat-guard.test.ts \
+    src/renderer/src/lib/launch-structured-agent-session.test.ts \
     src/renderer/src/components/native-chat/NativeChatApprovalCard.test.tsx \
     src/main/codex 2>&1)
   if printf '%s' "$out" | grep -q "Test Files.*failed"; then
@@ -1752,11 +1758,31 @@ spec012_criterio8_codigo_sano() {
   fi
 }
 
+spec012_criterio6_terminal_cruda() {
+  local out
+  out=$(npx playwright test tests/e2e/spec-012-developer-mode-keeps-raw-terminal.spec.ts \
+    --config tests/playwright.config.ts --project=electron-headless --workers=1 2>&1)
+  if printf '%s' "$out" | grep -q "1 passed"; then
+    ok "spec012#6 en modo desarrollo la terminal cruda sigue viva"
+  else
+    ko "spec012#6 en modo desarrollo la terminal cruda sigue viva"
+    ev "$(printf '%s' "$out" | tail -3 | tr '\n' ' ')"
+  fi
+}
+
 spec012_criterio9_chequeo_funcional() {
-  # El chequeo esta hecho y su resultado es negativo: la interfaz no llega al carril nuevo.
-  # El eval reporta rojo a proposito hasta que se decida como el carril recibe el primer mensaje.
-  ko "spec012#9 chequeo funcional en la app real"
-  ev "docs/research/2026-09-04-chequeo-funcional-spec-012/README.md: el modo simple siempre manda un primer mensaje y el porton estructurado exige que no lo haya"
+  local dir=docs/research/2026-09-04-chequeo-funcional-spec-012
+  local faltan=0
+  for captura in 01-app-abierta 02-carpeta-agregada 03-tarjeta-de-permiso \
+    04-permitido-archivo-escrito 05-segundo-hilo-tarjeta 06-rechazado-sin-archivo; do
+    [ -f "$dir/$captura.png" ] || faltan=1
+  done
+  if [ "$faltan" = "0" ] && grep -q "^# 2026-09-04 · Chequeo funcional de la spec 012 — PASA" "$dir/README.md"; then
+    ok "spec012#9 chequeo funcional en la app real (permitir y rechazar, 6 capturas, 2026-09-04)"
+  else
+    ko "spec012#9 chequeo funcional en la app real"
+    ev "faltan capturas o el README no declara PASA en $dir"
+  fi
 }
 
 spec014_criterio1_sin_archivos_de_marca_visual
@@ -1794,6 +1820,7 @@ spec012_criterio1_permiso_como_dato
 spec012_criterio2_3_4_5_unit
 spec012_criterio3_sin_pty_en_la_tarjeta
 spec012_criterio7_lo_que_falta_declarado
+spec012_criterio6_terminal_cruda
 spec012_criterio8_codigo_sano
 spec012_criterio9_chequeo_funcional
 

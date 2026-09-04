@@ -92,7 +92,10 @@ describe.runIf(ENABLED)('spec 012 criterion 1 — Claude hands the permission ov
     async () => {
       const outcome = await runOneTurn('allow')
       expect(outcome.permission).not.toBeNull()
-      expect(outcome.permission?.toolName).toBe('Write')
+      // Which tool the model picks to write a file is the model's choice and it varies between
+      // runs — `Write` on one, `Bash` on the next. What the criterion is about is that the
+      // permission arrived as data with something to show, and that allowing it did the work.
+      expect(outcome.permission?.toolName.length).toBeGreaterThan(0)
       expect(outcome.permission?.title.length).toBeGreaterThan(0)
       expect(outcome.fileWritten).toBe(true)
     },
@@ -104,7 +107,7 @@ describe.runIf(ENABLED)('spec 012 criterion 1 — Claude hands the permission ov
     async () => {
       const outcome = await runOneTurn('deny')
       expect(outcome.permission).not.toBeNull()
-      expect(outcome.permission?.toolName).toBe('Write')
+      expect(outcome.permission?.toolName.length).toBeGreaterThan(0)
       expect(outcome.fileWritten).toBe(false)
     },
     TIMEOUT_MS + 30000

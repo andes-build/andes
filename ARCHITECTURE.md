@@ -510,7 +510,7 @@ Dos gates distintos decidían esto y a los dos había que enseñarles `interface
   `experimentalNativeChat === true || interfaceMode === 'simple'`. Sin este segundo gate, una
   pestaña podía nacer con `viewMode: 'chat'` y renderizarse igual como terminal cruda.
 
-**El canal de datos de Claude existe; la interfaz todavía no llega a él** (spec 012).
+**El hilo de Claude corre por datos, de punta a punta** (spec 012).
 
 - **Los dos carriles**: `src/main/codex/` (Codex, sobre su app-server JSON-RPC) y `src/main/claude/`
   (Claude, sobre `stream-json` y el canal de control del propio binario). Los dos cumplen
@@ -525,11 +525,22 @@ Dos gates distintos decidían esto y a los dos había que enseñarles `interface
   `NativeChatApprovalCard.tsx` contesta con el id de la opción. El camino viejo
   (`NativeChatInteractiveCard.tsx`, modo desarrollo) mapea ese id a su tecla en su propio llamador,
   así que la terminal cruda no cambió.
-- **Lo que falta para que la persona lo vea**: el "New thread" del modo simple manda siempre un
-  primer mensaje (el del alcance, spec 019) y el portón de `launch-agent-in-new-tab.ts` exige que no
-  haya ninguno, porque `agentSession.create` no tiene ranura para él. Hasta que eso se decida, el
-  hilo del modo simple sigue por la PTY con la tarjeta imitada. Detalle en
-  `docs/research/2026-09-04-chequeo-funcional-spec-012/`.
+- **El primer mensaje viaja en la creación**: `agentSession.create` acepta `firstMessage` y el host
+  lo convierte en el primer turno. El modo simple manda siempre uno —el del alcance, spec 019— y así
+  la creación es el único emisor sobre una sesión en la que nadie escribió todavía. En la interfaz
+  solo lo toma un mensaje que quien llama declara como el de nacimiento del hilo
+  (`promptIsThreadFirstMessage`): el de un comando rápido sigue yendo a la terminal.
+- **Andes nombra la sesión**: `--session-id <uuid>`, porque el binario anuncia el suyo en
+  `system/init` recién con el primer turno. La prueba de adquisición es la respuesta a `initialize`,
+  y un id distinto termina la sesión en vez de renombrarla.
+- **Qué pestañas ve un cliente**: las de un proveedor con carril en el host
+  (`STRUCTURED_AGENT_SESSION_LANE_PROVIDERS`, `src/shared/agent-session-record.ts`). Escrito como un
+  solo proveedor, un hilo de Claude vivo no llegaba nunca a la pantalla.
+- **Qué cuenta como hilo abierto**: una pestaña de terminal con agente *o* una sesión estructurada
+  (`use-command-center-gate.ts`). Sin la segunda, el Command Center se quedaba con la pantalla sobre
+  una conversación abierta.
+- **La evidencia en la app real**: `docs/research/2026-09-04-chequeo-funcional-spec-012/`, con el
+  permiso permitido en un hilo y rechazado en otro.
 - **Lo que el carril de Claude declara en vez de simular**: subagentes, preguntas, opciones de
   sesión y diffs — cabecera de `src/main/claude/claude-structured-session-adapter.ts`.
 

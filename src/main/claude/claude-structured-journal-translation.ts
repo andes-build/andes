@@ -5,6 +5,7 @@
 // its kind named — never invented and never quietly dropped. Spec 012 criterion 7 lists what stays
 // declared rather than simulated.
 
+import { agentJournalItemKey } from '../../shared/agent-session-journal-item-key'
 import type {
   AgentJournalItemBody,
   AgentJournalItemIdentity
@@ -127,9 +128,15 @@ export function createClaudeJournalTranslator(
     const permission = readClaudeStructuredPermissionRequest(frame)
     if (permission) {
       // The request id is the uuid: it is what the answer travels back under, so one request can
-      // never bind to two journal items.
+      // never bind to two journal items. The binding key, though, is the journal ITEM key — that is
+      // the id the card answers with, and keying by the bare request id made every answer arrive
+      // as "claude is no longer waiting on permission …".
+      const identity = identityFor(permission.requestId)
+      if (!identity) {
+        return
+      }
       approvals.set(permission.requestId, permission)
-      deps.bindPermission(permission.requestId, permission)
+      deps.bindPermission(agentJournalItemKey(identity), permission)
       append(permission.requestId, claudeStructuredApprovalItem(permission))
       return
     }

@@ -3,6 +3,7 @@
 // `claude-structured-permission-as-data.integration.test.ts` (spec 012 criterion 1).
 
 import { describe, expect, it, vi } from 'vitest'
+import { agentJournalItemKey } from '../../shared/agent-session-journal-item-key'
 import type { AgentSessionJournalIdentity } from '../../shared/agent-session-journal-types'
 import {
   ClaudeStructuredSessionAdapter,
@@ -35,6 +36,14 @@ const permissionFrame = {
 }
 
 const RESERVED_SESSION_ID = '11111111-2222-4333-8444-555555555555'
+
+/** The id the card answers with is the journal ITEM key, not the bare request id: keying the
+ *  pending permission by the request id made every real answer arrive as "no longer waiting". */
+const PERMISSION_ITEM_ID = agentJournalItemKey({
+  provider: 'claude',
+  sessionId: RESERVED_SESSION_ID,
+  uuid: 'req-1'
+})
 
 function scriptedAdapter(overrides?: Partial<ClaudeStructuredSessionAdapterDeps>): {
   adapter: ClaudeStructuredSessionAdapter
@@ -182,7 +191,7 @@ describe('answering a permission', () => {
     })
     await adapter.answerPrompt({
       sessionId: 'claude_1',
-      itemId: 'req-1',
+      itemId: PERMISSION_ITEM_ID,
       kind: 'approval',
       optionId: 'allow'
     })
@@ -207,7 +216,7 @@ describe('answering a permission', () => {
     emit(permissionFrame)
     await adapter.answerPrompt({
       sessionId: 'claude_1',
-      itemId: 'req-1',
+      itemId: PERMISSION_ITEM_ID,
       kind: 'approval',
       optionId: 'deny'
     })
@@ -227,7 +236,7 @@ describe('answering a permission', () => {
     emit(permissionFrame)
     const answer = {
       sessionId: 'claude_1',
-      itemId: 'req-1',
+      itemId: PERMISSION_ITEM_ID,
       kind: 'approval' as const,
       optionId: 'allow'
     }

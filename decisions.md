@@ -1477,7 +1477,13 @@ Claude no existe. Contestar cualquiera de ellas con algo inventado le devolverí
 respuesta que la persona nunca dio.
 **La invalidaría**: que el cable de Claude abra un canal para alguna de las cuatro.
 
-## 2026-09-04 · [spec 012] El criterio 9 no pasa: el hilo del modo simple no llega al carril nuevo
+## 2026-09-04 · [spec 012] ~~El criterio 9 no pasa~~ — superada por la decisión del primer mensaje
+
+> Esta decisión quedó atrás el mismo día: la pregunta que dejaba abierta se contestó con "el primer
+> mensaje viaja en `agentSession.create`", más abajo en este archivo. Se deja escrita porque es el
+> estado desde el que se decidió.
+
+### 2026-09-04 · El criterio 9 no pasa: el hilo del modo simple no llega al carril nuevo
 
 **Qué se decide**: se reporta, no se arregla por cuenta propia. El "New thread" del modo simple no
 puede tomar el camino estructurado porque el portón de `launch-agent-in-new-tab.ts` exige que no
@@ -1533,3 +1539,49 @@ llega al agente, porque va escrito adentro del primer mensaje.
 la interfaz sería una segunda fuente para el mismo dato.
 **La invalidaría**: que la persona no pueda saber el alcance de un hilo estructurado por ningún otro
 camino.
+
+## 2026-09-04 · [spec 012] La sesión de Claude la nombra Andes, no se espera a que la anuncie
+
+**Qué se decide**: el carril lanza `claude --session-id <uuid>` en una sesión nueva y toma como
+prueba de adquisición la respuesta al `control_request` de `initialize`. El id anunciado por
+cualquier cuadro posterior tiene que coincidir; si no coincide, la sesión termina en vez de
+renombrarse.
+**Por qué**: medido contra el binario real el 2026-09-04, con `--input-format stream-json` el CLI
+emite `system/init` recién con el primer turno. Una sesión que nadie escribió todavía no tiene id
+que anunciar, así que esperarlo colgaba la creación 60 segundos y la mataba. Solo cambian los
+argumentos del binario, que es lo que el Gate 1 aprobó. Se descartó mandarle un turno inventado para
+forzar el `system/init`: escribiría en la conversación un mensaje que la persona nunca mandó.
+**La invalidaría**: una versión de Claude Code que deje de aceptar `--session-id` o que anuncie su
+id antes del primer turno.
+
+## 2026-09-04 · [spec 012] Las pestañas se esconden por carril, no por nombre de proveedor
+
+**Qué se decide**: la proyección de pestañas hacia un cliente esconde las sesiones cuyo proveedor no
+tiene carril en el host (`STRUCTURED_AGENT_SESSION_LANE_PROVIDERS`, en
+`src/shared/agent-session-record.ts`), y no las que no son Codex. Lo mismo vale para las mutaciones
+de pestaña, que se apoyan en esa visibilidad. Y el portón del Command Center cuenta como hilo
+también a una sesión estructurada, que no es una pestaña de terminal.
+**Por qué**: con la regla escrita como un solo proveedor, un hilo de Claude vivo y contestando no
+llegaba nunca a la pantalla: sin pestaña, sin error en consola y sin nada en el journal que lo
+delatara. Es la misma forma que el defecto de la spec 021.
+**La invalidaría**: un proveedor con carril en el host que no deba llegar a ningún cliente.
+
+## 2026-09-04 · [spec 012] El permiso pendiente se guarda con el id del ítem del journal
+
+**Qué se decide**: el traductor guarda el permiso pendiente con la clave del ítem del journal
+(`agentJournalItemKey`), no con el id del pedido de Claude.
+**Por qué**: la tarjeta contesta con el id del ítem, así que con la clave vieja toda respuesta real
+llegaba como "claude is no longer waiting on permission" y el permiso se perdía. El test unitario
+del criterio 3 estaba en verde porque contestaba con el id equivocado, igual que el adaptador: dos
+copias del mismo error se confirmaban entre sí. Por eso el criterio 9 —la app real— es el único que
+lo encontró.
+**La invalidaría**: que la tarjeta pase a contestar con el id del pedido del proveedor.
+
+## 2026-09-04 · [spec 012] El chequeo del criterio 1 no fija qué herramienta elige el modelo
+
+**Qué se decide**: la prueba contra el binario real exige que llegue un permiso con su texto y que
+permitir y rechazar den resultados distintos en el disco; no exige que la herramienta se llame
+`Write`.
+**Por qué**: el modelo elige `Write` en una corrida y `Bash` en la siguiente para el mismo pedido.
+Fijar el nombre convierte una prueba de contrato en una prueba del humor del modelo.
+**La invalidaría**: un pedido para el que una sola herramienta sea posible por construcción.

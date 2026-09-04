@@ -34,6 +34,11 @@ lee solo: nada de acá asume que el brain esté al alcance.
 - `ARCHITECTURE.md` actualizado si cambió; decisiones nuevas en `decisions.md`; lo que sirva para
   la próxima vez, en `learnings/`.
 - Spec archivada en `specs/done/`. Listo para PEDIR el merge — nunca autónomo.
+- **Chequeo funcional en la app real.** Ninguna rama que toque la interfaz se declara terminada sin
+  levantar la aplicación y recorrer el camino completo como lo haría una persona, con una captura
+  por paso guardada en `docs/research/` y pegada en la Evidencia. Los chequeos automáticos no
+  alcanzan: tres fallos visibles llegaron al operador con todo en verde (2026-09-03). Se hace con
+  el servidor de control de pantalla o con una prueba de interfaz que guarde capturas.
 
 ## Cómo se escribe
 

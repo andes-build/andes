@@ -2,23 +2,31 @@ import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { launchAgentInNewTab } from '@/lib/launch-agent-in-new-tab'
-import { resolveDefaultAgentForNewTab } from '@/lib/agent-tab-shortcuts'
+import { getConnectionId } from '@/lib/connection-context'
+import { isNativeChatTranscriptLocalReadable } from '@/lib/native-chat-transcript-readability'
+import {
+  resolveSimpleModeThreadAgent,
+  resolveSimpleModeThreadAgentArgs
+} from '@/lib/simple-mode-thread-launch'
 
 /**
- * Open a real thread in simple mode: launch the detected coding agent on the
- * active folder and show its conversation.
+ * Open a real thread in simple mode: launch a conversation-capable coding
+ * agent on the active folder and show its conversation.
  *
- * Spec 015. Until this fix the entry point called `createTab` with a
- * `launchAgent` tag and nothing else, so the PTY spawned a plain login shell:
- * the chat surface was mounted over a shell that could not answer, and every
- * message the operator typed went nowhere visible. Launching goes through
- * `launchAgentInNewTab`, the one path that also queues the startup command
- * that actually spawns the agent CLI.
+ * Spec 015 made this path launch the agent instead of only tagging the tab.
+ * Spec 016 fixes what it launched: the agent came from the shared new-tab
+ * picker, which honours the machine default, so a machine defaulting to
+ * Antigravity opened a raw terminal — simple mode draws a conversation only
+ * for the agents
+ * of `NATIVE_CHAT_SUPPORTED_AGENT_LIST` — and it carried the profile's default
+ * launch arguments, which are the permission-bypass ones
+ * (`DEFAULT_TUI_AGENT_ARGS = YOLO_TUI_AGENT_ARGS`). Both rules live in
+ * `@/lib/simple-mode-thread-launch`.
  *
  * Agent detection is lazy (`detectedAgentIds` starts `null`), so it is awaited
  * here instead of read from whatever another surface happened to populate.
- * Both dead ends — no folder, no agent installed — say so on screen; neither
- * opens a tab that silently swallows what the operator writes.
+ * Both dead ends — no folder, no conversation-capable agent — say so on screen
+ * with an action; neither opens a terminal.
  */
 export async function openNewThread(): Promise<void> {
   const state = useAppStore.getState()
@@ -28,22 +36,34 @@ export async function openNewThread(): Promise<void> {
       translate(
         'auto.components.workspaceScope.SimpleModeNav.noFolderForThread',
         'Open a folder before starting a thread.'
-      )
+      ),
+      {
+        action: {
+          label: translate(
+            'auto.components.workspaceScope.SimpleModeNav.noFolderForThreadAction',
+            'Open folder'
+          ),
+          onClick: () => void useAppStore.getState().addRepo()
+        }
+      }
     )
     return
   }
   const detectedAgentIds = await state.ensureDetectedAgents(worktreeId)
   const settings = useAppStore.getState().settings
-  const agent = resolveDefaultAgentForNewTab({
+  const agent = resolveSimpleModeThreadAgent({
     defaultTuiAgent: settings?.defaultTuiAgent,
     detectedAgentIds,
-    disabledTuiAgents: settings?.disabledTuiAgents
+    disabledTuiAgents: settings?.disabledTuiAgents,
+    nativeChatTranscriptIsLocalReadable: isNativeChatTranscriptLocalReadable(
+      getConnectionId(worktreeId)
+    )
   })
   if (!agent) {
     toast.error(
       translate(
-        'auto.components.workspaceScope.SimpleModeNav.noAgentForThread',
-        'No coding agent is installed, so there is nobody to talk to yet.'
+        'auto.components.workspaceScope.SimpleModeNav.noChatAgentForThread',
+        'Claude Code is not installed, so there is no conversation to open yet.'
       ),
       {
         action: {
@@ -59,7 +79,12 @@ export async function openNewThread(): Promise<void> {
   }
   const store = useAppStore.getState()
   store.setActiveView('terminal')
-  const launched = launchAgentInNewTab({ agent, worktreeId, launchSource: 'sidebar' })
+  const launched = launchAgentInNewTab({
+    agent,
+    worktreeId,
+    launchSource: 'sidebar',
+    agentArgs: resolveSimpleModeThreadAgentArgs(agent, store.settings)
+  })
   if (!launched) {
     toast.error(
       translate(

@@ -16518,9 +16518,10 @@
           "agentsAndSkills": "Agents & skills",
           "more": "More",
           "noFolderForThread": "Open a folder before starting a thread.",
-          "noAgentForThread": "No coding agent is installed, so there is nobody to talk to yet.",
           "noAgentForThreadAction": "Agents & skills",
-          "threadLaunchFailed": "The thread could not be started. Check the agent in Settings and try again."
+          "threadLaunchFailed": "The thread could not be started. Check the agent in Settings and try again.",
+          "noFolderForThreadAction": "Open folder",
+          "noChatAgentForThread": "Claude Code is not installed, so there is no conversation to open yet."
         },
         "SimpleModeMoreMenu": {
           "settings": "Settings"

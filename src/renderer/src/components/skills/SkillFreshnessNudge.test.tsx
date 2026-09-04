@@ -16,6 +16,8 @@ const mocks = vi.hoisted(() => ({
   toastDismiss: vi.fn(),
   requestDialog: vi.fn(),
   settingsLoaded: true,
+  // Why: el aviso es de la capa de desarrollo; en modo simple no se muestra.
+  interfaceMode: 'developer' as 'developer' | 'simple',
   canUseLocalSkillFreshness: true,
   freshnessEnabled: true,
   inventory: null as SkillFreshnessInventory | null,
@@ -86,7 +88,9 @@ vi.mock('./skill-freshness-update-dialog', () => ({
 
 vi.mock('@/store', () => {
   const state = () => ({
-    settings: mocks.settingsLoaded ? { dismissedSkillFreshnessNudges: mocks.dismissed } : null,
+    settings: mocks.settingsLoaded
+      ? { dismissedSkillFreshnessNudges: mocks.dismissed, interfaceMode: mocks.interfaceMode }
+      : null,
     updateSettings: mocks.updateSettings
   })
   const useAppStore = (selector: (value: ReturnType<typeof state>) => unknown) => selector(state())
@@ -118,6 +122,7 @@ describe('SkillFreshnessNudge', () => {
   beforeEach(() => {
     mocks.dismissed = []
     mocks.settingsLoaded = true
+    mocks.interfaceMode = 'developer'
     mocks.canUseLocalSkillFreshness = true
     mocks.freshnessEnabled = true
     mocks.inventory = eligibleInventory()
@@ -296,6 +301,14 @@ describe('SkillFreshnessNudge', () => {
       scanIssues: [],
       scannedAt: 2
     }
+
+    await renderNudge()
+
+    expect(mocks.toastInfo).not.toHaveBeenCalled()
+  })
+
+  it('no muestra el aviso en modo simple', async () => {
+    mocks.interfaceMode = 'simple'
 
     await renderNudge()
 

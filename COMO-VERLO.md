@@ -1,44 +1,63 @@
-# Cómo ver la spec 015 corriendo
+# Cómo ver la spec 009 corriendo
 
-Estos pasos levantan Andes desde este worktree (`andes-wt-spec-015`, rama
-`spec-015-el-hilo-responde`) y muestran el hilo respondiendo de verdad.
+Estos pasos levantan Andes desde este worktree (`andes-wt-spec-009`, rama
+`spec-009-command-center`) y muestran el Command Center.
 
 ## 1. Levantar la app
 
 ```
-cd /Users/pedroromeroluna/Documents/proyectos/andes-wt-spec-015
+cd /Users/pedroromeroluna/Documents/proyectos/andes-wt-spec-009
 pnpm install --frozen-lockfile   # si no lo corriste ya en este worktree
 pnpm run dev
 ```
 
 Arranca en modo simple. No hace falta ninguna variable de entorno.
 
-## 2. Abrir una carpeta y crear el hilo
+## 2. Abrir una carpeta preparada
 
-Abrí cualquier carpeta (sirve una sin subcarpeta `workspaces/`: el hilo no la necesita) y hacé clic
-en **New thread** en la barra lateral.
+Abrí una carpeta que ya haya pasado por el onboarding de Andes (con `.os/` instalado). Con
+ningún hilo activo, la pantalla principal ya no es el estado vacío de Orca ("Add a project"):
+es el Command Center.
 
-Lo que tiene que pasar:
+Lo que tiene que verse:
 
-- La pestaña nueva se llama con el nombre del agente, **no** "Terminal N".
-- La conversación abre y el agente arranca solo.
-- Escribís "hola", apretás Enter, y la respuesta aparece como burbuja.
+- Arriba, una sola línea con la acción sugerida (o "nothing urgent" si el arranque no sugirió
+  nada).
+- Cuatro tarjetas, en este orden: **Waiting for your decision** (la primaria, más grande, una
+  fila por ítem con su botón de resolver), **In progress**, **Queued**, **Checks**.
+- El contenido de cada tarjeta es la salida real del arranque del núcleo sobre la carpeta, tal
+  como salió — no un resumen.
 
-Antes de esta spec la pestaña se llamaba "Terminal 2", lo escrito iba a un shell y no volvía nada.
+Apretar el botón de una fila de **Waiting for your decision** abre un hilo nuevo (el mismo
+camino que "New thread" de la barra lateral) cuyo primer mensaje ya nombra esa iniciativa.
 
-## 3. Los dos callejones sin salida
+## 3. Los estados incómodos
 
-- **Sin agente instalado**: sacá `claude`/`codex` del `PATH` y hacé clic en New thread. Aparece el
-  aviso "No coding agent is installed, so there is nobody to talk to yet." con el botón
-  "Agents & skills". No se abre ninguna pestaña.
-- **Sin carpeta abierta**: aparece "Open a folder before starting a thread."
+- **Carpeta sin preparar**: abrí una carpeta sin `.os/`. Aparece el mensaje de carpeta sin
+  preparar con un botón para prepararla — nunca la pantalla en blanco ni la salida cruda de un
+  error.
+- **Arranque lento**: si el escaneo tarda más de diez segundos, la pantalla lo dice y ofrece
+  reintentar en lugar de quedar colgada.
 
-## 4. La prueba automática, si querés verla sola
+## 4. Modo desarrollo: nada cambia
+
+Con `ANDES_INTERFACE_MODE=developer` (o sin la preferencia de modo simple activada) sigue
+apareciendo el estado vacío de Orca, "Add a project" — el Command Center no aparece ahí.
+
+## 5. El bloqueante conocido, fuera de esta spec
+
+Con un workspace elegido en el selector de la barra lateral (no en la raíz), el panel del hilo
+queda en blanco al abrirlo — le pasa igual al botón "New thread" de la barra lateral, sin pasar
+por el Command Center. Es un defecto de `main` (specs 010 y 019), no de esta rama; va a spec
+propia. Evidencia: `docs/research/2026-09-04-chequeo-funcional-spec-009/06-comparacion-new-thread-alcance-root-pinta.png`
+y `07-comparacion-new-thread-alcance-workspace-en-blanco.png`.
+
+## 6. La prueba automática, si querés verla sola
 
 ```
-cd /Users/pedroromeroluna/Documents/proyectos/andes-wt-spec-015
+cd /Users/pedroromeroluna/Documents/proyectos/andes-wt-spec-009
 pnpm run ensure:electron-runtime
-npx playwright test tests/e2e/simple-mode-thread-answers.spec.ts \
+npx playwright test tests/e2e/command-center-simple-mode.spec.ts \
   --config tests/playwright.config.ts --project=electron-headless --workers=1
 ```
 

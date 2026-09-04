@@ -6,6 +6,7 @@ import {
   sshPtyOwnerLeaseSecretSlot,
   type ProtectedSecretRetentionUpdate
 } from '../../protected-secret-persistence'
+import { readInterfaceModeFromEnv } from '../../../shared/interface-mode'
 import { stripRetiredGlobalSettings } from '../applying-settings/terminal-settings-migrations'
 
 import {
@@ -16,7 +17,7 @@ import type { StoreRuntimeState } from './store-runtime-state'
 
 type StateSerializationSecretHandlingOperationsRuntime = Pick<
   StoreRuntimeState,
-  'protectedSecrets' | 'state'
+  'persistedInterfaceMode' | 'protectedSecrets' | 'state'
 >
 
 export class StateSerializationSecretHandlingOperations {
@@ -89,6 +90,12 @@ export class StateSerializationSecretHandlingOperations {
       ),
       settings: {
         ...stripRetiredGlobalSettings(this.runtime.state.settings),
+        // Why: ANDES_INTERFACE_MODE is a launch-time overlay, not a preference. Writing the
+        // overlaid value would convert one developer-mode launch into a permanent developer
+        // profile, and the operator's mode would not survive the next restart (spec 017).
+        interfaceMode: readInterfaceModeFromEnv()
+          ? this.runtime.persistedInterfaceMode
+          : this.runtime.state.settings.interfaceMode,
         opencodeSessionCookie: encryptToSentinel(
           PROTECTED_SECRET_SLOT.opencodeSessionCookie,
           this.runtime.state.settings.opencodeSessionCookie

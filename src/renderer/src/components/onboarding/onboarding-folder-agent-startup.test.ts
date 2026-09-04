@@ -7,19 +7,21 @@ import {
 } from '@/lib/onboarding-folder-agent-startup'
 
 describe('buildOnboardingFolderAgentStartup', () => {
-  it('queues the persisted default agent with onboarding telemetry', () => {
+  // Spec 016: en modo simple el arranque de la carpeta no lleva el argumento de
+  // omisión de permisos que trae el perfil por omisión.
+  it('spec016#4 queues the persisted default agent with onboarding telemetry, without the bypass argument', () => {
     const startup = buildOnboardingFolderAgentStartup({
       ...getDefaultSettings('/tmp/orca-workspaces'),
       defaultTuiAgent: 'codex'
     })
 
     expect(startup).toEqual({
-      command: "codex '--dangerously-bypass-approvals-and-sandbox'",
+      command: 'codex',
       env: {},
       launchAgent: 'codex',
       launchConfig: {
-        agentCommand: "codex '--dangerously-bypass-approvals-and-sandbox'",
-        agentArgs: '--dangerously-bypass-approvals-and-sandbox',
+        agentCommand: 'codex',
+        agentArgs: '',
         agentEnv: {}
       },
       sessionOptions: undefined,
@@ -125,6 +127,25 @@ describe('buildOnboardingFolderAgentStartup', () => {
     ).toBe(false)
   })
 
+  it('spec016#6 developer mode keeps the launch arguments Orca always passed', () => {
+    const startup = buildOnboardingFolderAgentStartup({
+      ...getDefaultSettings('/tmp/orca-workspaces'),
+      interfaceMode: 'developer',
+      defaultTuiAgent: 'codex'
+    })
+
+    expect(startup?.command).toBe("codex '--dangerously-bypass-approvals-and-sandbox'")
+  })
+
+  it('spec016#4 seeds no folder agent in simple mode when the default agent has no conversation', () => {
+    const startup = buildOnboardingFolderAgentStartup({
+      ...getDefaultSettings('/tmp/orca-workspaces'),
+      defaultTuiAgent: 'antigravity'
+    })
+
+    expect(startup).toBeUndefined()
+  })
+
   it('builds the skipped-onboarding folder startup from the persisted default agent', () => {
     expect(
       buildDismissedOnboardingFolderAgentStartup(
@@ -137,12 +158,12 @@ describe('buildOnboardingFolderAgentStartup', () => {
         false
       )
     ).toEqual({
-      command: "echo onboarding-folder-agent '--dangerously-bypass-approvals-and-sandbox'",
+      command: 'echo onboarding-folder-agent',
       env: {},
       launchAgent: 'codex',
       launchConfig: {
-        agentCommand: "echo onboarding-folder-agent '--dangerously-bypass-approvals-and-sandbox'",
-        agentArgs: '--dangerously-bypass-approvals-and-sandbox',
+        agentCommand: 'echo onboarding-folder-agent',
+        agentArgs: '',
         agentEnv: {}
       },
       sessionOptions: undefined,

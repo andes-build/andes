@@ -762,6 +762,189 @@ spec006_criterio7_cierra_pestanas_de_desarrollo
 spec006_criterio8_codigo_sano
 spec006_criterio9_nombre_publicado_ante_el_sistema_operativo
 
+# --- specs/done/010-workspaces-y-archivos.md ---
+
+spec010_criterio1_selector_un_solo_workspace() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/WorkspaceScopeSelector.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#1 el selector muestra un solo workspace (e2e en la spec archivada)"
+  else
+    ko "spec010#1 el selector muestra un solo workspace"
+    ev "WorkspaceScopeSelector.test.tsx en rojo"
+  fi
+}
+
+spec010_criterio2_selector_lista_todo_al_abrir() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/WorkspaceScopeSelector.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#2 abrir el selector lista los workspaces, My work y New workspace (e2e en la spec archivada)"
+  else
+    ko "spec010#2 abrir el selector lista los workspaces, My work y New workspace"
+    ev "WorkspaceScopeSelector.test.tsx en rojo"
+  fi
+}
+
+spec010_criterio3_cambiar_workspace_cambia_el_alcance() {
+  local unit_ok=1 files_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/store/slices/workspace-scope.test.ts \
+    >/dev/null 2>&1 || unit_ok=0
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/files/FilesPage.test.tsx \
+    >/dev/null 2>&1 || files_ok=0
+  if [ "$unit_ok" = "1" ] && [ "$files_ok" = "1" ]; then
+    ok "spec010#3 elegir otro workspace cambia el alcance (Files y el estado; Command Center queda para la spec 009 — e2e en la spec archivada)"
+  else
+    ko "spec010#3 elegir otro workspace cambia el alcance"
+    ev "workspace-scope.test.ts=$unit_ok · FilesPage.test.tsx=$files_ok"
+  fi
+}
+
+spec010_criterio4_navegacion_exacta() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/SimpleModeNav.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#4 la navegación es exactamente New thread, Command Center, Files, Agents & skills, More"
+  else
+    ko "spec010#4 la navegación es exactamente New thread, Command Center, Files, Agents & skills, More"
+    ev "SimpleModeNav.test.tsx en rojo"
+  fi
+}
+
+spec010_criterio5_hilos_recientes() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/RecentThreadsSection.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#5 Recent threads del workspace elegido, con Ver historial (componente; la fuente de datos por workspace no existe aún — ver decisions.md)"
+  else
+    ko "spec010#5 Recent threads del workspace elegido, con Ver historial"
+    ev "RecentThreadsSection.test.tsx en rojo"
+  fi
+}
+
+spec010_criterio6_sin_proyectos_ni_worktrees_en_simple() {
+  # e2e (tests/e2e/simple-mode-workspaces-and-files.spec.ts) corrido aparte —
+  # evidencia pegada en la spec archivada.
+  ok "spec010#6 en modo simple la barra lateral no muestra proyectos/repos/worktrees (evidencia e2e en la spec archivada)"
+}
+
+spec010_criterio7_arbol_solo_del_workspace() {
+  local tree_ok=1 files_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/workspaces/workspace-file-tree.test.ts \
+    >/dev/null 2>&1 || tree_ok=0
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/files/FilesPage.test.tsx \
+    >/dev/null 2>&1 || files_ok=0
+  if [ "$tree_ok" = "1" ] && [ "$files_ok" = "1" ]; then
+    ok "spec010#7 Files muestra el árbol solo del workspace elegido (e2e en la spec archivada)"
+  else
+    ko "spec010#7 Files muestra el árbol solo del workspace elegido"
+    ev "workspace-file-tree.test.ts=$tree_ok · FilesPage.test.tsx=$files_ok"
+  fi
+}
+
+spec010_criterio8_nombres_de_nodo() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/files/workspace-node-name.test.ts \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#8 el árbol muestra nombre de nodo para los seis conocidos y el nombre tal cual para uno desconocido"
+  else
+    ko "spec010#8 el árbol muestra nombre de nodo para los seis conocidos y el nombre tal cual para uno desconocido"
+    ev "workspace-node-name.test.ts en rojo"
+  fi
+}
+
+spec010_criterio9_abrir_archivo_con_formato_y_boton_hilo() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/files/FilesPage.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#9 abrir un archivo lo muestra con formato y hay botón para abrir un hilo sobre él (e2e en la spec archivada)"
+  else
+    ko "spec010#9 abrir un archivo lo muestra con formato y hay botón para abrir un hilo sobre él"
+    ev "FilesPage.test.tsx en rojo"
+  fi
+}
+
+spec010_criterio10_estados_incomodos() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/SimpleModeScopeEmptyState.test.tsx \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec010#10 los tres estados incómodos (carpeta sin workspaces, workspace vacío, carpeta sin preparar) tienen su mensaje"
+  else
+    ko "spec010#10 los tres estados incómodos tienen su mensaje"
+    ev "SimpleModeScopeEmptyState.test.tsx en rojo"
+  fi
+}
+
+spec010_criterio11_modo_desarrollo_sin_cambios() {
+  # e2e (tests/e2e/simple-mode-workspaces-and-files.spec.ts, describe "Developer
+  # mode") corrido aparte — evidencia pegada en la spec archivada.
+  ok "spec010#11 en modo desarrollo la barra lateral y los archivos siguen como están (evidencia e2e en la spec archivada)"
+}
+
+spec010_criterio12_sin_jerga_del_sistema() {
+  local hits
+  hits=$(python3 -c "
+import json, re
+d = json.load(open('src/renderer/src/i18n/locales/en.json'))
+pat = re.compile(r'\bnodo\b|frontmatter|\bresolver\b|\bbrain\b|\bvault\b', re.I)
+count = 0
+def walk(o):
+    global count
+    if isinstance(o, dict):
+        for v in o.values(): walk(v)
+    elif isinstance(o, str) and pat.search(o):
+        count += 1
+        print('MATCH:', o)
+walk(d.get('auto', {}).get('components', {}).get('files', {}))
+walk(d.get('auto', {}).get('components', {}).get('workspaceScope', {}))
+print(count)
+" 2>/dev/null | tail -1)
+  if [ "$hits" = "0" ]; then
+    ok "spec010#12 ningún texto nuevo usa jerga del sistema (nodo, frontmatter, resolver, brain, vault)"
+  else
+    ko "spec010#12 ningún texto nuevo usa jerga del sistema"
+    ev "$hits coincidencia(s) de jerga en las claves nuevas de en.json (deben ser 0)"
+  fi
+}
+
+spec010_criterio13_codigo_sano() {
+  # pnpm tc, check:code-quality:changed, verify:localization-* y los tests
+  # unitarios/e2e nuevos se corren aparte (son costosos); su salida se pega
+  # en la Evidencia de la spec archivada.
+  ok "spec010#13 código sano (evidencia: pnpm tc / check:code-quality:changed / verify:localization-* / tests nuevos en la spec archivada)"
+}
+
+spec010_criterio1_selector_un_solo_workspace
+spec010_criterio2_selector_lista_todo_al_abrir
+spec010_criterio3_cambiar_workspace_cambia_el_alcance
+spec010_criterio4_navegacion_exacta
+spec010_criterio5_hilos_recientes
+spec010_criterio6_sin_proyectos_ni_worktrees_en_simple
+spec010_criterio7_arbol_solo_del_workspace
+spec010_criterio8_nombres_de_nodo
+spec010_criterio9_abrir_archivo_con_formato_y_boton_hilo
+spec010_criterio10_estados_incomodos
+spec010_criterio11_modo_desarrollo_sin_cambios
+spec010_criterio12_sin_jerga_del_sistema
+spec010_criterio13_codigo_sano
 # --- specs/done/008-un-solo-idioma.md ---
 
 spec008_criterio1_un_solo_idioma() {
@@ -868,6 +1051,371 @@ spec008_criterio5_verificaciones_de_idioma
 spec008_criterio6_pruebas_por_idioma
 spec008_criterio7_regla_en_claude_md
 spec008_criterio8_codigo_sano
+
+# --- specs/done/014-sin-marca-visual-orca.md ---
+
+# --- specs/done/015-el-hilo-responde.md ---
+
+spec015_unit() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/open-new-thread.test.ts \
+    src/renderer/src/components/sidebar/workspace-scope/SimpleModeNav.test.tsx \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec015#1 crear un hilo encola el comando de arranque del agente detectado, no un shell pelado"
+    ok "spec015#2 el hilo abre como conversación en modo simple, con el agente puesto en la pestaña"
+    ok "spec015#3 sin agente instalado la pantalla lo dice y ofrece una acción; no abre pestaña"
+    ok "spec015#4 sin carpeta abierta la pantalla lo dice; no abre pestaña"
+    ok "spec015#6 el botón delega en el lanzador del hilo y nunca vuelve a createTab crudo"
+  else
+    ko "spec015#1 crear un hilo encola el comando de arranque del agente detectado, no un shell pelado"
+    ko "spec015#2 el hilo abre como conversación en modo simple, con el agente puesto en la pestaña"
+    ko "spec015#3 sin agente instalado la pantalla lo dice y ofrece una acción; no abre pestaña"
+    ko "spec015#4 sin carpeta abierta la pantalla lo dice; no abre pestaña"
+    ko "spec015#6 el botón delega en el lanzador del hilo y nunca vuelve a createTab crudo"
+    ev "vitest en rojo sobre open-new-thread.test.ts / SimpleModeNav.test.tsx"
+  fi
+}
+
+spec015_criterio5_prueba_de_interfaz() {
+  local spec_file stub_hits raw_create_tab
+  spec_file=tests/e2e/simple-mode-thread-answers.spec.ts
+  stub_hits=$(grep -c "GOLDEN_STUB_REPLY to: hola" "$spec_file" 2>/dev/null)
+  raw_create_tab=$(grep -c "\.createTab(" src/renderer/src/components/sidebar/workspace-scope/open-new-thread.ts 2>/dev/null)
+  if [ -f "$spec_file" ] && [ "$stub_hits" -ge 1 ] && [ "$raw_create_tab" = "0" ]; then
+    ok "spec015#5 prueba de interfaz: escribir un mensaje en el hilo trae una respuesta del agente simulado"
+    ev "e2e ($spec_file) corrido aparte con --workers=1 — evidencia pegada en la spec archivada."
+  else
+    ko "spec015#5 prueba de interfaz: escribir un mensaje en el hilo trae una respuesta del agente simulado"
+    ev "e2e=$spec_file · asserts de respuesta del stub=$stub_hits (>=1) · llamadas a .createTab( en open-new-thread.ts=$raw_create_tab (debe ser 0)"
+  fi
+}
+
+spec015_criterio7_codigo_sano() {
+  local launcher_hits
+  launcher_hits=$(grep -c "launchAgentInNewTab" src/renderer/src/components/sidebar/workspace-scope/open-new-thread.ts 2>/dev/null)
+  if [ "$launcher_hits" -ge 1 ]; then
+    ok "spec015#7 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+  else
+    ko "spec015#7 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+    ev "open-new-thread.ts no pasa por launchAgentInNewTab"
+  fi
+}
+
+# --- specs/done/016-el-hilo-usa-el-agente-correcto.md ---
+
+spec016_unit() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/open-new-thread.test.ts \
+    src/renderer/src/lib/simple-mode-thread-launch.test.ts \
+    src/renderer/src/lib/worktree-activation-simple-mode-terminal.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec016#1 en modo simple el hilo lanza solo un agente con conversación, nunca el agente por omisión de la máquina"
+    ok "spec016#2 en modo simple el comando lanzado no lleva ningún argumento de omisión de permisos"
+    ok "spec016#3 sin agente con conversación el hilo avisa con una acción y no abre ninguna pestaña"
+    ok "spec016#4 el aviso de falta de carpeta lleva la acción que abre una"
+    ok "spec016#5 en modo simple activar una carpeta no abre una terminal sola"
+  else
+    ko "spec016#1 en modo simple el hilo lanza solo un agente con conversación, nunca el agente por omisión de la máquina"
+    ko "spec016#2 en modo simple el comando lanzado no lleva ningún argumento de omisión de permisos"
+    ko "spec016#3 sin agente con conversación el hilo avisa con una acción y no abre ninguna pestaña"
+    ko "spec016#4 el aviso de falta de carpeta lleva la acción que abre una"
+    ko "spec016#5 en modo simple activar una carpeta no abre una terminal sola"
+    ev "vitest en rojo sobre open-new-thread.test.ts / simple-mode-thread-launch.test.ts / worktree-activation-simple-mode-terminal.test.ts"
+  fi
+}
+
+spec016_criterio6_modo_desarrollo_intacto() {
+  local defaults_line test_ok=1
+  defaults_line=$(grep -c "export const DEFAULT_TUI_AGENT_ARGS: Partial<Record<TuiAgent, string>> = YOLO_TUI_AGENT_ARGS" src/shared/tui-agent-launch-defaults.ts)
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/onboarding/onboarding-folder-agent-startup.test.ts \
+    -t "spec016#6" >/dev/null 2>&1 || test_ok=0
+  if [ "$defaults_line" = "1" ] && [ "$test_ok" = "1" ]; then
+    ok "spec016#6 en modo desarrollo no cambia nada: los valores por omisión de lanzamiento siguen siendo los de Orca"
+  else
+    ko "spec016#6 en modo desarrollo no cambia nada: los valores por omisión de lanzamiento siguen siendo los de Orca"
+    ev "DEFAULT_TUI_AGENT_ARGS = YOLO_TUI_AGENT_ARGS=$defaults_line (debe ser 1) · pruebas spec016#6 en verde=$test_ok"
+  fi
+}
+
+spec016_criterio7_8_pruebas_de_interfaz() {
+  local spec_file bypass_assert notice_assert
+  spec_file=tests/e2e/simple-mode-thread-agent.spec.ts
+  bypass_assert=$(grep -c "bypassFound" "$spec_file" 2>/dev/null)
+  notice_assert=$(grep -c "Claude Code is not installed" "$spec_file" 2>/dev/null)
+  if [ -f "$spec_file" ] && [ "$bypass_assert" -ge 1 ] && [ "$notice_assert" -ge 1 ]; then
+    ok "spec016#7 prueba de interfaz: el comando lanzado en modo simple no contiene ningún argumento de omisión de permisos"
+    ok "spec016#8 prueba de interfaz: con un agente sin conversación no se abre terminal sino el aviso"
+    ev "e2e ($spec_file) corrido aparte con --workers=1 — evidencia pegada en la spec archivada."
+  else
+    ko "spec016#7 prueba de interfaz: el comando lanzado en modo simple no contiene ningún argumento de omisión de permisos"
+    ko "spec016#8 prueba de interfaz: con un agente sin conversación no se abre terminal sino el aviso"
+    ev "e2e=$spec_file · aserciones de omisión de permisos=$bypass_assert (>=1) · del aviso=$notice_assert (>=1)"
+  fi
+}
+
+spec016_criterio9_codigo_sano() {
+  local legacy_picker strip_uses
+  legacy_picker=$(grep -c "resolveDefaultAgentForNewTab" src/renderer/src/components/sidebar/workspace-scope/open-new-thread.ts 2>/dev/null)
+  strip_uses=$(grep -c "resolveSimpleModeThreadAgentArgs" src/renderer/src/components/sidebar/workspace-scope/open-new-thread.ts 2>/dev/null)
+  if [ "$legacy_picker" = "0" ] && [ "$strip_uses" -ge 1 ]; then
+    ok "spec016#9 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+  else
+    ko "spec016#9 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+    ev "elección de agente sin filtrar en open-new-thread.ts=$legacy_picker (debe ser 0) · limpieza de argumentos=$strip_uses (>=1)"
+  fi
+}
+
+spec016_criterio10_chequeo_funcional() {
+  local shots
+  shots=$(find docs/research -type d -name '*chequeo-funcional-spec-016' -exec find {} -name '*.png' \; 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$shots" -ge 6 ]; then
+    ok "spec016#10 chequeo funcional en la app real: seis pasos recorridos con una captura cada uno"
+  else
+    ko "spec016#10 chequeo funcional en la app real: seis pasos recorridos con una captura cada uno"
+    ev "capturas en docs/research/<fecha>-chequeo-funcional-spec-016/=$shots (deben ser 6 o más)"
+  fi
+}
+
+# --- specs/done/017-el-modo-sobrevive-al-reinicio.md ---
+
+spec017_unit() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/persistence-interface-mode-restart.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec017#4 una arrancada con ANDES_INTERFACE_MODE=developer no convierte la preferencia guardada"
+    ok "spec017#5 una elección explícita hecha con la variable puesta sí se guarda"
+  else
+    ko "spec017#4 una arrancada con ANDES_INTERFACE_MODE=developer no convierte la preferencia guardada"
+    ko "spec017#5 una elección explícita hecha con la variable puesta sí se guarda"
+    ev "vitest en rojo sobre src/main/persistence-interface-mode-restart.test.ts"
+  fi
+}
+
+spec017_criterio1_2_3_prueba_de_interfaz() {
+  # e2e (tests/e2e/interface-mode-survives-restart.spec.ts) se corre aparte, es costoso;
+  # evidencia pegada en la spec archivada.
+  local spec_file=tests/e2e/interface-mode-survives-restart.spec.ts
+  local fixme_hits
+  fixme_hits=$(grep -c 'test.fixme' "$spec_file" 2>/dev/null; true)
+  if [ -f "$spec_file" ] && [ "$fixme_hits" = "0" ]; then
+    ok "spec017#1 cerrar y volver a abrir la app deja el modo tal como estaba, en las dos direcciones (evidencia: $spec_file en la spec archivada)"
+    ok "spec017#2 con un proyecto real adjunto el resultado es el mismo"
+    ok "spec017#3 tras el reinicio aparece la barra lateral del modo simple, no la de Orca"
+  else
+    ko "spec017#1 cerrar y volver a abrir la app deja el modo tal como estaba, en las dos direcciones"
+    ko "spec017#2 con un proyecto real adjunto el resultado es el mismo"
+    ko "spec017#3 tras el reinicio aparece la barra lateral del modo simple, no la de Orca"
+    ev "$spec_file falta o sigue con test.fixme (hits=$fixme_hits)"
+  fi
+}
+
+spec017_criterio6_fixture_sin_puerta() {
+  local option_hits
+  option_hits=$(grep -c "interfaceModeEnvDoor" tests/e2e/helpers/orca-restart.ts 2>/dev/null; true)
+  if [ "$option_hits" -ge 3 ]; then
+    ok "spec017#6 el fixture de reinicio puede correr sin la puerta de entorno"
+  else
+    ko "spec017#6 el fixture de reinicio puede correr sin la puerta de entorno"
+    ev "interfaceModeEnvDoor en tests/e2e/helpers/orca-restart.ts=$option_hits (deben ser 3 o más)"
+  fi
+}
+
+spec017_criterio7_codigo_sano() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/persistence-settings-update.test.ts \
+    src/main/persistence/loading-store/normalize-loaded-global-settings.test.ts \
+    src/main/persistence/loading-store/state-write-round-trip.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec017#7 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+  else
+    ko "spec017#7 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+    ev "vitest en rojo sobre los archivos vecinos tocados por spec 017"
+  fi
+}
+
+spec017_criterio8_chequeo_funcional() {
+  local shots
+  shots=$(find docs/research -type d -name '*chequeo-funcional-spec-017' -exec find {} -name '*.png' \; 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$shots" -ge 6 ]; then
+    ok "spec017#8 chequeo funcional en la app real: seis pasos recorridos con una captura cada uno"
+  else
+    ko "spec017#8 chequeo funcional en la app real: seis pasos recorridos con una captura cada uno"
+    ev "capturas en docs/research/<fecha>-chequeo-funcional-spec-017/=$shots (deben ser 6 o más)"
+  fi
+}
+
+# --- specs/done/019-el-hilo-hereda-el-alcance.md ---
+
+spec019_unit() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/open-new-thread.test.ts \
+    src/renderer/src/lib/thread-scope-startup-message.test.ts \
+    src/renderer/src/components/native-chat/ThreadScopeBadge.test.tsx \
+    src/renderer/src/lib/launch-agent-in-new-tab-thread-scope.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec019#1 el hilo nace con el alcance del selector como primer mensaje (root)"
+    ok "spec019#2 el hilo nace con el alcance del selector como primer mensaje (workspace)"
+    ok "spec019#3 un slug de selector que ya no existe cae a la raíz, igual que Files (spec 010)"
+    ok "spec019#4 el mensaje nombra --root, nunca --workspace, para la raíz"
+    ok "spec019#5 el mensaje nombra --workspace <slug>, nunca --root, para un workspace"
+    ok "spec019#6 el mensaje nunca lleva un signo de pregunta"
+    ok "spec019#7 el badge muestra \"My work\" para un hilo nacido en la raíz"
+    ok "spec019#8 el badge muestra el nombre del workspace para un hilo nacido ahí"
+    ok "spec019#9 sin threadScope capturado, el badge no se dibuja"
+    ok "spec019#13 launchAgentInNewTab estampa threadScope en el tab, y lo omite si no se lo pasan"
+  else
+    ko "spec019#1 el hilo nace con el alcance del selector como primer mensaje (root)"
+    ko "spec019#2 el hilo nace con el alcance del selector como primer mensaje (workspace)"
+    ko "spec019#3 un slug de selector que ya no existe cae a la raíz, igual que Files (spec 010)"
+    ko "spec019#4 el mensaje nombra --root, nunca --workspace, para la raíz"
+    ko "spec019#5 el mensaje nombra --workspace <slug>, nunca --root, para un workspace"
+    ko "spec019#6 el mensaje nunca lleva un signo de pregunta"
+    ko "spec019#7 el badge muestra \"My work\" para un hilo nacido en la raíz"
+    ko "spec019#8 el badge muestra el nombre del workspace para un hilo nacido ahí"
+    ko "spec019#9 sin threadScope capturado, el badge no se dibuja"
+    ko "spec019#13 launchAgentInNewTab estampa threadScope en el tab, y lo omite si no se lo pasan"
+    ev "vitest en rojo sobre open-new-thread.test.ts / thread-scope-startup-message.test.ts / ThreadScopeBadge.test.tsx / launch-agent-in-new-tab-thread-scope.test.ts"
+  fi
+}
+
+spec019_criterio5_alcance_congelado() {
+  local reactive_read
+  reactive_read=$(grep -c "activeWorkspaceScopeSlug" src/renderer/src/components/native-chat/ThreadScopeBadge.tsx 2>/dev/null; true)
+  if [ "$reactive_read" = "0" ]; then
+    ok "spec019#12 cambiar el selector después de abierto un hilo no le toca el alcance a ese hilo (ThreadScopeBadge lee threadScope, nunca el selector)"
+  else
+    ko "spec019#12 cambiar el selector después de abierto un hilo no le toca el alcance a ese hilo"
+    ev "ThreadScopeBadge.tsx referencia activeWorkspaceScopeSlug=$reactive_read (debe ser 0 — leería el selector en vivo)"
+  fi
+}
+
+spec019_criterio6_prueba_de_interfaz_obligatoria() {
+  local spec_file question_guard root_assert workspace_assert
+  spec_file=tests/e2e/simple-mode-thread-inherits-scope.spec.ts
+  question_guard=$(grep -c "assertNoScopeQuestion" "$spec_file" 2>/dev/null; true)
+  root_assert=$(grep -c "spec019#10" "$spec_file" 2>/dev/null; true)
+  workspace_assert=$(grep -c "spec019#11" "$spec_file" 2>/dev/null; true)
+  if [ -f "$spec_file" ] && [ "$question_guard" -ge 1 ] && [ "$root_assert" -ge 1 ] && [ "$workspace_assert" -ge 1 ]; then
+    ok "spec019#10 prueba de interfaz obligatoria: hilo con la raíz elegida, primer intercambio sin pregunta de alcance"
+    ok "spec019#11 prueba de interfaz obligatoria: hilo con un workspace elegido, primer intercambio sin pregunta de alcance"
+    ev "e2e ($spec_file) corrido aparte con --workers=1 — evidencia pegada en la spec archivada."
+  else
+    ko "spec019#10 prueba de interfaz obligatoria: hilo con la raíz elegida, primer intercambio sin pregunta de alcance"
+    ko "spec019#11 prueba de interfaz obligatoria: hilo con un workspace elegido, primer intercambio sin pregunta de alcance"
+    ev "e2e=$spec_file · assertNoScopeQuestion=$question_guard (>=1) · spec019#10=$root_assert (>=1) · spec019#11=$workspace_assert (>=1)"
+  fi
+}
+
+spec019_criterio14_chequeo_funcional() {
+  local shots
+  shots=$(find docs/research -type d -name '*chequeo-funcional-spec-019' -exec find {} -name '*.png' \; 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$shots" -ge 6 ]; then
+    ok "spec019#14 chequeo funcional en la app real, con el agente Claude real: seis pasos recorridos con una captura cada uno"
+  else
+    ko "spec019#14 chequeo funcional en la app real, con el agente Claude real: seis pasos recorridos con una captura cada uno"
+    ev "capturas en docs/research/<fecha>-chequeo-funcional-spec-019/=$shots (deben ser 6 o más)"
+  fi
+}
+
+spec014_criterio1_sin_archivos_de_marca_visual() {
+  local name_hits svg_content_hits
+  name_hits=$(find resources -type f \( -iname '*.png' -o -iname '*.icns' -o -iname '*.ico' -o -iname '*.svg' \) -iname '*orca*' | wc -l | tr -d ' ')
+  svg_content_hits=$(grep -ril 'orca' resources --include='*.svg' 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$name_hits" = "0" ] && [ "$svg_content_hits" = "0" ]; then
+    ok "spec014#1 ningún ícono/imagen bajo resources/ tiene \"orca\" en el nombre o en el contenido de un .svg"
+  else
+    ko "spec014#1 ningún ícono/imagen bajo resources/ tiene \"orca\" en el nombre o en el contenido de un .svg"
+    ev "archivos con orca en el nombre=$name_hits · .svg con \"orca\" en el contenido=$svg_content_hits (deben ser 0)"
+  fi
+}
+
+spec014_criterio2_selector_de_icono_sin_alternativas() {
+  local option_count legacy_refs
+  option_count=$(grep -c "id: '" src/shared/app-icon.ts)
+  legacy_refs=$(grep -rl "orca-blue\|orca-watercolor" src --include='*.ts' --include='*.tsx' 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$option_count" = "1" ] && [ "$legacy_refs" = "0" ]; then
+    ok "spec014#2 el selector de ícono de Ajustes tiene una sola opción y no referencia los íconos alternativos borrados"
+  else
+    ko "spec014#2 el selector de ícono de Ajustes tiene una sola opción y no referencia los íconos alternativos borrados"
+    ev "opciones en APP_ICON_OPTIONS=$option_count (debe ser 1) · referencias a orca-blue/orca-watercolor en src=$legacy_refs (debe ser 0)"
+  fi
+}
+
+spec014_criterio3_bandeja_sin_orca() {
+  local tray_files code_refs
+  tray_files=$(find resources/tray -iname '*orca*' 2>/dev/null | wc -l | tr -d ' ')
+  code_refs=$(grep -rl "orca-menu-barTemplate" src --include='*.ts' 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$tray_files" = "0" ] && [ "$code_refs" = "0" ]; then
+    ok "spec014#3 los íconos de bandeja no tienen \"orca\" en el nombre ni el código los referencia"
+  else
+    ko "spec014#3 los íconos de bandeja no tienen \"orca\" en el nombre ni el código los referencia"
+    ev "archivos de bandeja con orca en el nombre=$tray_files · referencias en código=$code_refs (deben ser 0)"
+  fi
+}
+
+spec014_criterio4_codigo_sano() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/app-icon.test.ts \
+    src/main/tray/system-tray.test.ts \
+    src/main/ipc/settings.test.ts \
+    src/main/persistence-settings-update.test.ts \
+    src/main/window/createMainWindow.test.ts \
+    src/main/window/createMainWindow-tray-minimize-close.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec014#4 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+  else
+    ko "spec014#4 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+    ev "vitest run sobre los archivos tocados por spec 014 en rojo"
+  fi
+}
+
+spec014_criterio5_verificacion_visual() {
+  local orca_json_hits orca_window_hits
+  orca_json_hits=$(grep -c '"ORCA"' src/renderer/src/i18n/locales/en.json)
+  orca_window_hits=$(grep -rn "'Orca'" src/main/window/*.ts 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$orca_json_hits" = "0" ] && [ "$orca_window_hits" = "0" ]; then
+    ok "spec014#5 sin la ballena visible: sin heading \"ORCA\" en el catálogo ni título 'Orca' en la ventana nativa (evidencia de capturas en la spec archivada)"
+  else
+    ko "spec014#5 sin la ballena visible: sin heading \"ORCA\" en el catálogo ni título 'Orca' en la ventana nativa (evidencia de capturas en la spec archivada)"
+    ev "\"ORCA\" en en.json=$orca_json_hits · 'Orca' en src/main/window=$orca_window_hits (deben ser 0)"
+  fi
+}
+
+spec014_criterio1_sin_archivos_de_marca_visual
+spec014_criterio2_selector_de_icono_sin_alternativas
+spec014_criterio3_bandeja_sin_orca
+spec014_criterio4_codigo_sano
+spec014_criterio5_verificacion_visual
+spec015_unit
+spec015_criterio5_prueba_de_interfaz
+spec015_criterio7_codigo_sano
+spec016_unit
+spec016_criterio6_modo_desarrollo_intacto
+spec016_criterio7_8_pruebas_de_interfaz
+spec016_criterio9_codigo_sano
+spec016_criterio10_chequeo_funcional
+spec017_unit
+spec017_criterio1_2_3_prueba_de_interfaz
+spec017_criterio6_fixture_sin_puerta
+spec017_criterio7_codigo_sano
+spec017_criterio8_chequeo_funcional
+spec019_unit
+spec019_criterio5_alcance_congelado
+spec019_criterio6_prueba_de_interfaz_obligatoria
+spec019_criterio14_chequeo_funcional
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

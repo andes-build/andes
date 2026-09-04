@@ -5,6 +5,7 @@ import { normalizeKagiSessionLink } from '../../../shared/browser-url'
 import type { PersistedState } from '../../../shared/persisted-state-types'
 import type { SshPtyConsumerRecovery } from '../../../shared/ssh-types'
 import { getDefaultPersistedState } from '../../../shared/constants'
+import { normalizeInterfaceMode } from '../../../shared/interface-mode'
 import { pruneLocalTerminalScrollbackBuffers } from '../../../shared/workspace-session-terminal-buffers'
 import { pruneWorkspaceSessionBrowserHistory } from '../../../shared/workspace-session-browser-history'
 import { clearMissingProjectGroupMemberships } from '../../../shared/project-groups'
@@ -64,6 +65,7 @@ type LoadedStateParsingOperationsRuntime = Pick<
   | 'dataFile'
   | 'githubCacheDirty'
   | 'loadNeedsSave'
+  | 'persistedInterfaceMode'
   | 'protectedSecrets'
   | 'storageAuthority'
   | 'terminalScrollbackSnapshotStorage'
@@ -85,6 +87,9 @@ export class LoadedStateParsingOperations {
     })
 
     let result: PersistedState | null = null
+    // Why kept apart from `result`: `result.settings.interfaceMode` already carries the
+    // ANDES_INTERFACE_MODE overlay, and the overlay must never reach disk (spec 017).
+    let interfaceModeOnDisk: unknown
     try {
       if (fileExistedOnLoad) {
         const readStartedAt = performance.now()
@@ -95,6 +100,7 @@ export class LoadedStateParsingOperations {
         })
         logPersistenceStartupMilestone('persistence-json-parse-start')
         const parsed = JSON.parse(raw) as PersistedState
+        interfaceModeOnDisk = parsed.settings?.interfaceMode
         logPersistenceStartupMilestone('persistence-json-parse-done')
 
         // Why: secrets are stored encrypted via safeStorage; decrypt at the load boundary so the app sees plaintext.
@@ -195,6 +201,7 @@ export class LoadedStateParsingOperations {
     if (result === null) {
       result = getDefaultPersistedState(homedir())
     }
+    this.runtime.persistedInterfaceMode = normalizeInterfaceMode(interfaceModeOnDisk)
 
     const workspaceSession = pruneWorkspaceSessionBrowserHistory(
       pruneLocalTerminalScrollbackBuffers(result.workspaceSession, result.repos)

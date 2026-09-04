@@ -132,10 +132,23 @@ function createRestartLaunchIsolation(
  * env stripping, headful toggle) so behavior differences between fixtures
  * don't leak in as false positives for persistence bugs.
  */
+export type RestartSessionOptions = {
+  /**
+   * 'developer' (default) keeps the hidden env door open, matching the shared
+   * fixture. 'off' leaves ANDES_INTERFACE_MODE unset on every launch of the
+   * session, so only the persisted preference decides the mode — the only way
+   * to test that the mode survives a restart (spec 017).
+   */
+  interfaceModeEnvDoor?: 'developer' | 'off'
+}
+
 export function createRestartSession(
   testInfo: TestInfo,
-  extraEnv: Record<string, string> = {}
+  extraEnv: Record<string, string> = {},
+  options: RestartSessionOptions = {}
 ): RestartSession {
+  const interfaceModeEnv: Record<string, string> =
+    options.interfaceModeEnvDoor === 'off' ? {} : { ANDES_INTERFACE_MODE: 'developer' }
   const mainPath = path.join(process.cwd(), 'out', 'main', 'index.js')
   const userDataDir = mkdtempSync(path.join(os.tmpdir(), 'orca-e2e-restart-'))
   const headful = shouldLaunchHeadful(testInfo)
@@ -179,8 +192,9 @@ export function createRestartSession(
       env: {
         // Spec 002, criterion 7: keep this restart fixture in developer mode
         // like the main orca-app.ts fixture, so a relaunch doesn't drop back
-        // to the simple-mode default mid-test.
-        ANDES_INTERFACE_MODE: 'developer',
+        // to the simple-mode default mid-test. A session built with
+        // `interfaceModeEnvDoor: 'off'` gets no override at all.
+        ...interfaceModeEnv,
         ...homeIsolation.env,
         ...options?.extraEnv,
         ORCA_E2E_RUNTIME_WS_PORT: String(runtimeWsPort)

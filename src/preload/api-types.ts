@@ -40,6 +40,7 @@ import type { OnboardingApi, StarNagApi } from './api/onboarding-api'
 import type { OnboardingBrainApi } from './api/onboarding-brain-api'
 import type { CommandCenterApi } from './api/command-center-api'
 import type { OrcaProfileApi } from './api/orca-profile-api'
+import type { WorkspaceScopeApi } from './api/workspace-scope-api'
 import type {
   ComputerUsePermissionsApi,
   DeveloperPermissionsApi,
@@ -112,6 +113,7 @@ export type PreloadApi = {
   onboarding: OnboardingApi
   onboardingBrain: OnboardingBrainApi
   commandCenter: CommandCenterApi
+  workspaceScope: WorkspaceScopeApi
   dashboard: DashboardApi
   terminalPreview: TerminalPreviewApi
   macosTccPrompts: MacosTccPromptsApi

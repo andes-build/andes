@@ -36,6 +36,54 @@ export const YOLO_TUI_AGENT_ENV: Partial<Record<TuiAgent, Record<string, string>
   goose: { GOOSE_MODE: 'auto' }
 }
 
+/**
+ * Every permission-bypass argument Andes knows how to pass, whatever the agent.
+ * Spec 016: simple mode must never launch with one of these — the permission
+ * card only exists while the agent still asks.
+ */
+export const PERMISSION_BYPASS_ARGS: readonly string[] = [
+  ...new Set(Object.values(YOLO_TUI_AGENT_ARGS))
+]
+
+/**
+ * Arguments that force the agent to ASK for every permission, per agent.
+ * Spec 016: removing the bypass argument is not enough — Claude Code 2.1's own
+ * default mode is `auto`, which performs routine writes without asking, and
+ * simple mode's whole design is the permission card. Only the agents whose flag
+ * is verified against their CLI are listed; the rest launch with whatever their
+ * own default is.
+ */
+export const ASK_PERMISSION_TUI_AGENT_ARGS: Partial<Record<TuiAgent, string>> = {
+  claude: '--permission-mode manual',
+  openclaude: '--permission-mode manual'
+}
+
+function bypassArgPattern(value: string): RegExp {
+  const escaped = value
+    .trim()
+    .split(/\s+/)
+    .map((token) => token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('\\s+')
+  return new RegExp(`(^|\\s)${escaped}(?=\\s|$)`, 'g')
+}
+
+function collapseWhitespace(value: string | null | undefined): string {
+  return (value ?? '').replace(/\s+/g, ' ').trim()
+}
+
+/** The same launch arguments with every permission-bypass argument removed. */
+export function stripPermissionBypassArgs(args: string | null | undefined): string {
+  let next = args ?? ''
+  for (const value of PERMISSION_BYPASS_ARGS) {
+    next = next.replace(bypassArgPattern(value), ' ')
+  }
+  return collapseWhitespace(next)
+}
+
+export function containsPermissionBypassArgs(args: string | null | undefined): boolean {
+  return stripPermissionBypassArgs(args) !== collapseWhitespace(args)
+}
+
 const PERMISSION_AGENT_IDS = Object.keys(TUI_AGENT_CONFIG).filter(
   (agent): agent is TuiAgent => agent in YOLO_TUI_AGENT_ARGS || agent in YOLO_TUI_AGENT_ENV
 )

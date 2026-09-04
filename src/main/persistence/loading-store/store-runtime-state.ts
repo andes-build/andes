@@ -1,5 +1,6 @@
 import { removeStaleDurableWriteTempFiles } from '../../durable-file-write'
 import type { GlobalSettings } from '../../../shared/global-settings-types'
+import { INTERFACE_MODE_SIMPLE, type InterfaceMode } from '../../../shared/interface-mode'
 import type { PersistedState } from '../../../shared/persisted-state-types'
 import type { ActiveViewPreference } from '../../active-view-preference'
 import {
@@ -53,6 +54,10 @@ export class StoreRuntimeState {
   readonly gitUsernameCache = new Map<string, string>()
   readonly protectedSecrets = new ProtectedSecretPersistence()
   loadNeedsSave = false
+  /** The interfaceMode that belongs on disk. Diverges from state.settings.interfaceMode
+   *  only while ANDES_INTERFACE_MODE overrides the launch; see
+   *  specs/done/017-el-modo-sobrevive-al-reinicio.md. */
+  persistedInterfaceMode: InterfaceMode = INTERFACE_MODE_SIMPLE
   flushOrThrow!: () => void
   settingsChangeListeners = new Set<
     (

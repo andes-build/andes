@@ -97,6 +97,10 @@ docs/**
 !docs/site/**
 !docs/assets/
 !docs/assets/**
+# La evidencia fechada de investigación y de los chequeos funcionales es del repo
+# (CLAUDE.md, tabla "Dónde está cada cosa"), no notas locales — spec 016.
+!docs/research/
+!docs/research/**
 !docs/readme/
 !docs/readme/**
 !docs/STYLEGUIDE.md

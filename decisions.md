@@ -890,3 +890,279 @@ existió", es la regla más simple que cumple el criterio sin un caso especial.
 
 **La invalidaría**: que una spec futura necesite distinguir, en el valor persistido, un ajuste que
 nunca fue válido de uno que dejó de serlo.
+
+## 2026-09-03 · [spec 010] Seis commits de marca visual entraron por la sesión supervisora, en la misma rama
+
+**Qué se decide**: los commits `5cc02281c9` (barra lateral oscura en tema claro), `e3064224a8`
+(tipografía de títulos: Instrument Serif), `9daaad8343` (isologo de Andes y título del estado vacío
+en `Landing.tsx`), `8ac34708ee` (tokens de la barra izquierda y texto "Andes" en `en.json`),
+`cb26d11a67` (intercambio de los dos archivos de logo en `resources/`) y `af727470b4` (tipografía de
+títulos: Newsreader en lugar de Instrument Serif) no los escribió el agente que implementó la spec
+010 — los escribió, con la identidad de Peter, la sesión que lo supervisaba, directamente sobre la
+rama `spec-010-workspaces-archivos` mientras el agente trabajaba en el resto de la spec. Peter ya
+vio y aprobó estos cambios en pantalla.
+
+**Por qué**: la regla de la iniciativa es un worktree por agente para evitar que dos escritores
+choquen en el mismo árbol; la sesión supervisora la rompió en este caso puntual para iterar la
+marca visual en vivo sobre la rama que ya estaba abierta, en vez de esperar a una spec propia o abrir
+su propio worktree. El agente que trabajaba ahí lo detectó (`git status` antes de cada commit, como
+exige la regla), frenó y reportó en vez de pisar o revertir esos commits — la sesión supervisora
+confirmó que eran suyos y que no había que investigar nada.
+
+**La invalidaría**: nada — es historia de cómo se armó esta rama. La regla de un worktree por agente
+sigue valiendo para el resto de la iniciativa; esto fue una excepción puntual y reconocida, no un
+cambio de regla.
+## 2026-09-03 · [spec 011] El hilo se entrega en dos etapas; esta etapa usa el puente existente, no el canal de datos
+
+**Qué se decide**: la spec 011 pedía que el permiso del agente llegara **como dato**, no leyendo la
+pantalla de una terminal. El criterio 0 encontró que hoy, para Claude, llega leyendo la terminal y
+mandando teclas (el único adaptador de sesión estructurada existente es para Codex —
+`src/main/codex/codex-structured-session-adapter.ts` — y
+`structured-agent-session-provider-support.ts:14` sólo habilita `agent === 'codex'`). Peter, vía la
+sesión supervisora, decidió no bloquear la entrega: esta etapa saca la conversación de detrás del
+ajuste experimental y hace funcionar la tarjeta de permiso **sobre el puente existente** (teclas),
+y deja "el permiso llega como dato" (criterio 2b) como una spec aparte, con el hallazgo del
+criterio 0 como su estado previo.
+
+**Por qué**: la prioridad explícita de Peter era poder crear hilos y conversar cuanto antes; para
+el operador, hoy, la tarjeta se ve y funciona igual en los dos casos (por dato o por teclas). Parar
+la entrega completa hasta construir el adaptador de datos para Claude —que no existe hoy y es
+trabajo no trivial— hubiera dejado a Peter sin nada que probar. El criterio original (permiso por
+datos) no se abandona: queda declarado, con su motivo original intacto (es lo único que permite
+dibujar el permiso como tarjeta *de verdad*, sin depender de leer una pantalla), como el criterio
+de apertura de la próxima spec.
+
+**La invalidaría**: que la próxima spec (el canal de datos para Claude) resuelva que el puente
+actual no alcanza ni como paso intermedio — por ejemplo, si aparece un caso donde la tarjeta por
+teclas se desincroniza de lo que la terminal real está mostrando y eso rompe la confianza del
+operador antes de que el canal de datos esté listo.
+## 2026-09-03 · [spec 014] El ícono de 200×200 de Peter se escala a 1024 con `sips`, sin pasar por Icon Composer
+
+**Qué se decide**: `resources/build/icon.icns`, `icon.png` y `resources/icon.png`/`icon-dev.png` se
+generan escalando `/tmp/andes-icon-dock.png` (200×200) a 1024×1024 con `sips`, y el `.icns` se arma
+con `iconutil` desde un iconset de tamaños estándar (16 a 1024) generado también con `sips` — no se
+usó `resources/icon-source/generate.sh` (que compila un proyecto `.icon` de Icon Composer con
+`xcrun actool`), porque ese proyecto sigue teniendo la fuente vectorial de la ballena y reemplazarla
+exige un logo vectorial real, que no existe todavía.
+
+**Por qué**: el criterio de la spec pedía reemplazar los íconos ya, con lo que Peter entregó. Un
+archivo de 200 píxeles escalado 5× para el instalador (1024) pierde nitidez en los tamaños grandes
+comparado con un origen ya vectorial o de mayor resolución — se avisa acá en vez de forzar una
+fidelidad que el archivo de origen no tiene.
+
+**La invalidaría**: que Peter entregue un logo vectorial (SVG) o un raster de al menos 1024×1024,
+momento en el que conviene además volver a armar `resources/icon-source/icon.icon` con ese vector y
+retomar `generate.sh` como fuente de verdad del ícono.
+
+## 2026-09-03 · [spec 014] El logo de la interfaz (`resources/logo.svg`) es el isologo embebido como raster, no un vector propio
+
+**Qué se decide**: `resources/logo.svg` y `resources/icon-source/icon.icon/Assets/logo.svg` envuelven
+el PNG que entregó Peter (`/tmp/andes-logo-real.png`) dentro de una etiqueta `<image>` con los datos
+en base64, en vez de redibujar el isologo como trazos vectoriales.
+
+**Por qué**: no había un archivo `.svg` vectorial entre lo que Peter entregó, y redibujar a mano un
+logo ajeno como vector introduce el riesgo de una copia imprecisa. Envolver el raster mantiene la
+extensión `.svg` (que es lo que importan los componentes existentes) y el `viewBox` cuadrado
+(201×201) sin escalar mal la imagen. El costo es que el logo no escala con nitidez infinita como un
+vector real.
+
+**La invalidaría**: que Peter entregue el logo como `.svg` vectorial, momento en el que se reemplaza
+el contenido de estos dos archivos por el vector real.
+
+## 2026-09-03 · [spec 014] `AppIconSelector` deja de tener flechas de ciclado con una sola opción
+
+**Qué se decide**: con `APP_ICON_OPTIONS` reducido a una sola entrada (Andes), `AppIconSelector.tsx`
+ya no ofrece botones de "ícono anterior/siguiente": solo muestra el ícono actual. `src/main/app-icon.ts`
+pierde la rama de "persistir un ícono personalizado" en el Dock (`runMacCustomIconCommand` y las
+rutas de AppleScript que la acompañaban): con una sola opción esa rama nunca se ejecutaba, así que
+quedaba como código muerto.
+
+**Por qué**: el pedido explícito de la spec ("Borrá los íconos alternativos del selector en vez de
+dejarlos elegibles"). Dejar las flechas de ciclado con un solo destino (ciclar sobre sí mismo) no
+tiene ninguna utilidad y solo agrega una interacción sin efecto; la regla del repo sobre no dejar
+código de intentos abandonados en el diff (`CLAUDE.md` del brain, Definition of Done) pesó igual
+para borrar la rama muerta de persistencia del ícono personalizado en vez de dejarla sin usar.
+
+**La invalidaría**: que Andes vuelva a ofrecer más de un ícono de aplicación, momento en el que
+`AppIconSelector` recupera las flechas y `app-icon.ts` recupera la rama de ícono personalizado.
+
+## 2026-09-03 · [spec 015] Crear un hilo se lanza con `launchAgentInNewTab`, nunca con `createTab` crudo
+
+**Qué se decide**: toda superficie que abra un hilo con un agente pasa por
+`src/renderer/src/lib/launch-agent-in-new-tab.ts`. `createTab` con la opción `launchAgent` solo
+etiqueta la pestaña; el binario del agente lo lanza el comando de arranque que encola
+`queueTabStartupCommand`, y ese comando lo arma únicamente `launchAgentInNewTab`.
+
+**Por qué**: "New thread" en modo simple llamaba a `createTab` directo y la pestaña levantaba un
+shell de login con la conversación montada encima: lo que el operador escribía iba a `zsh` y nada
+volvía, porque la conversación solo dibuja transcripciones de agente. La opción `launchAgent` se
+lee como si lanzara y no lanza, así que la regla se enuncia acá una vez en lugar de confiar en que
+la próxima superficie lo deduzca del nombre.
+
+**La invalidaría**: que `createTab` pase a encolar el comando de arranque por sí mismo cuando recibe
+`launchAgent`, momento en el que las dos rutas dejarían de ser distinguibles.
+
+## 2026-09-03 · [spec 015] Un eval de lanzamiento afirma el comando encolado, no la forma del argumento
+
+**Qué se decide**: un chequeo que dice "esta superficie lanza el agente" tiene que afirmar la
+llamada a `queueTabStartupCommand` con su comando, o verificar de punta a punta que llega una
+respuesta. Afirmar los argumentos con los que se llamó a `createTab` no cuenta como evidencia de
+lanzamiento.
+
+**Por qué**: el eval de la spec 010 afirmaba exactamente el objeto pasado a `createTab` y quedó en
+verde sobre una pestaña que abría un shell pelado. El e2e de la spec 011 tampoco lo agarró porque
+lanzaba desde el menú de la barra de pestañas y nunca tocaba el botón "New thread".
+
+**La invalidaría**: nada a la vista; es una regla sobre qué prueba un eval, no sobre una
+implementación.
+
+## 2026-09-03 · [spec 015] El agente simulado de los e2e responde escribiendo una transcripción
+
+**Qué se decide**: el stub dorado (`tests/e2e/fixtures/golden-stub-agent/golden-stub-agent.js`)
+acepta `--transcript <ruta>` y `--session <id>`: por cada línea enviada escribe el turno del usuario
+y una respuesta del asistente en formato Claude. Una prueba de conversación que quiera verificar
+que llega una respuesta usa eso, no una transcripción fija escrita por la prueba.
+
+**Por qué**: una transcripción fija prueba que la conversación dibuja un archivo, no que lo escrito
+llegue a un agente y vuelva — que es justo la mitad que faltaba cuando el hilo se montaba sobre un
+shell. El stub cierra el circuito sin gastar crédito de una sesión en vivo.
+
+**La invalidaría**: que el hilo deje de leer transcripciones y reciba los mensajes como datos del
+kit de agentes (criterio 2b de la spec 011), momento en el que el stub tendría que hablar ese
+protocolo en vez de escribir un archivo.
+
+## 2026-09-03 · [spec 016] El hilo del modo simple solo lanza un agente con conversación
+
+**Qué se decide**: en modo simple, "New thread" elige entre los agentes que
+`isNativeChatSupportedAgent` acepta y cuya transcripción es legible en este disco; si ninguno está
+instalado, avisa en pantalla con la acción que abre "Agents & skills" y no abre ninguna pestaña.
+Nunca cae al agente por omisión de la máquina ni a un shell.
+
+**Por qué**: `resolveDefaultAgentForNewTab` honra `defaultTuiAgent` sin preguntar si ese agente
+tiene conversación, y en una máquina con Antigravity por omisión el hilo abría una terminal cruda —
+lo único que el modo simple promete no mostrar. El filtro usa los mismos dos predicados con los que
+`decideInitialAgentTabViewMode` decide dibujar la conversación, para que la regla viva en un solo
+criterio y no en dos listas que se separan.
+
+**La invalidaría**: que la conversación deje de depender del agente —por ejemplo si el hilo pasa a
+hablar el protocolo del kit de agentes— y cualquier agente pueda dibujarse como conversación.
+
+## 2026-09-03 · [spec 016] En modo simple no se pasa ningún argumento de omisión de permisos
+
+**Qué se decide**: el hilo del modo simple lanza con los argumentos configurados menos todo valor de
+`YOLO_TUI_AGENT_ARGS` (`PERMISSION_BYPASS_ARGS`), y agrega el argumento de "preguntar siempre" del
+agente cuando está verificado (`ASK_PERMISSION_TUI_AGENT_ARGS`: `claude` y `openclaude` con
+`--permission-mode manual`). Los valores por omisión de lanzamiento no se tocan: el modo desarrollo
+sigue siendo Orca.
+
+**Por qué**: `DEFAULT_TUI_AGENT_ARGS = YOLO_TUI_AGENT_ARGS`, así que cada perfil nuevo nace con el
+argumento que anula el pedido de permiso, y sin ese pedido no hay tarjeta de permitir/rechazar, que
+es el corazón del diseño de Andes. Sacarlo no alcanza: Claude Code 2.1.260 sin argumentos corre en
+modo `auto` y escribió un archivo sin preguntar durante el chequeo funcional; el modo manual es lo
+que hace aparecer la tarjeta.
+
+**La invalidaría**: que Claude Code cambie su modo por omisión a uno que pregunte, o que el pedido
+de permiso deje de llegar por el CLI y pase a ser un dato del kit de agentes.
+
+## 2026-09-03 · [spec 016] En modo simple, activar una carpeta no siembra ninguna terminal
+
+**Qué se decide**: `ensureWorktreeHasInitialTerminal` no crea la terminal automática cuando
+`interfaceMode` es `simple`. El sembrado por trabajo explícito —un agente sembrado, un script de
+setup— sigue creando su superficie.
+
+**Por qué**: agregar una carpeta abría "Terminal 1" sola, una superficie de desarrollo en el modo
+que promete no mostrarla; el hilo se abre a propósito desde "New thread". El gate va sobre el
+sembrado automático únicamente porque apagar también el explícito rompería el arranque de carpeta
+del onboarding sin que nadie lo haya pedido.
+
+**La invalidaría**: que el modo simple gane una superficie propia que deba existir al abrir una
+carpeta, en cuyo caso la decisión no es "ninguna" sino "cuál".
+
+## 2026-09-03 · [spec 016] El aviso de "falta una carpeta" ofrece abrirla
+
+**Qué se decide**: el aviso lleva la acción "Open folder", que llama a `addRepo` — el mismo selector
+de carpetas del botón "Add Project".
+
+**Por qué**: cierra la decisión que la spec 015 dejó abierta para el Gate. Un aviso sin salida
+obliga al operador a adivinar dónde se abre una carpeta en un modo que esconde el resto de la
+aplicación.
+
+**Reemplaza a**: la parte de la decisión de la spec 015 que dejaba ese aviso sin acción "porque no
+hay una sola acción correcta".
+
+**La invalidaría**: que abrir una carpeta deje de ser una sola acción —por ejemplo, elegir entre
+carpeta local y remota— y el aviso tenga que ofrecer dos.
+
+## 2026-09-03 · [spec 016] Una rama no se declara terminada sin recorrer la app de verdad
+
+**Qué se decide**: antes de declarar una rama lista, se levanta la aplicación y se recorre el camino
+completo como lo haría una persona, con una captura por paso guardada en `docs/research/`.
+
+**Por qué**: los tres defectos que Peter encontró el 2026-09-03 pasaban todos los chequeos
+automáticos, porque ninguno abría la aplicación. En esta misma spec el recorrido encontró un cuarto
+defecto que ninguna prueba veía: con el comando ya limpio, Claude Code seguía escribiendo sin pedir
+permiso porque su modo por omisión es `auto`.
+
+**La invalidaría**: que exista una prueba automática que levante la aplicación real con el agente
+real y verifique el pedido de permiso de punta a punta.
+
+## 2026-09-03 · [spec 016] `docs/research/` se versiona
+
+**Qué se decide**: `.gitignore` deja de ignorar `docs/research/`. La evidencia fechada de
+investigación y de los chequeos funcionales —capturas incluidas— se commitea con la spec que la
+produjo.
+
+**Por qué**: la tabla "Dónde está cada cosa" de `CLAUDE.md` declara `docs/research/` como evidencia
+del repo, fechada y que no se pisa; la regla `docs/**` heredada de Orca la mandaba a notas locales,
+así que la evidencia de un criterio moría en la máquina del agente que lo corrió.
+
+**La invalidaría**: que la evidencia pase a vivir fuera del repo con una referencia estable desde la
+spec.
+
+## 2026-09-04 · [spec 017] `ANDES_INTERFACE_MODE` es una superposición de arranque y nunca se escribe en disco
+
+**Qué se decide**: `state.settings.interfaceMode` sigue teniendo el valor efectivo (la variable gana
+sobre el valor guardado, como declara la spec 002), pero el serializador escribe el valor persistido
+que `StoreRuntimeState.persistedInterfaceMode` recuerda desde la carga. Una escritura explícita
+—`updateSettings({ interfaceMode })`, el Option-clic— actualiza ese valor y sí llega al disco.
+
+**Por qué**: el valor superpuesto se serializaba junto con el resto de los settings, así que una
+sola arrancada con la variable puesta convertía el perfil a `developer` de forma permanente y el
+modo del operador no sobrevivía al reinicio siguiente. Se descartaron dos alternativas: aplicar la
+superposición en `getSettings()` —devuelve `state.settings` por identidad y tiene más de cuarenta
+llamadores en el proceso principal, cambiarlo a un objeto nuevo por llamada es un riesgo
+desproporcionado— y honrar la variable solo cuando no hay valor guardado, que contradice la regla de
+la spec 002 ("gana siempre sobre el valor persistido") y rompe la suite e2e existente, que se apoya
+en que la variable pise perfiles ya sembrados.
+
+**La invalidaría**: que se decida que la variable de entorno debe ser una preferencia y no una
+puerta de arranque, momento en el que el valor superpuesto vuelve a ser el que se guarda.
+
+## 2026-09-04 · [spec 017] El fixture de reinicio deja elegir si abre la puerta de entorno
+
+**Qué se decide**: `createRestartSession` acepta `{ interfaceModeEnvDoor: 'developer' | 'off' }`,
+con `'developer'` por omisión. Con `'off'` ninguna arrancada de esa sesión define
+`ANDES_INTERFACE_MODE`.
+
+**Por qué**: el fixture fijaba la variable en las dos arrancadas, así que ninguna prueba de reinicio
+podía observar la preferencia guardada — la prueba que la spec 010 dejó en `test.fixme` medía el
+fixture, no el producto. El valor por omisión se mantiene en `developer` para no tocar el resto de
+la suite, que asume modo desarrollo (spec 002, criterio 7).
+
+**La invalidaría**: que el modo simple pase a ser el modo por omisión de la suite e2e, momento en el
+que la omisión se invierte y la opción sobra.
+
+## 2026-09-04 · [spec 019] El alcance de un hilo se congela en su primer mensaje, nunca se relee del selector
+
+**Qué se decide**: `openNewThread` captura el alcance activo del selector (root o workspace) una
+sola vez, en el momento del lanzamiento, y lo manda como primer mensaje del hilo. Ese valor queda
+estampado en el `TerminalTab` (`threadScope`); nada lo reconcilia después. Cambiar el selector
+después de abierto un hilo no le toca el alcance a ese hilo — solo cambia lo que hereda el próximo.
+
+**Por qué**: es el piso mínimo que pidió Peter para el criterio 2 de la spec 019, y el comportamiento
+que menos sorprende — un hilo es una conversación con un agente que ya arrancó sobre una carpeta
+real (`--root` o `--workspace <slug>`); cambiarle el badge sin reiniciar esa sesión sería cosmético
+y falso.
+
+**La invalidaría**: que el hilo pase a poder cambiar de alcance en caliente, reiniciando la sesión
+del agente — eso exige un mecanismo nuevo, no alcanza con leer el store en el render.

@@ -40,6 +40,7 @@ export function buildQuickComposerStartup(input: QuickComposerStartupInput): Qui
           {
             experimentalNativeChat: settings?.experimentalNativeChat,
             openAgentTabsInChatByDefault: settings?.openAgentTabsInChatByDefault,
+            interfaceMode: settings?.interfaceMode,
             nativeChatSessionOptions: settings?.nativeChatSessionOptions
           },
           {

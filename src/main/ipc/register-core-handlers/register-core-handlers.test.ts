@@ -56,6 +56,7 @@ const {
   registerOnboardingHandlersMock,
   registerOnboardingBrainHandlersMock,
   registerCommandCenterHandlersMock,
+  registerWorkspaceScopeHandlersMock,
   registerDashboardPopoutHandlersMock,
   isDashboardPopoutRendererMock,
   registerTerminalPreviewHandlersMock,
@@ -124,6 +125,7 @@ const {
   registerOnboardingHandlersMock: vi.fn(),
   registerOnboardingBrainHandlersMock: vi.fn(),
   registerCommandCenterHandlersMock: vi.fn(),
+  registerWorkspaceScopeHandlersMock: vi.fn(),
   registerDashboardPopoutHandlersMock: vi.fn(),
   isDashboardPopoutRendererMock: vi.fn(),
   registerTerminalPreviewHandlersMock: vi.fn(),
@@ -162,6 +164,10 @@ vi.mock('../command-center', () => ({
 
 vi.mock('../onboarding-brain', () => ({
   registerOnboardingBrainHandlers: registerOnboardingBrainHandlersMock
+}))
+
+vi.mock('../workspace-scope', () => ({
+  registerWorkspaceScopeHandlers: registerWorkspaceScopeHandlersMock
 }))
 
 vi.mock('../onboarding', () => ({

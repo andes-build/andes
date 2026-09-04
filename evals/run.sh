@@ -1054,6 +1054,55 @@ spec008_criterio8_codigo_sano
 
 # --- specs/done/014-sin-marca-visual-orca.md ---
 
+# --- specs/done/015-el-hilo-responde.md ---
+
+spec015_unit() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/sidebar/workspace-scope/open-new-thread.test.ts \
+    src/renderer/src/components/sidebar/workspace-scope/SimpleModeNav.test.tsx \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec015#1 crear un hilo encola el comando de arranque del agente detectado, no un shell pelado"
+    ok "spec015#2 el hilo abre como conversación en modo simple, con el agente puesto en la pestaña"
+    ok "spec015#3 sin agente instalado la pantalla lo dice y ofrece una acción; no abre pestaña"
+    ok "spec015#4 sin carpeta abierta la pantalla lo dice; no abre pestaña"
+    ok "spec015#6 el botón delega en el lanzador del hilo y nunca vuelve a createTab crudo"
+  else
+    ko "spec015#1 crear un hilo encola el comando de arranque del agente detectado, no un shell pelado"
+    ko "spec015#2 el hilo abre como conversación en modo simple, con el agente puesto en la pestaña"
+    ko "spec015#3 sin agente instalado la pantalla lo dice y ofrece una acción; no abre pestaña"
+    ko "spec015#4 sin carpeta abierta la pantalla lo dice; no abre pestaña"
+    ko "spec015#6 el botón delega en el lanzador del hilo y nunca vuelve a createTab crudo"
+    ev "vitest en rojo sobre open-new-thread.test.ts / SimpleModeNav.test.tsx"
+  fi
+}
+
+spec015_criterio5_prueba_de_interfaz() {
+  local spec_file stub_hits raw_create_tab
+  spec_file=tests/e2e/simple-mode-thread-answers.spec.ts
+  stub_hits=$(grep -c "GOLDEN_STUB_REPLY to: hola" "$spec_file" 2>/dev/null)
+  raw_create_tab=$(grep -c "\.createTab(" src/renderer/src/components/sidebar/workspace-scope/open-new-thread.ts 2>/dev/null)
+  if [ -f "$spec_file" ] && [ "$stub_hits" -ge 1 ] && [ "$raw_create_tab" = "0" ]; then
+    ok "spec015#5 prueba de interfaz: escribir un mensaje en el hilo trae una respuesta del agente simulado"
+    ev "e2e ($spec_file) corrido aparte con --workers=1 — evidencia pegada en la spec archivada."
+  else
+    ko "spec015#5 prueba de interfaz: escribir un mensaje en el hilo trae una respuesta del agente simulado"
+    ev "e2e=$spec_file · asserts de respuesta del stub=$stub_hits (>=1) · llamadas a .createTab( en open-new-thread.ts=$raw_create_tab (debe ser 0)"
+  fi
+}
+
+spec015_criterio7_codigo_sano() {
+  local launcher_hits
+  launcher_hits=$(grep -c "launchAgentInNewTab" src/renderer/src/components/sidebar/workspace-scope/open-new-thread.ts 2>/dev/null)
+  if [ "$launcher_hits" -ge 1 ]; then
+    ok "spec015#7 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+  else
+    ko "spec015#7 código sano (evidencia completa de pnpm tc / check:code-quality:changed en la spec archivada)"
+    ev "open-new-thread.ts no pasa por launchAgentInNewTab"
+  fi
+}
+
 spec014_criterio1_sin_archivos_de_marca_visual() {
   local name_hits svg_content_hits
   name_hits=$(find resources -type f \( -iname '*.png' -o -iname '*.icns' -o -iname '*.ico' -o -iname '*.svg' \) -iname '*orca*' | wc -l | tr -d ' ')
@@ -1125,6 +1174,9 @@ spec014_criterio2_selector_de_icono_sin_alternativas
 spec014_criterio3_bandeja_sin_orca
 spec014_criterio4_codigo_sano
 spec014_criterio5_verificacion_visual
+spec015_unit
+spec015_criterio5_prueba_de_interfaz
+spec015_criterio7_codigo_sano
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

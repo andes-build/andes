@@ -382,10 +382,14 @@ toca `src/main/runtime/` ni la capa que lanza el binario del agente.
   learnings.md → "Learnings", backlog.md → "Backlog", initiatives → "Initiatives", research →
   "Research"; un nombre no reconocido se muestra tal cual) y un visor de markdown con formato
   (reusa `MarkdownPreviewBody` del editor) con el botón "Open a thread about this file".
-- **New thread**: crea y activa una pestaña nueva (`createTab`, `viewMode: 'chat'`) sobre la carpeta
-  activa, lanzando el agente detectado si hay uno — nunca toca `native-chat/`. El modo chat efectivo
-  depende de la propia elegibilidad de native-chat (necesita un CLI real corriendo); sin eso, la
-  pestaña queda en modo terminal pero es una sesión real, nunca una pantalla vacía.
+- **New thread**: `open-new-thread.ts` espera la detección de agentes (`ensureDetectedAgents`),
+  elige el agente con `resolveDefaultAgentForNewTab` y lanza con `launchAgentInNewTab` sobre la
+  carpeta activa — nunca toca `native-chat/`. Es `launchAgentInNewTab` el que crea la pestaña **y**
+  encola el comando de arranque: `createTab` con `launchAgent` solo etiqueta, y una pestaña
+  etiquetada sin comando encolado levanta un shell de login (spec 015). El modo chat lo decide
+  `decideInitialAgentTabViewMode`, que en modo simple devuelve `'chat'` para todo agente soportado.
+  Sin carpeta abierta o sin agente instalado no se abre pestaña: se avisa en pantalla, y el segundo
+  caso ofrece la acción que abre "Agents & skills".
 - **Command Center**: no tiene pantalla propia en esta spec. El botón del nav navega a
   `activeView: 'terminal'` — la spec 009 (pausada) resuelve su contenido enganchando su propio gate
   sobre esa misma vista, no sobre una vista separada.

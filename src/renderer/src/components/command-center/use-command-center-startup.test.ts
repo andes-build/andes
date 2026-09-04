@@ -22,13 +22,13 @@ describe('spec009#8 useCommandCenterStartup — loading timer', () => {
 
   it('starts loading without the slow flag', () => {
     stubCommandCenterApi(() => new Promise(() => {}))
-    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain' }))
+    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain', scope: { type: 'root' } }))
     expect(result.current.state).toEqual({ status: 'loading', slow: false })
   })
 
   it('flips to slow after the threshold when the scan has not resolved', () => {
     stubCommandCenterApi(() => new Promise(() => {}))
-    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain' }))
+    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain', scope: { type: 'root' } }))
     act(() => {
       vi.advanceTimersByTime(COMMAND_CENTER_SLOW_THRESHOLD_MS)
     })
@@ -37,7 +37,7 @@ describe('spec009#8 useCommandCenterStartup — loading timer', () => {
 
   it('never flips to slow once the scan has resolved', async () => {
     stubCommandCenterApi(() => Promise.resolve({ kind: 'unavailable' }))
-    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain' }))
+    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain', scope: { type: 'root' } }))
     await act(async () => {
       await Promise.resolve()
     })
@@ -56,7 +56,7 @@ describe('spec009#7 useCommandCenterStartup — result states', () => {
 
   it('reports not-prepared', async () => {
     stubCommandCenterApi(() => Promise.resolve({ kind: 'not-prepared' }))
-    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain' }))
+    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain', scope: { type: 'root' } }))
     await waitFor(() => expect(result.current.state.status).toBe('not-prepared'))
   })
 
@@ -64,13 +64,13 @@ describe('spec009#7 useCommandCenterStartup — result states', () => {
     stubCommandCenterApi(() =>
       Promise.resolve({ kind: 'error', stderr: 'boom: python3 missing', code: 1 })
     )
-    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain' }))
+    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain', scope: { type: 'root' } }))
     await waitFor(() => expect(result.current.state.status).toBe('run-error'))
   })
 
   it('reports a parse-error when the four sections are missing', async () => {
     stubCommandCenterApi(() => Promise.resolve({ kind: 'ok', stdout: 'garbage output' }))
-    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain' }))
+    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain', scope: { type: 'root' } }))
     await waitFor(() => expect(result.current.state.status).toBe('parse-error'))
   })
 
@@ -90,7 +90,7 @@ describe('spec009#7 useCommandCenterStartup — result states', () => {
       '0 nodes · 0.0s'
     ].join('\n')
     stubCommandCenterApi(() => Promise.resolve({ kind: 'ok', stdout }))
-    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain' }))
+    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain', scope: { type: 'root' } }))
     await waitFor(() => expect(result.current.state.status).toBe('ready'))
   })
 
@@ -100,12 +100,59 @@ describe('spec009#7 useCommandCenterStartup — result states', () => {
       .mockResolvedValueOnce({ kind: 'unavailable' })
       .mockResolvedValueOnce({ kind: 'not-prepared' })
     stubCommandCenterApi(runStartup)
-    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain' }))
+    const { result } = renderHook(() => useCommandCenterStartup({ brainPath: '/brain', scope: { type: 'root' } }))
     await waitFor(() => expect(result.current.state.status).toBe('unavailable'))
     act(() => {
       result.current.retry()
     })
     await waitFor(() => expect(result.current.state.status).toBe('not-prepared'))
     expect(runStartup).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('spec009#2 useCommandCenterStartup — the scope comes from the selector', () => {
+  const runStartup = vi.fn()
+
+  beforeEach(() => {
+    runStartup.mockReset()
+    runStartup.mockResolvedValue({ kind: 'not-prepared' })
+    stubCommandCenterApi(runStartup)
+  })
+
+  afterEach(() => {
+    delete (window as unknown as { api?: unknown }).api
+  })
+
+  it('passes the selected scope through to the scan', async () => {
+    renderHook(() =>
+      useCommandCenterStartup({
+        brainPath: '/brain',
+        scope: { type: 'workspace', slug: 'tandem-pay' }
+      })
+    )
+    await waitFor(() => expect(runStartup).toHaveBeenCalled())
+    expect(runStartup).toHaveBeenCalledWith({
+      brainPath: '/brain',
+      scope: { type: 'workspace', slug: 'tandem-pay' }
+    })
+  })
+
+  it('re-runs the scan when the selected scope changes, and not on a plain re-render', async () => {
+    const { rerender } = renderHook(
+      (props: { slug: string | null }) =>
+        useCommandCenterStartup({
+          brainPath: '/brain',
+          scope: props.slug ? { type: 'workspace', slug: props.slug } : { type: 'root' }
+        }),
+      { initialProps: { slug: 'tandem-pay' as string | null } }
+    )
+    await waitFor(() => expect(runStartup).toHaveBeenCalledTimes(1))
+
+    rerender({ slug: 'tandem-pay' })
+    expect(runStartup).toHaveBeenCalledTimes(1)
+
+    rerender({ slug: null })
+    await waitFor(() => expect(runStartup).toHaveBeenCalledTimes(2))
+    expect(runStartup).toHaveBeenLastCalledWith({ brainPath: '/brain', scope: { type: 'root' } })
   })
 })

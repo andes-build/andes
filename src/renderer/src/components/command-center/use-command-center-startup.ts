@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { CommandCenterScope } from '../../../../shared/command-center-types'
 import {
   isCommandCenterStartupParseError,
   parseCommandCenterStartupOutput,
@@ -20,14 +21,18 @@ export type CommandCenterStartupState =
 
 export type UseCommandCenterStartupArgs = {
   brainPath: string | null
+  /** The scope the scan covers, as chosen in the sidebar selector. Changing
+   *  it re-runs the scan: the Command Center always shows the scope the
+   *  operator currently has selected. */
+  scope: CommandCenterScope
 }
 
 /**
  * Runs the core's startup scan for the active brain and turns its result
  * into a state the Command Center can render directly. The scope (a
- * workspace slug, or root) is resolved on the main side — there is no
- * workspace selector yet (spec 010) for this hook to read one from; see
- * `resolveCommandCenterScope`. Never blocks the window: the scan runs on the
+ * workspace slug, or root) comes from the sidebar selector (spec 010) and is
+ * passed through to the main side, never guessed there. Never blocks the
+ * window: the scan runs on the
  * main process via IPC while this hook reports 'loading', and flips a `slow`
  * flag once it has run past `COMMAND_CENTER_SLOW_THRESHOLD_MS` so the UI can
  * say so and offer a retry.
@@ -37,6 +42,17 @@ export function useCommandCenterStartup(args: UseCommandCenterStartupArgs): {
   retry: () => void
 } {
   const { brainPath } = args
+  // Why: callers rebuild the scope object on every render (it comes out of
+  // `resolveActiveWorkspaceScope`), so depending on its identity would re-run
+  // the scan forever. Key it by value and rebuild one stable object.
+  const scopeKey = args.scope.type === 'root' ? 'root' : `workspace:${args.scope.slug}`
+  const scope = useMemo<CommandCenterScope>(
+    () =>
+      scopeKey === 'root'
+        ? { type: 'root' }
+        : { type: 'workspace', slug: scopeKey.slice('workspace:'.length) },
+    [scopeKey]
+  )
   const [state, setState] = useState<CommandCenterStartupState>({ status: 'loading', slow: false })
   const [attempt, setAttempt] = useState(0)
   const retry = useCallback(() => setAttempt((n) => n + 1), [])
@@ -63,7 +79,7 @@ export function useCommandCenterStartup(args: UseCommandCenterStartupArgs): {
     }, COMMAND_CENTER_SLOW_THRESHOLD_MS)
 
     void window.api.commandCenter
-      .runStartup({ brainPath })
+      .runStartup({ brainPath, scope })
       .then((result) => {
         if (cancelled) {
           return
@@ -97,7 +113,7 @@ export function useCommandCenterStartup(args: UseCommandCenterStartupArgs): {
       cancelled = true
       clearTimeout(slowTimer)
     }
-  }, [brainPath, attempt])
+  }, [brainPath, scope, attempt])
 
   return { state, retry }
 }

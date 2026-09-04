@@ -17288,7 +17288,8 @@
   },
   "commandCenter": {
     "header": {
-      "title": "Command Center"
+      "title": "Command Center",
+      "rootScope": "My work"
     },
     "actionLine": {
       "empty": "Nothing urgent. Open a thread whenever you want.",
@@ -17342,9 +17343,10 @@
       "description": "Andes could not run the workspace scan on this computer.",
       "retry": "Retry"
     },
-    "agentLaunch": {
-      "noAgentDetected": "No AI agent was detected on this computer.",
-      "launchFailed": "Could not open a new thread."
+    "emptyScan": {
+      "title": "This workspace is empty so far",
+      "description": "Nothing is waiting, running, or queued yet. Open a thread to start something.",
+      "action": "Open thread"
     }
   }
 }

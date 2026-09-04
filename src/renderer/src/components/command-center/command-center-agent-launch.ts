@@ -1,55 +1,19 @@
-import { toast } from 'sonner'
-import { useAppStore } from '@/store'
-import { launchAgentInNewTab } from '@/lib/launch-agent-in-new-tab'
-import { pickSourceControlLaunchAgent } from '@/lib/source-control-launch-agent-selection'
-import { focusTerminalTabSurface } from '@/lib/focus-terminal-tab-surface'
-import { translate } from '@/i18n/i18n'
+import { openNewThread } from '@/components/sidebar/workspace-scope/open-new-thread'
 
 /**
- * Opens a new agent thread in the currently active workspace with `message`
- * already written as the first message — never a blank terminal (spec 009,
- * criterion 6). Reuses `launchAgentInNewTab`, the same existing, tested path
- * `startFixChecksAgent` uses to open a thread about a check finding in an
- * *existing* worktree: it is the one launch path in the app that already
- * does this without creating a new worktree, so this never touches the
- * layer that actually spawns the agent binary.
+ * Opens a thread from a Command Center button, with `message` already written
+ * as part of its first message — never a blank terminal and never a raw
+ * agent session (spec 009, criterion 6, resolved against the thread that
+ * specs 011/015/016/019 landed in `main`).
+ *
+ * This delegates to `openNewThread` rather than calling `launchAgentInNewTab`
+ * itself: that is the one path in simple mode that picks a
+ * conversation-capable agent, launches it without the permission-bypass
+ * arguments, and stamps the thread with the scope the selector had at that
+ * moment (spec 019). A second launch path here would silently drift from all
+ * three. Nothing in the layer that spawns the agent binary is touched: the
+ * first message travels as `launchAgentInNewTab`'s existing `prompt`.
  */
-export async function openCommandCenterThread(
-  worktreeId: string,
-  message: string
-): Promise<boolean> {
-  const store = useAppStore.getState()
-  const detectedAgents = await store.ensureDetectedAgents()
-  const agent = pickSourceControlLaunchAgent({
-    defaultAgent: store.settings?.defaultTuiAgent,
-    detectedAgents,
-    disabledAgents: store.settings?.disabledTuiAgents
-  })
-  if (!agent) {
-    toast.error(
-      translate(
-        'commandCenter.agentLaunch.noAgentDetected',
-        'No AI agent was detected on this computer.'
-      )
-    )
-    return false
-  }
-  const result = launchAgentInNewTab({
-    agent,
-    worktreeId,
-    prompt: message,
-    promptDelivery: 'submit-after-ready',
-    // Why: 'unknown' is the closest existing LaunchSource value — adding a
-    // dedicated 'command_center' entry to the shared telemetry schema is out
-    // of this spec's scope (see decisions.md).
-    launchSource: 'unknown'
-  })
-  if (!result) {
-    toast.error(translate('commandCenter.agentLaunch.launchFailed', 'Could not open a new thread.'))
-    return false
-  }
-  if (result.tabId) {
-    focusTerminalTabSurface(result.tabId)
-  }
-  return true
+export async function openCommandCenterThread(message: string): Promise<boolean> {
+  return openNewThread({ seedMessage: message })
 }

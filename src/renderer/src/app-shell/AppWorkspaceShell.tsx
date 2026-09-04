@@ -97,12 +97,8 @@ function ActivePage({
       {activeView === 'terminal' &&
       !creationLayoutActive &&
       commandCenterGate.active &&
-      commandCenterGate.brainPath &&
-      commandCenterGate.worktreeId ? (
-        <CommandCenter
-          brainPath={commandCenterGate.brainPath}
-          worktreeId={commandCenterGate.worktreeId}
-        />
+      commandCenterGate.brainPath ? (
+        <CommandCenter brainPath={commandCenterGate.brainPath} />
       ) : null}
       {activeView === 'terminal' && !activeWorktreeId && !creationLayoutActive ? <Landing /> : null}
     </>

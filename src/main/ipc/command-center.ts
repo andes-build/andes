@@ -3,7 +3,6 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { resolveVendoredCorePath } from '../onboarding/brain-preparation'
 import { runCommandCenterStartup } from '../command-center/run-command-center-startup'
-import { resolveCommandCenterScope } from '../command-center/resolve-command-center-scope'
 import type {
   CommandCenterRunStartupArgs,
   CommandCenterRunStartupResult
@@ -22,8 +21,7 @@ export function registerCommandCenterHandlers(): void {
       if (!existsSync(join(args.brainPath, '.os', 'core'))) {
         return { kind: 'not-prepared' }
       }
-      const scope = resolveCommandCenterScope(args.brainPath)
-      return runCommandCenterStartup(args.brainPath, resolveVendoredCorePath(), scope)
+      return runCommandCenterStartup(args.brainPath, resolveVendoredCorePath(), args.scope)
     }
   )
 }

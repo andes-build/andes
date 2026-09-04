@@ -5,6 +5,11 @@ export type CommandCenterScope = { type: 'workspace'; slug: string } | { type: '
 
 export type CommandCenterRunStartupArgs = {
   brainPath: string
+  /** Which scope the scan covers. Comes from the simple-mode workspace
+   *  selector (spec 010), never guessed on the main side: the selector is
+   *  the one place the operator chooses a scope, and every simple-mode
+   *  surface reads it (`store/slices/workspace-scope.ts`). */
+  scope: CommandCenterScope
 }
 
 export type CommandCenterRunStartupResult =

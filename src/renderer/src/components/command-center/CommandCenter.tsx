@@ -1,13 +1,13 @@
 import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
+import { useAppStore } from '@/store'
+import { resolveActiveWorkspaceScope } from '@/store/slices/workspace-scope'
 import { useCommandCenterStartup } from './use-command-center-startup'
 import { deriveSuggestedAction } from './command-center-suggested-action'
-import {
-  buildCheckFindingMessage,
-  buildWaitingResolveMessage
-} from './command-center-first-message'
+import { buildCheckFindingMessage, buildWaitingResolveMessage } from './command-center-first-message'
 import { openCommandCenterThread } from './command-center-agent-launch'
+import { isCommandCenterScanEmpty } from './command-center-scan-empty'
 import { CommandCenterActionLine } from './CommandCenterActionLine'
 import { CommandCenterWaitingCard } from './CommandCenterWaitingCard'
 import { CommandCenterInProgressCard } from './CommandCenterInProgressCard'
@@ -15,6 +15,7 @@ import { CommandCenterQueueCard } from './CommandCenterQueueCard'
 import { CommandCenterChecksCard } from './CommandCenterChecksCard'
 import { CommandCenterFooter } from './CommandCenterFooter'
 import {
+  CommandCenterEmptyScanState,
   CommandCenterLoadingState,
   CommandCenterNotPreparedState,
   CommandCenterParseErrorState,
@@ -24,27 +25,36 @@ import {
 
 export type CommandCenterProps = {
   brainPath: string
-  /** The workspace's own workspace/worktree id — where a thread opened from
-   *  here lives (spec 009, criterion 6). */
-  worktreeId: string
 }
 
 /**
  * Andes's own home screen in simple mode (spec 009): the core's startup scan
- * for the active workspace, shown as its four fixed sections, with a single
- * suggested action above them. Every button here opens an agent thread with
- * a first message already written — never a blank terminal.
+ * for the scope chosen in the sidebar selector, shown as its four fixed
+ * sections, with a single suggested action above them. Every button here
+ * opens a thread with a first message already written — never a blank
+ * terminal.
  */
-export function CommandCenter({ brainPath, worktreeId }: CommandCenterProps): React.JSX.Element {
-  const { state, retry } = useCommandCenterStartup({ brainPath })
+export function CommandCenter({ brainPath }: CommandCenterProps): React.JSX.Element {
+  // Spec 010's selector is the single place a scope is chosen; this screen
+  // reads it instead of keeping its own notion of scope.
+  const activeWorkspaceScopeSlug = useAppStore((s) => s.activeWorkspaceScopeSlug)
+  const workspaceScopeOptions = useAppStore((s) => s.workspaceScopeOptions)
+  const selectorScope = resolveActiveWorkspaceScope(activeWorkspaceScopeSlug, workspaceScopeOptions)
+  const scope =
+    selectorScope.kind === 'root'
+      ? ({ type: 'root' } as const)
+      : ({ type: 'workspace', slug: selectorScope.slug } as const)
+  const scopeName =
+    selectorScope.kind === 'root'
+      ? translate('commandCenter.header.rootScope', 'My work')
+      : selectorScope.name
+
+  const { state, retry } = useCommandCenterStartup({ brainPath, scope })
   const [preparing, setPreparing] = useState(false)
 
-  const openThread = useCallback(
-    (message: string) => {
-      void openCommandCenterThread(worktreeId, message)
-    },
-    [worktreeId]
-  )
+  const openThread = useCallback((message: string) => {
+    void openCommandCenterThread(message)
+  }, [])
 
   const handlePrepare = useCallback(() => {
     setPreparing(true)
@@ -57,11 +67,21 @@ export function CommandCenter({ brainPath, worktreeId }: CommandCenterProps): Re
       .finally(() => setPreparing(false))
   }, [brainPath, retry])
 
+  const scanIsEmpty = state.status === 'ready' && isCommandCenterScanEmpty(state.output)
+
   return (
-    <div className="scrollbar-sleek flex h-full min-h-0 flex-col gap-4 overflow-y-auto px-8 py-6">
-      <h1 className="text-2xl font-semibold">
-        {translate('commandCenter.header.title', 'Command Center')}
-      </h1>
+    <div
+      data-testid="command-center"
+      className="scrollbar-sleek flex h-full min-h-0 flex-col gap-4 overflow-y-auto px-8 py-6"
+    >
+      <div className="flex flex-col gap-0.5">
+        <h1 className="text-2xl font-semibold">
+          {translate('commandCenter.header.title', 'Command Center')}
+        </h1>
+        <p data-testid="command-center-scope" className="text-sm text-muted-foreground">
+          {scopeName}
+        </p>
+      </div>
 
       {state.status === 'loading' ? (
         <CommandCenterLoadingState slow={state.slow} onRetry={retry} />
@@ -75,10 +95,19 @@ export function CommandCenter({ brainPath, worktreeId }: CommandCenterProps): Re
 
       {state.status === 'ready' ? (
         <>
-          <CommandCenterActionLine
-            suggestion={deriveSuggestedAction(state.output)}
-            onOpenThread={openThread}
-          />
+          {/* Criterion 7's third uncomfortable state: a scan that ran fine and
+              found nothing anywhere. The four cards still render — criterion 2
+              shows the sections as they came — but the line above says plainly
+              that the folder is empty rather than leaving a suggestion slot
+              that reads like a bug. */}
+          {scanIsEmpty ? (
+            <CommandCenterEmptyScanState onOpenThread={openThread} />
+          ) : (
+            <CommandCenterActionLine
+              suggestion={deriveSuggestedAction(state.output)}
+              onOpenThread={openThread}
+            />
+          )}
           <div className="grid flex-1 grid-cols-3 auto-rows-min gap-4">
             <CommandCenterWaitingCard
               section={state.output.waiting}

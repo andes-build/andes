@@ -12,13 +12,20 @@ export type CommandCenterGate = {
 /**
  * Decides whether the Command Center takes over the "terminal" view for the
  * active workspace (spec 009, criterion 1): simple mode, an active workspace
- * (worktree or plain folder), and no *thread* opened in it yet. A plain
- * terminal tab does not count as a thread — opening a folder already seeds
- * one by itself (`createFolderWorkspace`'s own default-tab behavior, outside
- * this spec) — only a tab actually launched with an agent
- * (`TerminalTab.launchAgent`, set by `launchAgentInNewTab`) does. There is no
- * workspace selector yet (spec 010): the active workspace *is* the scope,
- * root or worktree alike.
+ * (worktree or plain folder), and either no *thread* opened in it yet or the
+ * operator asking for it from the navigation.
+ *
+ * A plain terminal tab does not count as a thread — opening a folder already
+ * seeds one by itself (`createFolderWorkspace`'s own default-tab behavior,
+ * outside this spec) — only a tab actually launched with an agent
+ * (`TerminalTab.launchAgent`, set by `launchAgentInNewTab`) does.
+ *
+ * `commandCenterRequested` is the navigation item spec 010 shipped pointing
+ * at this screen: without it the item would be dead once a thread exists,
+ * because the thread owns the terminal view.
+ *
+ * Which *scope* the screen scans is not decided here: the Command Center
+ * reads spec 010's selector directly.
  */
 export function useCommandCenterGate(activeWorktreeId: string | null): CommandCenterGate {
   const interfaceMode = useInterfaceMode()
@@ -32,7 +39,12 @@ export function useCommandCenterGate(activeWorktreeId: string | null): CommandCe
       : false
   )
 
-  if (interfaceMode !== 'simple' || !activeWorktreeId || hasAgentThread) {
+  const commandCenterRequested = useAppStore((s) => s.commandCenterRequested)
+
+  if (interfaceMode !== 'simple' || !activeWorktreeId) {
+    return { active: false, brainPath: null, worktreeId: null }
+  }
+  if (hasAgentThread && !commandCenterRequested) {
     return { active: false, brainPath: null, worktreeId: null }
   }
 

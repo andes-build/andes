@@ -129,3 +129,44 @@ export function CommandCenterUnavailableState({ onRetry }: { onRetry: () => void
     />
   )
 }
+
+/**
+ * A scan that ran fine and found nothing (spec 009, criterion 7). It replaces
+ * the suggested-action line, never the cards: the four sections still show
+ * what the scan printed.
+ */
+export function CommandCenterEmptyScanState({
+  onOpenThread
+}: {
+  onOpenThread: (message: string) => void
+}) {
+  return (
+    <div
+      data-command-center-state="empty-scan"
+      className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card px-4 py-3"
+    >
+      <div className="flex min-w-0 flex-col">
+        <p className="text-sm font-medium">
+          {translate('commandCenter.emptyScan.title', 'This workspace is empty so far')}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {translate(
+            'commandCenter.emptyScan.description',
+            'Nothing is waiting, running, or queued yet. Open a thread to start something.'
+          )}
+        </p>
+      </div>
+      <Button
+        size="sm"
+        className="shrink-0"
+        onClick={() =>
+          onOpenThread(
+            'This workspace is empty. Help me figure out what to start here and set it up.'
+          )
+        }
+      >
+        {translate('commandCenter.emptyScan.action', 'Open thread')}
+      </Button>
+    </div>
+  )
+}

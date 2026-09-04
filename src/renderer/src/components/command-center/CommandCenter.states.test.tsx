@@ -18,7 +18,7 @@ afterEach(() => {
 describe('spec009#7 CommandCenter — uncomfortable states', () => {
   it('shows a message and a way forward for an unprepared folder, never a blank screen', async () => {
     stubApi(() => Promise.resolve({ kind: 'not-prepared' }))
-    render(<CommandCenter brainPath="/brain" worktreeId="w1" />)
+    render(<CommandCenter brainPath="/brain" />)
 
     await waitFor(() => expect(screen.getByText("This folder isn't set up yet")).toBeTruthy())
     expect(screen.getByRole('button', { name: 'Prepare this folder' })).toBeTruthy()
@@ -32,7 +32,7 @@ describe('spec009#7 CommandCenter — uncomfortable states', () => {
         code: 1
       })
     )
-    render(<CommandCenter brainPath="/brain" worktreeId="w1" />)
+    render(<CommandCenter brainPath="/brain" />)
 
     await waitFor(() => expect(screen.getByText("Couldn't read your workspace")).toBeTruthy())
     expect(screen.queryByText(/python3/)).toBeNull()
@@ -56,7 +56,7 @@ describe('spec009#7 CommandCenter — uncomfortable states', () => {
       '2 nodes · 0.1s'
     ].join('\n')
     stubApi(() => Promise.resolve({ kind: 'ok', stdout }))
-    render(<CommandCenter brainPath="/brain" worktreeId="w1" />)
+    render(<CommandCenter brainPath="/brain" />)
 
     await waitFor(() => expect(screen.getByText('Nothing is waiting on you.')).toBeTruthy())
     expect(screen.getByText('Nothing in progress.')).toBeTruthy()
@@ -64,5 +64,31 @@ describe('spec009#7 CommandCenter — uncomfortable states', () => {
     // so it never hits its own translated empty state — it shows the raw row.
     expect(screen.getAllByText('no findings').length).toBeGreaterThan(0)
     expect(screen.getByText('Nothing urgent. Open a thread whenever you want.')).toBeTruthy()
+  })
+})
+
+describe('spec009#7 CommandCenter — a scan that found nothing', () => {
+  const EMPTY_SCAN = [
+    'Waiting for your decision',
+    '  nothing is waiting on you',
+    '',
+    'In progress',
+    '  nothing in progress',
+    '',
+    'Queued',
+    '',
+    'Checks',
+    '  identity 1/1',
+    '0 nodes · 0.1s'
+  ].join('\n')
+
+  it('says so in its own words, and still shows the four sections', async () => {
+    stubApi(() => Promise.resolve({ kind: 'ok', stdout: EMPTY_SCAN }))
+    render(<CommandCenter brainPath="/brain" />)
+
+    await waitFor(() => expect(screen.getByText('This workspace is empty so far')).toBeTruthy())
+    expect(document.querySelector('[data-command-center-card="waiting"]')).toBeTruthy()
+    expect(document.querySelector('[data-command-center-card="checks"]')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Open thread' })).toBeTruthy()
   })
 })

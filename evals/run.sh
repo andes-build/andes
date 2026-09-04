@@ -1686,6 +1686,79 @@ spec009_criterio11_codigo_sano() {
   fi
 }
 
+# --- specs/012-el-permiso-de-claude-llega-como-dato.md ---
+
+spec012_criterio1_permiso_como_dato() {
+  local evidencia=docs/research/2026-09-04-permiso-de-claude-como-dato/README.md
+  local prueba=src/main/claude/claude-structured-permission-as-data.integration.test.ts
+  if [ -f "$evidencia" ] && [ -f "$prueba" ] && grep -q "permission-prompt-tool" "$evidencia"; then
+    ok "spec012#1 el permiso llega como dato y la respuesta vuelve (2/2 el 2026-09-04; se repite con ANDES_EVAL_CLAUDE_REAL=1)"
+  else
+    ko "spec012#1 el permiso llega como dato y la respuesta vuelve"
+    ev "evidencia=$evidencia · prueba=$prueba"
+  fi
+}
+
+spec012_criterio2_3_4_5_unit() {
+  local out
+  out=$(npx vitest run --config config/vitest.config.ts \
+    src/main/claude \
+    src/main/native-chat/agent-session-wire/structured-agent-session-adapter-router.test.ts \
+    src/renderer/src/components/native-chat/NativeChatApprovalCard.test.tsx \
+    src/main/codex 2>&1)
+  if printf '%s' "$out" | grep -q "Test Files.*failed"; then
+    ko "spec012#2#3#4#5 el porton, la tarjeta, los campos del permiso y Codex intacto"
+    ev "$(printf '%s' "$out" | grep -E 'Test Files|Tests ' | tr '\n' ' ')"
+  else
+    ok "spec012#2#3#4#5 el porton, la tarjeta, los campos del permiso y Codex intacto"
+  fi
+}
+
+spec012_criterio3_sin_pty_en_la_tarjeta() {
+  local hits
+  hits=$(grep -c "PTY" src/renderer/src/components/native-chat/NativeChatApprovalCard.tsx)
+  if [ "$hits" = "0" ]; then
+    ok "spec012#3 la tarjeta de permiso no nombra la PTY"
+  else
+    ko "spec012#3 la tarjeta de permiso no nombra la PTY"
+    ev "menciones de PTY=$hits (debe ser 0)"
+  fi
+}
+
+spec012_criterio7_lo_que_falta_declarado() {
+  local declarado=1
+  for tema in subagents questions "session options" diffs; do
+    grep -qi "$tema" src/main/claude/claude-structured-session-adapter.ts || declarado=0
+  done
+  grep -q "criterion 7" src/main/claude/claude-structured-session-adapter.ts || declarado=0
+  if [ "$declarado" = "1" ]; then
+    ok "spec012#7 lo que el carril no puede dar esta declarado en el adaptador"
+  else
+    ko "spec012#7 lo que el carril no puede dar esta declarado en el adaptador"
+    ev "faltan temas declarados en src/main/claude/claude-structured-session-adapter.ts"
+  fi
+}
+
+spec012_criterio8_codigo_sano() {
+  local tc_ok=1 lint_ok=1
+  pnpm tc >/dev/null 2>&1 || tc_ok=0
+  npx oxlint src/main/claude src/main/native-chat/agent-session-wire \
+    src/renderer/src/components/native-chat >/dev/null 2>&1 || lint_ok=0
+  if [ "$tc_ok" = "1" ] && [ "$lint_ok" = "1" ]; then
+    ok "spec012#8 codigo sano"
+  else
+    ko "spec012#8 codigo sano"
+    ev "pnpm tc=$tc_ok · oxlint=$lint_ok (deben ser 1)"
+  fi
+}
+
+spec012_criterio9_chequeo_funcional() {
+  # El chequeo esta hecho y su resultado es negativo: la interfaz no llega al carril nuevo.
+  # El eval reporta rojo a proposito hasta que se decida como el carril recibe el primer mensaje.
+  ko "spec012#9 chequeo funcional en la app real"
+  ev "docs/research/2026-09-04-chequeo-funcional-spec-012/README.md: el modo simple siempre manda un primer mensaje y el porton estructurado exige que no lo haya"
+}
+
 spec014_criterio1_sin_archivos_de_marca_visual
 spec014_criterio2_selector_de_icono_sin_alternativas
 spec014_criterio3_bandeja_sin_orca
@@ -1717,6 +1790,12 @@ spec009_criterio11_codigo_sano
 spec021_criterio1_2_5_6_capa_de_render
 spec021_criterio3_4_prueba_de_interfaz
 spec021_criterio8_chequeo_funcional
+spec012_criterio1_permiso_como_dato
+spec012_criterio2_3_4_5_unit
+spec012_criterio3_sin_pty_en_la_tarjeta
+spec012_criterio7_lo_que_falta_declarado
+spec012_criterio8_codigo_sano
+spec012_criterio9_chequeo_funcional
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

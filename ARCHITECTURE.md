@@ -344,6 +344,21 @@ detrás del overlay.
   y las descripciones/ejemplos de "Orca" como marca fuera de `andes-cli` (por ejemplo, el resto de
   `src/cli/specs/*.ts` sigue mencionando "Orca" en su prosa descriptiva — solo los comandos
   literales `usage`/`examples` se corrigieron a `andes`, no la prosa).
+- **Cierre del criterio 5 (retomado el 2026-09-04, tras integrar `main` hasta `d97c8cc07c`)**: los
+  dos commits de avance ya dejaban `en.json` sin "Orca CLI" literal ni comando entre backticks
+  (eval en verde), pero quedaban comandos literales sin backticks apuntando al binario viejo:
+  `RuntimeHostAccessForm.tsx` ("orca serve --pairing-address"), `runtime-rpc-startup-failure.ts`
+  ("orca status, orca terminal"), `NativeChatOrchestrationPausedNotice.tsx` ("orca orchestration
+  check", que además no calzaba con el uso real ya renombrado en `src/cli/specs/orchestration.ts`),
+  `MobileEmulatorAgentSetupGuideSteps.tsx` (dos textos y el fallback "Orca CLI skill", nunca
+  renderizado porque la clave ya tenía una traducción — se corrigió igual) y las palabras clave de
+  búsqueda de Ajustes (`shortcuts-search.ts`, `mobile-emulator-search.ts`; `browser-use-search.ts`
+  quedó con `'orca'` como alias de búsqueda, a propósito, para quien todavía escriba el nombre
+  viejo). Se corrigieron el `.tsx`/`.ts` fuente y, donde `en.json` tenía una traducción propia para
+  esa clave (no el fallback en código), también el catálogo — `translate(key, fallback)` devuelve
+  el catálogo si existe, así que tocar solo el fallback no alcanza. `verify:localization-extraction`
+  bajó de 77 a 71 "inline defaults differ" con este cierre (ninguno de los 71 restantes menciona
+  Orca).
 
 ## Un solo idioma mientras la interfaz cambia (spec 008)
 

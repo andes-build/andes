@@ -1269,3 +1269,59 @@ y falso.
 
 **La invalidaría**: que el hilo pase a poder cambiar de alcance en caliente, reiniciando la sesión
 del agente — eso exige un mecanismo nuevo, no alcanza con leer el store en el render.
+
+## 2026-09-04 · [spec 007] `pnpm test` se cierra con 8 fallos preexistentes de `main`, no de esta spec
+
+**Qué se decide**: la evidencia de "código sano" de la spec 007 se registra como `pnpm test` en
+verde salvo 8 tests que ya estaban rotos en `main` (`d97c8cc07c`) antes de que esta rama lo
+integrara: `Sidebar.test.tsx` (6, `TypeError` en `resolveActiveWorkspaceScope` por
+`workspaceScopeOptions` indefinido en el fixture del test), `repos-onboarding-folder-startup.test.ts`
+(1, el comando de Codex esperado por el test todavía llevaba `--dangerously-bypass-approvals-and-
+sandbox`, que el código real ya no agrega) y `onboarding-folder-agent-startup.test.ts` (1, un
+lanzamiento con carpeta `terminal-default` sigue mandando `-m`/`model_reasoning_effort` que el test
+espera que se omitan). Los tres archivos están sin tocar por esta rama (`git diff d97c8cc07c --
+<archivo>` vacío para los tres), así que no son una regresión de la spec 007.
+
+**Por qué**: correr la corrida completa de `pnpm test` de esta spec destapó 20 fallos; 10 eran textos
+"Orca" que quedaron sin actualizar en tests después de que la spec 006 renombrara el código fuente
+(dentro del alcance del criterio 5/8 de esta spec, corregidos acá) y 1 lo introdujo esta misma
+sesión al tocar `runtime-rpc-startup-failure.ts` (corregido en el mismo commit). Los 8 restantes no
+tienen relación con el nombre del comando ni con ningún archivo que esta spec toque; investigarlos
+exige entender el flujo de argumentos por omisión de Codex/Claude fuera de modo simple y un fixture
+de store ajeno a esta spec — trabajo de otra sesión, no de spec 007.
+
+**La invalidaría**: que se demuestre que alguno de los 8 sí depende de un archivo que esta spec
+modificó (no encontrado al momento de esta decisión).
+
+## 2026-09-04 · [spec 007] El noveno fallo (`structured-tui-transcript-catchup.test.ts`) es un test flaky de `main`, no una regresión de esta rama
+
+**Qué se decide**: tras fusionar `main` hasta `d97c8cc07c` en esta rama (merge del
+2026-09-04), `pnpm test` mostró un noveno archivo roto —
+`src/main/native-chat/agent-session-wire/structured-tui-transcript-catchup.test.ts`, 1 de 2 tests—
+que no estaba en el recuento de 8 de la entrada anterior. Se declara heredado y no regresión de la
+spec 007, con la misma evidencia exigida por la tarea de retomar esta spec: el archivo no tiene diff
+contra esta rama (`git diff d97c8cc07c -- <archivo>` vacío) y, corrido 3 veces seguidas en modo
+aislado (`pnpm vitest run --config config/vitest.config.ts <archivo>`), pasó una vez y falló dos —
+es flaky por timing (usa `vi.waitFor` sobre un watcher de filesystem con vencimiento fijo), no por
+contenido. No se toca: la sesión paralela que arregla los 8 fallos preexistentes de `main` es la que
+corresponde, no esta spec.
+
+**La invalidaría**: que el archivo empiece a fallar con el mismo error en el 100% de las corridas, lo
+que apuntaría a una causa determinística en vez de timing.
+
+## 2026-09-04 · [spec 007] Criterio 3: se agrega el test unitario de migración que faltaba
+
+**Qué se decide**: `removeLegacyMacCommandIfManaged` (`src/main/cli/cli-command-macos-install.ts`,
+ya implementado por el avance anterior de esta spec) no tenía ningún test que lo ejercitara —ni
+directo ni a través de `CliInstaller.install()`— así que el eval del criterio 3 ("con `orca`
+presente, después de instalar queda `andes` y `orca` no apunta a la app") no tenía cómo estar en
+verde. Se agrega `'removes a legacy mac orca symlink when installing andes'` en
+`src/main/cli/cli-installer-command-conflicts.test.ts`, con el mismo patrón de fixture que el test
+Linux análogo (`cli-installer.test.ts` → `'removes the old managed linux orca symlink when
+installing orca-ide'`): una app empaquetada de prueba con un `orca` symlink legado apuntando a
+`Contents/Resources/bin/orca` de la misma app, `defaultMacCommandPath` apuntando al futuro
+`.../bin/andes`, e instalación real vía `installer.install()`. El test verifica que `andes` queda
+instalado (`readlink` apunta al launcher nuevo) y que `orca` deja de existir (`lstat` rechaza con
+`ENOENT`).
+
+**La invalidaría**: nada — cierra un vacío de cobertura, no reemplaza una decisión previa.

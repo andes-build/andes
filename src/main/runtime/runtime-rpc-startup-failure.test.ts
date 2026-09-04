@@ -156,7 +156,7 @@ describe('runtime RPC startup failure reporting', () => {
         title: 'Command line tool unavailable',
         message: "Andes couldn't start its local command transport.",
         detail: expect.stringMatching(
-          /orca status.*orca terminal.*orchestration.*Cause: metadata write failed/s
+          /andes status.*andes terminal.*orchestration.*Cause: metadata write failed/s
         )
       })
     )

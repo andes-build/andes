@@ -31,7 +31,7 @@ export function NativeChatOrchestrationPausedNotice({
           <code className="font-mono text-foreground">
             {translate(
               'components.native-chat.orchestrationPaused.command',
-              'orca orchestration check'
+              'andes orchestration check'
             )}
           </code>
           .

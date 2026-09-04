@@ -27,13 +27,18 @@ function parseTitle(value: unknown): AiVaultSessionTitle {
     record.sessionId.length > 512 ||
     typeof record.title !== 'string' ||
     !record.title.trim() ||
-    record.title.length > 512
+    record.title.length > 512 ||
+    (record.explicitTitle !== null &&
+      record.explicitTitle !== undefined &&
+      (typeof record.explicitTitle !== 'string' || record.explicitTitle.length > 512))
   ) {
     throw new Error('invalid session title')
   }
   return {
     agent: record.agent,
     sessionId: record.sessionId,
-    title: record.title.trim()
+    title: record.title.trim(),
+    explicitTitle:
+      typeof record.explicitTitle === 'string' ? record.explicitTitle.trim() || null : null
   }
 }

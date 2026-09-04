@@ -147,6 +147,7 @@ const CACHED_SESSION_FIELDS = {
   agent: true,
   sessionId: true,
   title: true,
+  explicitTitle: true,
   cwd: true,
   branch: true,
   model: true,

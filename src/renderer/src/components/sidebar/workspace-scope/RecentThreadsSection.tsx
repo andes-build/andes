@@ -1,11 +1,14 @@
 import React from 'react'
 import { translate } from '@/i18n/i18n'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 export type RecentThreadSummary = {
   id: string
   title: string
   timestampLabel: string
+  /** Spec 013, criterion 2: the thread currently open in the terminal view. */
+  isActive?: boolean
 }
 
 export type RecentThreadsSectionProps = {
@@ -50,8 +53,16 @@ export function RecentThreadsSection({
             <button
               key={thread.id}
               type="button"
+              data-testid="recent-thread-row"
+              data-active={thread.isActive ? 'true' : 'false'}
+              aria-current={thread.isActive ? 'true' : undefined}
               onClick={() => onSelectThread(thread.id)}
-              className="flex items-center justify-between rounded-md px-2 py-1 text-left text-[12px] text-sidebar-foreground/80 hover:bg-sidebar-foreground/8"
+              className={cn(
+                'flex items-center justify-between rounded-md px-2 py-1 text-left text-[12px]',
+                thread.isActive
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                  : 'text-sidebar-foreground/80 hover:bg-sidebar-foreground/8'
+              )}
             >
               <span className="truncate">{thread.title}</span>
               <span className="shrink-0 text-[10px] text-sidebar-foreground/45">

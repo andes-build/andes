@@ -593,10 +593,77 @@ sabe ese alcance (lo eligió el selector de la spec 010); esta spec se lo dice a
   `launchAgentInNewTab` con `promptDelivery: 'auto-submit'` — el mismo mecanismo de argv que ya usan
   `resolveSimpleModeThreadAgentArgs` y el resto del lanzamiento (Claude tiene `promptInjectionMode:
   'argv'`, spec 016), así que llega al agente antes de que la persona escriba nada.
-- **En pantalla** (`src/renderer/src/components/native-chat/ThreadScopeBadge.tsx`): lee
-  `tab.threadScope` —nunca el selector en vivo— y muestra "My work" o el nombre del workspace.
-  Montado arriba de la conversación en `TerminalPaneNativeChatPortal.tsx` (único cambio de layout).
-  Catálogo: `components.native-chat.threadScope.{root,workspace}` en `en.json`.
+- **En pantalla** (spec 013 renombró este componente a `ThreadHeader.tsx`, mismo mecanismo — ver su
+  propia sección más abajo): lee `tab.threadScope` —nunca el selector en vivo— y muestra "My work"
+  o el nombre del workspace.
 
 Diferido, sin implementar: que un hilo ya abierto pueda cambiar de alcance en caliente (ver
 `decisions.md`); el canal de datos del permiso (criterio 2b de la spec 011, sin tocar).
+
+## El hilo se ve como un hilo — barra lateral, título y lenguaje de persona (spec 013)
+
+Tres cambios de superficie en modo simple, ninguno toca modo desarrollo (spec 002 lo exige, cada
+punto abajo dice cómo se lo respetó).
+
+- **La barra de pestañas real no es `TerminalTitlebarTabs`** (ese portal ya vuelve `null` en
+  cuanto existe cualquier layout — `effectiveActiveLayout`, spec 021 — así que en la práctica nunca
+  pintaba). El renglón que la persona ve es el que arma cada `TabGroupPanel`
+  (`src/renderer/src/components/tab-group/TabGroupPanel.tsx`), un strip de 32px por grupo que
+  existía sin condición de modo. Spec 013 gatea su contenido (la lista de pestañas, el botón de
+  comandos rápidos y el menú de panel) con `useInterfaceMode() === 'simple'`; el strip de 32px en sí
+  queda —es el único área `-webkit-app-region: drag` bajo la barra de título oculta de macOS.
+  `TerminalTitlebarTabs.tsx` también gatea por las dudas (no cambia nada visible, pero deja el
+  camino honesto). **Encontrado por chequeo funcional en la app real, no por la suite**: la app
+  compila igual y los tests unitarios con un store mockeado pasaban antes de este arreglo porque el
+  mock nunca ejecuta el layout de grupos real — el gap solo se ve con `pnpm dev` de verdad.
+- **Los hilos en la barra lateral** (`src/renderer/src/components/sidebar/workspace-scope/`):
+  `RecentThreadsSection` (spec 010) pasó de recibir `threads={[]}` a `useSimpleModeThreadRows()`, que
+  filtra las pestañas del worktree activo por alcance (`simple-mode-thread-scope-filter.ts` — una
+  pestaña sin `threadScope` cuenta como raíz) y las ordena reusando
+  `orderRecentWorkspaceTabs`/`RecentWorkspaceTabRow` de `src/renderer/src/lib/recent-workspace-tab-rows.ts`
+  (la misma proyección de Cmd+J — decisión delegada de la spec: reusar en vez de escribir una
+  segunda), en `simple-mode-thread-rows.ts`. Clic en una fila (`select-thread.ts`) llama
+  `setActiveTab`/`setActiveTabType('terminal')`, el mismo camino que la barra de pestañas de modo
+  desarrollo.
+- **El título y el alcance del hilo** (`src/renderer/src/components/native-chat/ThreadHeader.tsx`,
+  reemplaza `ThreadScopeBadge.tsx` de la spec 019 — misma lectura de `tab.threadScope`, nunca el
+  selector en vivo): dos líneas arriba de la conversación, el título y debajo "My work" o
+  "Workspace · Focus: {{nombre}}" (catálogo `components.native-chat.threadScope.workspace`).
+  El título se resuelve con `src/shared/thread-header-title.ts`
+  (`resolveThreadHeaderTitle`): el renombrado a mano de Andes (`tab.customTitle`) gana sobre
+  `tab.aiVaultTitle.explicitTitle`, que gana sobre el *fallback* "New thread" — nunca lee
+  `tab.aiVaultTitle.title` (que sí cae al primer prompt o a un nombre inventado con el id de
+  sesión) ni `tab.generatedTitle`.
+  - **Quién llenaba `aiVaultTitle` hasta hoy** (el ❓ de la spec): `startAiVaultTabTitleSync`
+    (`src/renderer/src/lib/ai-vault-tab-title-sync.ts`) ya lo hacía, leyendo
+    `session-title-file-reader.ts` → `parseAgentSessionFileCached` → el escáner de sesiones
+    (`session-scanner-primary-parsers.ts`, Claude). Pero `AiVaultSession.title` ya traía su propio
+    *fallback chain* (custom-title → ai-title → primer prompt de usuario → `"Claude <id>"` inventado)
+    — nunca aislaba el título que el CLI mismo escribió. Spec 013 agrega
+    `AiVaultSession.explicitTitle` / `AiVaultSessionTitle.explicitTitle` (`string | null`,
+    campo nuevo en `src/shared/ai-vault-types.ts` y `src/shared/ai-vault-session-title.ts`): en el
+    parser de Claude, `accumulator.explicitTitle = accumulator.title || generatedTitle || null`
+    (custom-title gana, ai-title si no hay, `null` si el CLI no escribió ninguno de los dos) —
+    calculado en `finalizeClaudeSessionParseState`, nunca desde el primer prompt. Otros agentes
+    (codex incluido) quedan con `explicitTitle: null` hasta que alguien verifique su propio formato
+    de título — degradan a "New thread", el comportamiento correcto por el criterio 6, no un hueco.
+    El caché persistido de sesiones (`session-parse-cache-persistence.ts`) subió a
+    `SCHEMA_VERSION = 3` porque el campo es nuevo semánticamente, no solo de forma.
+- **La línea de actividad en lenguaje de persona** (criterio 7,
+  `src/renderer/src/components/native-chat/native-chat-activity-phrase.ts`,
+  `describeToolActivity`): en modo simple, `NativeChatToolRun` reemplaza su renglón crudo
+  (`2× Bash …`, con nombre de herramienta y expansión a diffs/JSON) por una sola línea fija,
+  sin interacción, gateada por `usePlainLanguageActivity()`
+  (`use-plain-language-activity.ts`, wrapper de `useInterfaceMode()`). El redactor clasifica por
+  familia de herramienta (leer/escribir/buscar/comando/delegar) y, para lectura/escritura, arma un
+  sustantivo humanizado del *basename* del archivo —nunca la ruta, nunca el comando ni el patrón de
+  búsqueda, que podrían traer una ruta adentro— con `humanizeFileSubject`. Una herramienta no
+  reconocida cae a "Working…"; sobre-filtrar es la decisión (`decisions.md`).
+- **El panel de archivos de la derecha** (criterio 8): `use-app-chrome-layout.ts`,
+  `showRightSidebarControls` ahora también exige `interfaceMode !== 'simple'` — apaga a la vez el
+  botón que lo abre y el montaje de `<RightSidebar />`
+  (`src/renderer/src/components/right-sidebar/index.tsx`, que ganó `data-testid="right-sidebar"`
+  para el chequeo). Los archivos siguen viéndose en Files (spec 010), donde ya vivían.
+
+Diferido, sin implementar: historial de hilos cerrados ("View history"), archivos de un hilo, la
+tarjeta de subagente (spec 012 la desbloquea).

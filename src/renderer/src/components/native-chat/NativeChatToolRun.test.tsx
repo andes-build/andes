@@ -3,11 +3,24 @@
 import '@testing-library/jest-dom/vitest'
 
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { useAppStore } from '@/store'
+import type { AppState } from '@/store/types'
 import type { AgentJournalRenderItem } from '../../../../shared/agent-session-journal-types'
 import type { NativeChatBlock } from '../../../../shared/native-chat-types'
 import { projectStructuredItemToNativeChat } from '../../../../shared/structured-agent-session-projection'
 import { NativeChatToolRun } from './NativeChatToolRun'
+
+// This file exercises the raw, developer-mode-shaped rendering. Simple
+// mode's plain-language activity line (spec 013, criterion 7) has its own
+// coverage in `native-chat-activity-phrase.test.ts`.
+const initialAppState = useAppStore.getInitialState()
+
+beforeEach(() => {
+  useAppStore.setState({
+    settings: { ...initialAppState.settings, interfaceMode: 'developer' }
+  } as Partial<AppState>)
+})
 
 afterEach(cleanup)
 

@@ -14,21 +14,24 @@
  */
 
 import { test, expect } from './helpers/orca-app'
-import { waitForActivePaneHookDescriptor } from './helpers/terminal'
-import { getActiveTabId, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
+import { waitForActivePaneHookDescriptor, waitForTerminalOutput } from './helpers/terminal'
+import {
+  getActiveTabId,
+  getActiveWorktreeId,
+  getWorktreeTabs,
+  waitForActiveWorktree,
+  waitForSessionReady
+} from './helpers/store'
 import {
   configureGoldenStubAgent,
   getGoldenStubAgentLaunchEnv,
-  GOLDEN_STUB_AGENTS,
-  launchGoldenStubAgentFromNewTab
+  GOLDEN_STUB_READY_MARKER
 } from './helpers/golden-stub-agent'
 import {
   clearTerminalPtyWriteLog,
   installTerminalPtyWriteSpy,
   readTerminalPtyWrites
 } from './helpers/terminal-pty-write-spy'
-
-const CLAUDE_MENU_ITEM = GOLDEN_STUB_AGENTS.find((agent) => agent.id === 'claude')!.menuItemName
 
 test.describe('Simple mode — el hilo (spec 011, etapa 1)', () => {
   test.use({
@@ -44,15 +47,28 @@ test.describe('Simple mode — el hilo (spec 011, etapa 1)', () => {
     await waitForActiveWorktree(orcaPage)
     await installTerminalPtyWriteSpy(electronApp)
     await configureGoldenStubAgent(orcaPage, { agent: 'claude' })
-    await launchGoldenStubAgentFromNewTab(orcaPage, CLAUDE_MENU_ITEM)
+    await orcaPage.getByTestId('simple-mode-nav-new-thread').click()
 
     // Simple mode: the new thread opens as a conversation on its own — no
     // toggle to chat view. The newly launched tab is the active one, so its
     // content is what the operator sees; a pre-existing "Terminal 1" tab from
     // before this thread is a separate, unrelated surface (still mounted in
     // the background, as any inactive tab is) and is out of scope here.
-    const activeTab = orcaPage.locator('[data-testid="sortable-tab"][data-active="true"]')
-    await expect(activeTab).toHaveAttribute('data-tab-title', /Golden Stub Agent|Claude/i)
+    // Spec 013: simple mode has no tab bar (criterion 1), so the launched
+    // agent's identity is read from the store's tab list instead of a
+    // `sortable-tab` DOM row. The title arrives via the PTY's OSC sequence,
+    // slightly after the tab itself, so poll rather than read once.
+    const worktreeId = await getActiveWorktreeId(orcaPage)
+    await expect
+      .poll(
+        async () => {
+          const activeTabId = await getActiveTabId(orcaPage)
+          const tabs = worktreeId ? await getWorktreeTabs(orcaPage, worktreeId) : []
+          return tabs.find((tab) => tab.id === activeTabId)?.title
+        },
+        { timeout: 15_000 }
+      )
+      .toMatch(/Golden Stub Agent|Claude/i)
     await expect(orcaPage.locator('[data-native-chat-root="true"]')).toBeVisible({
       timeout: 15_000
     })
@@ -92,10 +108,14 @@ test.describe('Simple mode — el hilo (spec 011, etapa 1)', () => {
     await waitForActiveWorktree(orcaPage)
     await installTerminalPtyWriteSpy(electronApp)
     await configureGoldenStubAgent(orcaPage, { agent: 'claude' })
-    await launchGoldenStubAgentFromNewTab(orcaPage, CLAUDE_MENU_ITEM)
+    await orcaPage.getByTestId('simple-mode-nav-new-thread').click()
     await expect(orcaPage.locator('[data-native-chat-root="true"]')).toBeVisible({
       timeout: 15_000
     })
+    // The PTY spy below only sees writes once the golden stub's process is
+    // actually attached — wait for its own readiness marker, not just the
+    // chat shell mounting.
+    await waitForTerminalOutput(orcaPage, GOLDEN_STUB_READY_MARKER, 20_000)
 
     const descriptor = await waitForActivePaneHookDescriptor(orcaPage)
 

@@ -89,6 +89,12 @@ export type AiVaultSession = {
   agent: AiVaultAgent
   sessionId: string
   title: string
+  /** Spec 013: only a title the CLI itself wrote to the session file
+   *  (`custom-title`/`ai-title`, custom winning) — `null` when it wrote
+   *  none, never a first-user-prompt or agent-label guess. `title` above
+   *  keeps its full fallback chain for AI Vault's own listing; this field is
+   *  for a thread header, which shows this or nothing. */
+  explicitTitle?: string | null
   cwd: string | null
   branch: string | null
   model: string | null

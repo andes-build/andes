@@ -183,7 +183,8 @@ describe('AI Vault tab title sync', () => {
         expect(store.getState().tabsByWorktree['worktree-1'][0].aiVaultTitle).toEqual({
           agent,
           sessionId: `${agent}-session`,
-          title: `${agent} conversation`
+          title: `${agent} conversation`,
+          explicitTitle: null
         })
       )
       expect(resolveSessionTitles).toHaveBeenCalledWith({

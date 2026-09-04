@@ -3,6 +3,8 @@ import { lazyWithRetry as lazy } from '@/lib/lazy-with-retry'
 import { useDroppable } from '@dnd-kit/core'
 import { Ellipsis, X } from 'lucide-react'
 import { useAppStore } from '../../store'
+import { useInterfaceMode } from '@/hooks/useInterfaceMode'
+import { INTERFACE_MODE_SIMPLE } from '../../../../shared/interface-mode'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +65,12 @@ export default function TabGroupPanel({
 }): React.JSX.Element {
   const rightSidebarOpen = useAppStore((state) => state.rightSidebarOpen)
   const sidebarOpen = useAppStore((state) => state.sidebarOpen)
+  // Spec 013, criterion 1: this per-group strip — not `TerminalTitlebarTabs`,
+  // whose titlebar slot `effectiveActiveLayout` already keeps empty once any
+  // group exists — is the tab row a person actually sees. Simple mode hides
+  // its tab list; the 32px strip itself stays (it doubles as the only
+  // `-webkit-app-region: drag` surface here on macOS's hidden titlebar).
+  const isSimpleMode = useInterfaceMode() === INTERFACE_MODE_SIMPLE
   const model = useTabGroupWorkspaceModel({ groupId, worktreeId })
   const {
     activeTab,
@@ -264,16 +272,16 @@ export default function TabGroupPanel({
               }
             />
           ) : null}
-          <div className="min-w-0 flex-1 h-full">{tabBar}</div>
+          <div className="min-w-0 flex-1 h-full">{isSimpleMode ? null : tabBar}</div>
           <div
             className="ml-1.5 flex shrink-0 items-center gap-0.5"
             style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
           >
             <div className={focusedActionChromeClassName}>
-              {isFocused ? (
+              {isFocused && !isSimpleMode ? (
                 <TabBarQuickCommandsButton worktreeId={worktreeId} groupId={groupId} />
               ) : null}
-              {isFocused && hasSplitGroups ? (
+              {isFocused && hasSplitGroups && !isSimpleMode ? (
                 <Tooltip>
                   <DropdownMenu modal={false}>
                     <TooltipTrigger asChild>

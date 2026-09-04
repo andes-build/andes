@@ -111,6 +111,13 @@ export type SessionAccumulator = {
   sessionId: string
   title: string | null
   fallbackTitle: string | null
+  /** Spec 013: only a title the CLI itself wrote (`custom-title`/`ai-title` —
+   *  custom wins when both exist), never `fallbackTitle`'s first-user-prompt
+   *  or agent-label guesses. A thread header shows this or nothing; it never
+   *  invents one. Stays `null` for a CLI that writes no title record at all
+   *  (parsers other than Claude's don't populate it yet — spec 013's open
+   *  item, see `decisions.md`). */
+  explicitTitle: string | null
   cwd: string | null
   branch: string | null
   model: string | null

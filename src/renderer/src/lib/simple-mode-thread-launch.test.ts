@@ -10,6 +10,7 @@ import {
   resolveSimpleModeThreadAgentArgs
 } from './simple-mode-thread-launch'
 import {
+  ASK_PERMISSION_TUI_AGENT_ARGS,
   PERMISSION_BYPASS_ARGS,
   YOLO_TUI_AGENT_ARGS,
   containsPermissionBypassArgs,
@@ -37,17 +38,33 @@ describe('spec016#5 permission-bypass arguments', () => {
 
   it('strips the profile default of every agent that carries one', () => {
     for (const [agent, value] of Object.entries(YOLO_TUI_AGENT_ARGS)) {
-      expect(
-        resolveSimpleModeThreadAgentArgs(agent as never, {
-          agentDefaultArgs: { [agent]: value }
-        })
-      ).toBe('')
+      const args = resolveSimpleModeThreadAgentArgs(agent as never, {
+        agentDefaultArgs: { [agent]: value }
+      })
+      expect(containsPermissionBypassArgs(args)).toBe(false)
+      expect(args).toBe(ASK_PERMISSION_TUI_AGENT_ARGS[agent as never] ?? '')
     }
   })
 
-  it('falls back to the code default, stripped, when the profile says nothing', () => {
-    expect(resolveSimpleModeThreadAgentArgs('claude', { agentDefaultArgs: {} })).toBe('')
-    expect(resolveSimpleModeThreadAgentArgs('claude', null)).toBe('')
+  it('asks Claude Code for the permission card instead of its auto default', () => {
+    expect(
+      resolveSimpleModeThreadAgentArgs('claude', {
+        agentDefaultArgs: { claude: '--dangerously-skip-permissions --model opus' }
+      })
+    ).toBe('--model opus --permission-mode manual')
+    expect(resolveSimpleModeThreadAgentArgs('claude', { agentDefaultArgs: {} })).toBe(
+      '--permission-mode manual'
+    )
+    // Un modo elegido a mano no se pisa.
+    expect(
+      resolveSimpleModeThreadAgentArgs('claude', {
+        agentDefaultArgs: { claude: '--permission-mode plan' }
+      })
+    ).toBe('--permission-mode plan')
+  })
+
+  it('leaves an agent without a verified ask argument alone', () => {
+    expect(resolveSimpleModeThreadAgentArgs('codex', { agentDefaultArgs: {} })).toBe('')
   })
 })
 

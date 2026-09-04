@@ -3,7 +3,10 @@ import {
   nativeChatRequiresLocalTranscript
 } from '@/lib/native-chat-supported-agent'
 import { pickTuiAgent } from '../../../shared/tui-agent-selection'
-import { stripPermissionBypassArgs } from '../../../shared/tui-agent-permissions'
+import {
+  ASK_PERMISSION_TUI_AGENT_ARGS,
+  stripPermissionBypassArgs
+} from '../../../shared/tui-agent-permissions'
 import { resolveTuiAgentLaunchArgs } from '../../../shared/tui-agent-launch-defaults'
 import type { GlobalSettings } from '../../../shared/global-settings-types'
 import type { TuiAgent } from '../../../shared/tui-agent'
@@ -50,10 +53,20 @@ export function resolveSimpleModeThreadAgent(args: {
   return pickTuiAgent(preferred, usable, args.disabledTuiAgents)
 }
 
-/** The configured launch arguments minus every permission-bypass argument. */
+/**
+ * The configured launch arguments minus every permission-bypass argument, plus
+ * the agent's ask-for-permission argument when it has one.
+ */
 export function resolveSimpleModeThreadAgentArgs(
   agent: TuiAgent,
   settings: Pick<GlobalSettings, 'agentDefaultArgs'> | null | undefined
 ): string {
-  return stripPermissionBypassArgs(resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs))
+  const stripped = stripPermissionBypassArgs(
+    resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs)
+  )
+  const askArgs = ASK_PERMISSION_TUI_AGENT_ARGS[agent]
+  if (!askArgs || stripped.includes('--permission-mode')) {
+    return stripped
+  }
+  return stripped ? `${stripped} ${askArgs}` : askArgs
 }

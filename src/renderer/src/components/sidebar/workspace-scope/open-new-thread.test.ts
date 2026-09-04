@@ -214,7 +214,9 @@ describe('openNewThread — el agente correcto y sin omisión de permisos (spec 
     expect(String(startup.command)).not.toContain('--dangerously-skip-permissions')
     // Lo que no es omisión de permisos sobrevive: el filtro es por argumento, no por bloque.
     expect(String(startup.command)).toContain("'--model' 'opus'")
-    expect(startup.agentArgsOverride).toBe('--model opus')
+    // Y el modo que hace aparecer la tarjeta: sin él, Claude Code corre en su modo `auto`.
+    expect(String(startup.command)).toContain("'--permission-mode' 'manual'")
+    expect(startup.agentArgsOverride).toBe('--model opus --permission-mode manual')
   })
 
   it('spec016#3 opens no terminal when the only agent installed has no conversation', async () => {

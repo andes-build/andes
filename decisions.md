@@ -1030,3 +1030,91 @@ shell. El stub cierra el circuito sin gastar crédito de una sesión en vivo.
 **La invalidaría**: que el hilo deje de leer transcripciones y reciba los mensajes como datos del
 kit de agentes (criterio 2b de la spec 011), momento en el que el stub tendría que hablar ese
 protocolo en vez de escribir un archivo.
+
+## 2026-09-03 · [spec 016] El hilo del modo simple solo lanza un agente con conversación
+
+**Qué se decide**: en modo simple, "New thread" elige entre los agentes que
+`isNativeChatSupportedAgent` acepta y cuya transcripción es legible en este disco; si ninguno está
+instalado, avisa en pantalla con la acción que abre "Agents & skills" y no abre ninguna pestaña.
+Nunca cae al agente por omisión de la máquina ni a un shell.
+
+**Por qué**: `resolveDefaultAgentForNewTab` honra `defaultTuiAgent` sin preguntar si ese agente
+tiene conversación, y en una máquina con Antigravity por omisión el hilo abría una terminal cruda —
+lo único que el modo simple promete no mostrar. El filtro usa los mismos dos predicados con los que
+`decideInitialAgentTabViewMode` decide dibujar la conversación, para que la regla viva en un solo
+criterio y no en dos listas que se separan.
+
+**La invalidaría**: que la conversación deje de depender del agente —por ejemplo si el hilo pasa a
+hablar el protocolo del kit de agentes— y cualquier agente pueda dibujarse como conversación.
+
+## 2026-09-03 · [spec 016] En modo simple no se pasa ningún argumento de omisión de permisos
+
+**Qué se decide**: el hilo del modo simple lanza con los argumentos configurados menos todo valor de
+`YOLO_TUI_AGENT_ARGS` (`PERMISSION_BYPASS_ARGS`), y agrega el argumento de "preguntar siempre" del
+agente cuando está verificado (`ASK_PERMISSION_TUI_AGENT_ARGS`: `claude` y `openclaude` con
+`--permission-mode manual`). Los valores por omisión de lanzamiento no se tocan: el modo desarrollo
+sigue siendo Orca.
+
+**Por qué**: `DEFAULT_TUI_AGENT_ARGS = YOLO_TUI_AGENT_ARGS`, así que cada perfil nuevo nace con el
+argumento que anula el pedido de permiso, y sin ese pedido no hay tarjeta de permitir/rechazar, que
+es el corazón del diseño de Andes. Sacarlo no alcanza: Claude Code 2.1.260 sin argumentos corre en
+modo `auto` y escribió un archivo sin preguntar durante el chequeo funcional; el modo manual es lo
+que hace aparecer la tarjeta.
+
+**La invalidaría**: que Claude Code cambie su modo por omisión a uno que pregunte, o que el pedido
+de permiso deje de llegar por el CLI y pase a ser un dato del kit de agentes.
+
+## 2026-09-03 · [spec 016] En modo simple, activar una carpeta no siembra ninguna terminal
+
+**Qué se decide**: `ensureWorktreeHasInitialTerminal` no crea la terminal automática cuando
+`interfaceMode` es `simple`. El sembrado por trabajo explícito —un agente sembrado, un script de
+setup— sigue creando su superficie.
+
+**Por qué**: agregar una carpeta abría "Terminal 1" sola, una superficie de desarrollo en el modo
+que promete no mostrarla; el hilo se abre a propósito desde "New thread". El gate va sobre el
+sembrado automático únicamente porque apagar también el explícito rompería el arranque de carpeta
+del onboarding sin que nadie lo haya pedido.
+
+**La invalidaría**: que el modo simple gane una superficie propia que deba existir al abrir una
+carpeta, en cuyo caso la decisión no es "ninguna" sino "cuál".
+
+## 2026-09-03 · [spec 016] El aviso de "falta una carpeta" ofrece abrirla
+
+**Qué se decide**: el aviso lleva la acción "Open folder", que llama a `addRepo` — el mismo selector
+de carpetas del botón "Add Project".
+
+**Por qué**: cierra la decisión que la spec 015 dejó abierta para el Gate. Un aviso sin salida
+obliga al operador a adivinar dónde se abre una carpeta en un modo que esconde el resto de la
+aplicación.
+
+**Reemplaza a**: la parte de la decisión de la spec 015 que dejaba ese aviso sin acción "porque no
+hay una sola acción correcta".
+
+**La invalidaría**: que abrir una carpeta deje de ser una sola acción —por ejemplo, elegir entre
+carpeta local y remota— y el aviso tenga que ofrecer dos.
+
+## 2026-09-03 · [spec 016] Una rama no se declara terminada sin recorrer la app de verdad
+
+**Qué se decide**: antes de declarar una rama lista, se levanta la aplicación y se recorre el camino
+completo como lo haría una persona, con una captura por paso guardada en `docs/research/`.
+
+**Por qué**: los tres defectos que Peter encontró el 2026-09-03 pasaban todos los chequeos
+automáticos, porque ninguno abría la aplicación. En esta misma spec el recorrido encontró un cuarto
+defecto que ninguna prueba veía: con el comando ya limpio, Claude Code seguía escribiendo sin pedir
+permiso porque su modo por omisión es `auto`.
+
+**La invalidaría**: que exista una prueba automática que levante la aplicación real con el agente
+real y verifique el pedido de permiso de punta a punta.
+
+## 2026-09-03 · [spec 016] `docs/research/` se versiona
+
+**Qué se decide**: `.gitignore` deja de ignorar `docs/research/`. La evidencia fechada de
+investigación y de los chequeos funcionales —capturas incluidas— se commitea con la spec que la
+produjo.
+
+**Por qué**: la tabla "Dónde está cada cosa" de `CLAUDE.md` declara `docs/research/` como evidencia
+del repo, fechada y que no se pisa; la regla `docs/**` heredada de Orca la mandaba a notas locales,
+así que la evidencia de un criterio moría en la máquina del agente que lo corrió.
+
+**La invalidaría**: que la evidencia pase a vivir fuera del repo con una referencia estable desde la
+spec.

@@ -383,13 +383,37 @@ toca `src/main/runtime/` ni la capa que lanza el binario del agente.
   "Research"; un nombre no reconocido se muestra tal cual) y un visor de markdown con formato
   (reusa `MarkdownPreviewBody` del editor) con el botón "Open a thread about this file".
 - **New thread**: `open-new-thread.ts` espera la detección de agentes (`ensureDetectedAgents`),
-  elige el agente con `resolveDefaultAgentForNewTab` y lanza con `launchAgentInNewTab` sobre la
-  carpeta activa — nunca toca `native-chat/`. Es `launchAgentInNewTab` el que crea la pestaña **y**
-  encola el comando de arranque: `createTab` con `launchAgent` solo etiqueta, y una pestaña
-  etiquetada sin comando encolado levanta un shell de login (spec 015). El modo chat lo decide
-  `decideInitialAgentTabViewMode`, que en modo simple devuelve `'chat'` para todo agente soportado.
-  Sin carpeta abierta o sin agente instalado no se abre pestaña: se avisa en pantalla, y el segundo
-  caso ofrece la acción que abre "Agents & skills".
+  elige el agente y los argumentos con `@/lib/simple-mode-thread-launch` y lanza con
+  `launchAgentInNewTab` sobre la carpeta activa — nunca toca `native-chat/`. Es
+  `launchAgentInNewTab` el que crea la pestaña **y** encola el comando de arranque: `createTab` con
+  `launchAgent` solo etiqueta, y una pestaña etiquetada sin comando encolado levanta un shell de
+  login (spec 015). El modo chat lo decide `decideInitialAgentTabViewMode`, que en modo simple
+  devuelve `'chat'` para todo agente soportado. Sin carpeta abierta o sin agente con conversación no
+  se abre pestaña: se avisa en pantalla, el primer caso con la acción que abre el selector de
+  carpetas (`addRepo`) y el segundo con la que abre "Agents & skills" (spec 016).
+
+### Qué puede lanzar un hilo, y con qué argumentos (spec 016)
+
+`src/renderer/src/lib/simple-mode-thread-launch.ts` tiene las dos reglas del modo simple, y es el
+único lugar donde se enuncian:
+
+- **Agente**: `resolveSimpleModeThreadAgent` filtra los detectados por `isNativeChatSupportedAgent`
+  más `nativeChatRequiresLocalTranscript` —los mismos predicados de
+  `decideInitialAgentTabViewMode`— y recién sobre ese conjunto aplica el agente por omisión del
+  operador y el orden de auto-elección. El agente por omisión de la máquina no alcanza para lanzar:
+  con `defaultTuiAgent: 'antigravity'` el hilo lanza Claude Code, y sin ningún agente con
+  conversación no lanza nada.
+- **Argumentos**: `resolveSimpleModeThreadAgentArgs` saca todo valor de `PERMISSION_BYPASS_ARGS`
+  (`src/shared/tui-agent-permissions.ts`, derivado de `YOLO_TUI_AGENT_ARGS`) y agrega el argumento
+  de "preguntar siempre" del agente si está declarado en `ASK_PERMISSION_TUI_AGENT_ARGS`
+  (`claude`/`openclaude`: `--permission-mode manual`). Los valores por omisión del lanzamiento
+  (`DEFAULT_TUI_AGENT_ARGS = YOLO_TUI_AGENT_ARGS`) **no** se tocan: en modo desarrollo Orca lanza
+  como siempre.
+
+Las mismas dos reglas las aplica `buildOnboardingFolderAgentStartup` cuando el arranque de carpeta
+del onboarding corre en modo simple. Y `ensureWorktreeHasInitialTerminal` no siembra su terminal
+automática en modo simple: activar una carpeta ahí no abre ninguna pestaña, solo el trabajo de
+arranque explícito crea su superficie.
 - **Command Center**: no tiene pantalla propia en esta spec. El botón del nav navega a
   `activeView: 'terminal'` — la spec 009 (pausada) resuelve su contenido enganchando su propio gate
   sobre esa misma vista, no sobre una vista separada.

@@ -93,7 +93,7 @@ test.describe('Simple mode — el hilo usa el agente correcto (spec 016)', () =>
     expect(launch.agent).toBe('claude')
     expect(launch.command).not.toContain('--dangerously-skip-permissions')
     expect(launch.command).not.toContain('agy')
-    expect(launch.argsOverride).toBe('--model opus')
+    expect(launch.argsOverride).toBe('--model opus --permission-mode manual')
 
     // Ningún argumento de omisión de permisos de ningún agente del catálogo.
     const bypassFound = await orcaPage.evaluate((command) => {
@@ -114,6 +114,9 @@ test.describe('Simple mode — el hilo usa el agente correcto (spec 016)', () =>
       return args.filter((arg) => command.includes(arg))
     }, launch.command)
     expect(bypassFound).toEqual([])
+    // Y el modo que hace aparecer la tarjeta: el modo por omisión de Claude Code
+    // (`auto`) escribe archivos sin preguntar aunque no haya flag de omisión.
+    expect(launch.command).toContain("'--permission-mode' 'manual'")
 
     await expect(orcaPage.locator('[data-native-chat-root="true"]')).toBeVisible({
       timeout: 20_000

@@ -45,6 +45,19 @@ export const PERMISSION_BYPASS_ARGS: readonly string[] = [
   ...new Set(Object.values(YOLO_TUI_AGENT_ARGS))
 ]
 
+/**
+ * Arguments that force the agent to ASK for every permission, per agent.
+ * Spec 016: removing the bypass argument is not enough — Claude Code 2.1's own
+ * default mode is `auto`, which performs routine writes without asking, and
+ * simple mode's whole design is the permission card. Only the agents whose flag
+ * is verified against their CLI are listed; the rest launch with whatever their
+ * own default is.
+ */
+export const ASK_PERMISSION_TUI_AGENT_ARGS: Partial<Record<TuiAgent, string>> = {
+  claude: '--permission-mode manual',
+  openclaude: '--permission-mode manual'
+}
+
 function bypassArgPattern(value: string): RegExp {
   const escaped = value
     .trim()

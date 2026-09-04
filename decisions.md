@@ -1379,3 +1379,47 @@ not know which paths to walk" y lee 0 nodos, en cualquier alcance. Es una depend
 onboarding, no de esta pantalla: la misma forma que la primera condición de parada de la spec
 ("eso es una dependencia del onboarding, no de esta pantalla").
 **La invalidaría**: que el onboarding pase a escribir `tree.md` al preparar la carpeta.
+
+## 2026-09-04 · [spec 021] El panel en blanco se arregla en la capa que resuelve el layout, no en la que crea la pestaña
+
+**Qué se decide**: `getEffectiveLayoutForWorktree`
+(`src/renderer/src/components/terminal/split-group-mount.ts:17`) poda el layout explícito contra
+los grupos que existen antes de devolverlo. Una hoja que nombra un grupo que ya no está cae al
+grupo activo; en un split se conserva la mitad viva.
+**Por qué**: `layoutByWorktree` y `groupsByWorktree` los escriben acciones distintas
+(`ensureWorktreeRootGroup`, `hydrateTabsSession`, `createTab`) y quedan en desacuerdo: el layout
+sigue nombrando el grupo que `ensureWorktreeRootGroup` creó y `createTab` acuña uno nuevo porque
+`ensureGroup` (`src/renderer/src/store/slices/tab-group-state.ts:74`) ignora el id preferido cuando
+la lista de grupos está vacía. Con la hoja muerta, la barra dibuja la tira de pestañas de un grupo
+sin pestañas y la superposición del panel —anclada por `position-anchor` al cuerpo del grupo vivo,
+que nunca se dibuja— mide 0x0: la conversación está entera en el árbol del documento y no se pinta
+nada. Se eligió la capa de render y no la de escritura porque es la única por la que pasan todos
+los caminos (`use-terminal-workspace-projection`, `anyMountedWorktreeHasLayout`,
+`TerminalSplitWorkspaceSurfaces`) y porque repara también un estado ya persistido, que un arreglo
+en `createTab` dejaría intacto.
+**La invalidaría**: que `layoutByWorktree` y `groupsByWorktree` pasen a escribirse en una sola
+acción, con la coherencia garantizada por construcción.
+
+## 2026-09-04 · [spec 021] El síntoma no depende del alcance elegido
+
+**Qué se decide**: se corrige la observación de la spec — el panel en blanco no lo causa elegir un
+workspace. Lo causa el desacuerdo entre el layout y los grupos, que aparece según el orden en que
+`hydrateTabsSession` y `ensureWorktreeRootGroup` terminan después de abrir la carpeta.
+**Por qué**: el chequeo funcional lo reprodujo con la raíz elegida
+(`docs/research/2026-09-04-chequeo-funcional-spec-021/`) y el eval `spec019#11`, que abre un hilo
+con un workspace elegido, pasaba en verde sobre `main` roto. El alcance elegido no aparece en
+ningún punto del camino que dibuja el panel: `threadScope` solo viaja al primer mensaje y al
+rótulo. La captura `07-comparacion-new-thread-alcance-workspace-en-blanco.png` de la spec 009 quedó
+del lado del workspace por el orden en que se hizo la comparación, no por el alcance.
+**La invalidaría**: una reproducción del panel en blanco con el layout y los grupos de acuerdo.
+
+## 2026-09-04 · [spec 021] La contradicción del hallazgo se resuelve a favor del pintado
+
+**Qué se decide**: de los dos diagnósticos que traía la spec —la pestaña no se crea, o se crea y no
+se dibuja— el verdadero es el segundo. La pestaña, su grupo, su alcance y el texto de la
+conversación están todos en el store y en el árbol del documento.
+**Por qué**: con el panel en blanco, `document.body.innerText` contiene "Start a chat with Claude" y
+el rótulo del alcance, y el elemento del panel mide 0x0 con `display: flex`. Los dos hechos que
+parecían contradecirse son uno solo: la tira de pestañas vacía y el panel en blanco son las dos
+caras de la misma hoja de layout muerta.
+**La invalidaría**: un caso de panel en blanco donde el store no tenga la pestaña.

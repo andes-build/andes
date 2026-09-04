@@ -59,7 +59,7 @@ describe('CliInstaller', () => {
     'creates a dev launcher and installs a macOS symlink in the requested path',
     async () => {
       const fixture = await makeFixture()
-      const installPath = join(fixture.root, 'bin', 'orca')
+      const installPath = join(fixture.root, 'bin', 'andes')
       const installer = new CliInstaller({
         platform: 'darwin',
         isPackaged: false,
@@ -72,7 +72,7 @@ describe('CliInstaller', () => {
 
       const initial = await installer.getStatus()
       expect(initial.state).toBe('not_installed')
-      expect(initial.launcherPath).toContain(join('userData', 'cli', 'bin', 'orca'))
+      expect(initial.launcherPath).toContain(join('userData', 'cli', 'bin', 'andes'))
 
       const installed = await installer.install()
       expect(installed.state).toBe('installed')
@@ -123,7 +123,7 @@ describe('CliInstaller', () => {
   // Why: dev installs are useful for validation, but they must not replace the
   // packaged `orca` / `orca-ide` commands developers rely on day to day.
   it.skipIf(process.platform === 'win32')(
-    'uses a separate orca-dev command for default development installs',
+    'uses a separate andes-dev command for default development installs',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
@@ -140,12 +140,12 @@ describe('CliInstaller', () => {
 
       const installed = await installer.install()
       expect(installed.state).toBe('installed')
-      expect(installed.commandName).toBe('orca-dev')
-      expect(installed.commandPath).toBe(join(commandDir, 'orca-dev'))
-      expect(installed.launcherPath).toBe(join(fixture.userDataPath, 'cli', 'bin', 'orca-dev'))
+      expect(installed.commandName).toBe('andes-dev')
+      expect(installed.commandPath).toBe(join(commandDir, 'andes-dev'))
+      expect(installed.launcherPath).toBe(join(fixture.userDataPath, 'cli', 'bin', 'andes-dev'))
       await expect(readlink(installed.commandPath as string)).resolves.toBe(installed.launcherPath)
       await expect(
-        readFile(join(fixture.userDataPath, 'cli', 'bin', 'orca'), 'utf8')
+        readFile(join(fixture.userDataPath, 'cli', 'bin', 'andes'), 'utf8')
       ).resolves.toBe(await readFile(installed.launcherPath as string, 'utf8'))
     }
   )

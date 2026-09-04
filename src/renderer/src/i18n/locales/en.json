@@ -575,12 +575,12 @@
         "skill": {
           "cli": {
             "prerequisite": {
-              "79371593b0": "The command line tool is not visible on PATH yet",
+              "79371593b0": "The Andes CLI is not visible on PATH yet",
               "e99d7dc36f": "Command line tool registration needs attention",
               "2db0bd7515": "Command line tool registration is unavailable",
-              "8d6eedf97e": "Failed to register the command line tool in PATH.",
-              "0f116999f1": "Restart your shell or add the command line tool's directory to PATH before setup.",
-              "15cbedc3e3": "Install the command line tool before running agent skill setup.",
+              "8d6eedf97e": "Failed to register the Andes CLI in PATH.",
+              "0f116999f1": "Restart your shell or add the Andes CLI's directory to PATH before setup.",
+              "15cbedc3e3": "Install the Andes CLI before running agent skill setup.",
               "windowsPathUnknown": "Andes could not check your Windows user PATH",
               "refreshCliRegistration": "Refresh CLI registration status and try again."
             }
@@ -5466,10 +5466,10 @@
           "automationRunMissing": "Run history no longer available.",
           "automationAvailabilityUnavailable": "Automation availability could not be checked.",
           "cliHeader": "Command Line",
-          "cliCreatedFromAgent": "Created by an agent via `orca worktree create`",
-          "cliCreatedFromShell": "Created via `orca worktree create`",
+          "cliCreatedFromAgent": "Created by an agent via `andes worktree create`",
+          "cliCreatedFromShell": "Created via `andes worktree create`",
           "cliStartupAgent": "Started with {{value0}}",
-          "cliCreated": "Created by the command line tool",
+          "cliCreated": "Created by the Andes CLI",
           "jiraIssue": "Jira {{value0}}",
           "viewOnJira": "View on Jira",
           "linkedJira": "Linked Jira {{value0}}"
@@ -5886,7 +5886,7 @@
           "6e7f8a9b0c": "Remove host…"
         },
         "LinearAgentSkillSetupPrompt": {
-          "missingBoth": "The command line tool and Linear agent skill are missing.",
+          "missingBoth": "The Andes CLI and Linear agent skill are missing.",
           "panelTitle": "Linear agent skill",
           "panelDescription": "Install the host agent skill for linked Linear task handoffs."
         },
@@ -5991,7 +5991,7 @@
           "pairingCode": "Pairing code",
           "pairingCodePlaceholder": "orca://pair?code=...",
           "pairingHelpPrefix": "Run",
-          "pairingCommand": "orca serve --pairing-address <host>",
+          "pairingCommand": "andes serve --pairing-address <host>",
           "pairingHelpSuffix": "on the server and paste the printed pairing URL.",
           "sshImportAlreadySynced": "~/.ssh/config already in sync.",
           "sshImportSynced": "Added {{value0}} host{{value1}} to Andes.",
@@ -6650,14 +6650,14 @@
           "68ea76eb71": "Install the Browser Use skill so agents can operate Andes's browser.",
           "2d6ead9ab2": "Install Browser Use Skill",
           "e9f3f3b488": "Installed at",
-          "9fca1f7f5d": "Registers the command line tool so agents can orchestrate the browser from their shell.",
-          "c6065d205d": "Enable the command line tool",
-          "c79eff0213": "Register the command line tool so agents can drive the browser.",
+          "9fca1f7f5d": "Registers the Andes CLI so agents can orchestrate the browser from their shell.",
+          "c6065d205d": "Enable the Andes CLI",
+          "c79eff0213": "Register the Andes CLI so agents can drive the browser.",
           "702488a5f7": "Let coding agents drive this browser with your logins. Finish the three steps below.",
           "b8a1f2d84d": "Agent Browser Use",
           "96b91c6349": "Let coding agents drive this browser with your logins.",
           "2ea4617e3a": "Imported {{value0}} cookies from {{value1}}{{value2}}.",
-          "721aee31b4": "Registered the command line tool in PATH.",
+          "721aee31b4": "Registered the Andes CLI in PATH.",
           "180a9abf3a": "Failed to load CLI status.",
           "2ccfc9cff8": "Import",
           "0462565413": "Re-import",
@@ -7314,14 +7314,14 @@
           "d94ca6a623": "Enables agents to use command line commands, including mobile emulator control.",
           "67e19ee03c": "Command line skill",
           "aaf62a3dd2": "Installed at",
-          "2fef055608": "Registers the command line tool so agents can control the active emulator from their shell.",
-          "4f2205f3b6": "Enable the command line tool",
+          "2fef055608": "Registers the Andes CLI so agents can control the active emulator from their shell.",
+          "4f2205f3b6": "Enable the Andes CLI",
           "ff4b7e65d6": "Let coding agents control the active mobile emulator with command line commands.",
           "2a674aa810": "Agent Mobile Emulator Control",
-          "cdeaed9e37": "Registered the command line tool in PATH.",
-          "3d34423e88": "Registering the command line tool",
+          "cdeaed9e37": "Registered the Andes CLI in PATH.",
+          "3d34423e88": "Registering the Andes CLI",
           "3be27641c9": "so emulator commands can run from agent shells.",
-          "3941719a56": "Checking the command line tool before opening skill setup."
+          "3941719a56": "Checking the Andes CLI before opening skill setup."
         },
         "MobileEmulatorExamples": {
           "edf13dd03b": "Copy",
@@ -7859,7 +7859,7 @@
           "9a3758d983": "No saved servers.",
           "9bee6bbeeb": "Add Server",
           "55fcc964cd": "on the server and paste the printed pairing URL.",
-          "960e901ae4": "orca serve --pairing-address <host>",
+          "960e901ae4": "andes serve --pairing-address <host>",
           "163671f7b5": "Run",
           "c3d772c514": "orca://pair?code=...",
           "9bc9b83474": "Pairing code",
@@ -8656,7 +8656,7 @@
           "e49688f67f": "Register `{{value0}}` in WSL?",
           "61ac55278e": "Remove `{{value0}}` from WSL?",
           "e2b0ee267f": "stale",
-          "7aa456a460": "Register `orca-ide` in ~/.local/bin inside WSL.",
+          "7aa456a460": "Register `andes-ide` in ~/.local/bin inside WSL.",
           "0307677bb9": "Checking WSL CLI registration..."
         },
         "accounts": {
@@ -9053,7 +9053,7 @@
               "cee44fb442": "automation",
               "a57c2172dc": "agent-browser",
               "6ea88e5206": "npx",
-              "f5b8fdddf5": "orca-cli",
+              "f5b8fdddf5": "andes-cli",
               "e5a784bc54": "install",
               "9d97446873": "agent",
               "a2d489263e": "skill",
@@ -9066,8 +9066,8 @@
               "30c74aaa1f": "path",
               "ff05cbc344": "orca",
               "85fab5e12c": "cli",
-              "890ddf943d": "Register the command line tool so agents can drive the browser.",
-              "50f0860e18": "Enable the command line tool"
+              "890ddf943d": "Register the Andes CLI so agents can drive the browser.",
+              "50f0860e18": "Enable the Andes CLI"
             }
           }
         },
@@ -9306,14 +9306,14 @@
             "6382fe9724": "npx",
             "baa263d6d8": "agents",
             "bda108e66c": "skill",
-            "244e3fb4c8": "Install the command line skill so agents know to use the command line tool.",
+            "244e3fb4c8": "Install the command line skill so agents know to use the Andes CLI.",
             "2d9f7b42df": "Agent skill",
             "0a00691c06": "shell command",
             "dbeb1f348e": "command",
             "88d3df9ce9": "terminal",
             "fb4f338a3d": "path",
             "924a660a78": "cli",
-            "ca529079bf": "Register or remove the command line tool.",
+            "ca529079bf": "Register or remove the Andes CLI.",
             "327e3fa70d": "Command Line",
             "fb84767421": "switch",
             "f8f0ac213a": "sequential",
@@ -9583,8 +9583,8 @@
               "b8ddd13195": "agent emulator",
               "1ad6fb6230": "default device",
               "ac0a985873": "emulator skill",
-              "9353854ff3": "orca emulator",
-              "d4b7833894": "orca cli",
+              "9353854ff3": "andes emulator",
+              "d4b7833894": "andes cli",
               "84e5706975": "serve-sim",
               "7c5a8a2bee": "xcode",
               "bec7231663": "ipad",
@@ -9927,7 +9927,7 @@
             "ca6a0c2df7": "shortcut",
             "groupShortcut": "{{value0}} shortcut",
             "4811a8264a": "terminal first",
-            "afda131738": "orca first",
+            "afda131738": "andes first",
             "0ecfc47434": "conflict",
             "0f8cb15582": "agent",
             "f1adebbe8c": "shell",
@@ -11168,7 +11168,7 @@
           "advanced": "Advanced",
           "sshTunnel": "I am using an SSH tunnel to this local address",
           "sshTunnelHelp": "Keep the tunnel active while using this connection.",
-          "headlessHelp": "Using headless orca serve? Run orca serve --pairing-address <reachable-host> on the other computer.",
+          "headlessHelp": "Using headless andes serve? Run andes serve --pairing-address <reachable-host> on the other computer.",
           "cancel": "Cancel",
           "addWithTunnel": "Add host using tunnel",
           "addHost": "Add host",
@@ -11301,7 +11301,7 @@
         "shareSkills": {
           "title": "Share Skills",
           "description": "Share your skills with an unlisted link. Anyone who has it can install them.",
-          "allowAgentPublishing": "Allow agents and the command line tool to publish skill links",
+          "allowAgentPublishing": "Allow agents and the Andes CLI to publish skill links",
           "allowAgentPublishingDescription": "Let commands publish explicitly named installed skills. Skill folders can contain scripts, configuration, or secrets, so this is off by default.",
           "allowAgentPublishingWebDescription": "Desktop only. Open Settings → Share Skills on the host device to change this setting.",
           "selectTitle": "Select one or more skills",
@@ -13533,7 +13533,7 @@
           "FloatingTerminalOrchestrationDialog": {
             "f726054620": "Enables agents to hand off context and coordinate work through Andes.",
             "1cd3f8af64": "Orchestration skill",
-            "6f0aed26b8": "Install the command line tool and orchestration skill so agents can coordinate through Andes.",
+            "6f0aed26b8": "Install the Andes CLI and orchestration skill so agents can coordinate through Andes.",
             "05d7aabc20": "Not installed",
             "630c0ac8c8": "Installed",
             "dfd021ce46": "Checking...",
@@ -13551,7 +13551,7 @@
             "690b6fb98a": "Unsaved Changes",
             "bbc177f98f": "Enable",
             "adc281394d": "Dismiss",
-            "8cf80db43b": "Set up the command line tool and agent skill so agents can coordinate through Andes.",
+            "8cf80db43b": "Set up the Andes CLI and agent skill so agents can coordinate through Andes.",
             "2a3c5ddf5e": "Enable orchestration",
             "d6b563ae24": "Loading editor...",
             "8b14ba6c17": "New Browser Tab",
@@ -13821,7 +13821,7 @@
                       "71bd9a8c95": "Know the moment an agent finishes, needs attention, or gets blocked.",
                       "46db810da8": "Choose your default agent",
                       "b8e5bae17f": "Start new work faster with your preferred agent already selected.",
-                      "fee5557b02": "Enable the command line tool",
+                      "fee5557b02": "Enable the Andes CLI",
                       "7bcb4097fa": "Register the Andes shell command and install agent skills for browser, computer, and orchestration workflows.",
                       "ad342dd4c6": "Connect integrations",
                       "06fe30fdb0": "Start an agent from a task in one click and keep PR status in view.",
@@ -14016,8 +14016,8 @@
             "55846c7f95": "“Split this PR into two",
             "4795ac2d4a": "Try asking:",
             "53905bd076": "Development preview: opening skills setup terminal.",
-            "1da82af45b": "The command line tool needs attention",
-            "ce13a742d0": "Registered `orca` in PATH.",
+            "1da82af45b": "The Andes CLI needs attention",
+            "ce13a742d0": "Registered `andes` in PATH.",
             "d1a86c7eb5": "Open Settings to finish CLI setup."
           },
           "CmdJPaletteFeatureTipVisual": {
@@ -14096,11 +14096,11 @@
                       "7c1b6bdb1e": "Enable",
                       "51074ccb05": "Failed to load CLI status.",
                       "35dea1ae12": "Agent control is ready.",
-                      "9dff3a6338": "Skill is installed. Enable the command line tool to finish setup.",
-                      "15986a1080": "The command line tool is ready. Install the skill to finish setup.",
+                      "9dff3a6338": "Skill is installed. Enable the Andes CLI to finish setup.",
+                      "15986a1080": "The Andes CLI is ready. Install the skill to finish setup.",
                       "4c26913def": "Still not set up. Complete both steps to enable agent control.",
                       "c94ff11e91": "Could not re-check setup status.",
-                      "2b519eed94": "Registered the command line tool in PATH."
+                      "2b519eed94": "Registered the Andes CLI in PATH."
                     }
                   }
                 },
@@ -14118,7 +14118,7 @@
             "2fda9ff015": "Set up agent control",
             "0ac0fef514": "Agent control is ready.",
             "2bdfff8763": "Agent control (optional).",
-            "72736b051f": "Set up the command line tool + skill when you want agents to drive this simulator.",
+            "72736b051f": "Set up the Andes CLI + skill when you want agents to drive this simulator.",
             "d10ae98046": "Done",
             "3756cbeca7": "Not now",
             "6d950431d2": "Hide",
@@ -14126,15 +14126,15 @@
             "3f003507f4": "Open full setup in Settings"
           },
           "MobileEmulatorAgentSetupGuideSteps": {
-            "9b49d892e3": "Enable the command line tool",
-            "3d8dc52c93": "Registers the orca command for emulator control in agent shells.",
+            "9b49d892e3": "Enable the Andes CLI",
+            "3d8dc52c93": "Registers the andes command for emulator control in agent shells.",
             "21f5687c07": "Command line skill",
-            "64fb057667": "Teaches agents the orca emulator commands for this worktree.",
+            "64fb057667": "Teaches agents the andes emulator commands for this worktree.",
             "5c59ea96ca": "Mobile emulator command line skill setup",
             "bff5341ac3": "Mobile emulator command line skill install terminal",
-            "3d34423e88": "Registering the command line tool",
+            "3d34423e88": "Registering the Andes CLI",
             "3be27641c9": "so emulator commands can run from agent shells.",
-            "3941719a56": "Checking the command line tool before opening skill setup."
+            "3941719a56": "Checking the Andes CLI before opening skill setup."
           },
           "MobileEmulatorTabIntroCallout": {
             "1924982130": "Dismiss",
@@ -16758,7 +16758,7 @@
       "orchestrationPaused": {
         "label": "Orchestration paused",
         "message": "Structured Chat blocks terminal prompts and sends. Orchestration messages remain queued; switch to Terminal, then check the Andes inbox with",
-        "command": "orca orchestration check"
+        "command": "andes orchestration check"
       },
       "structuredSessionCloseFailed": "Could not close this Codex chat",
       "structuredSessionLaunchFailed": "Could not open Codex chat",
@@ -17232,7 +17232,7 @@
       "continueButton": "Continue without CLI",
       "title": "Command line tool unavailable",
       "message": "Andes couldn't start its local command transport.",
-      "detail": "Andes will continue to work, but commands such as orca status, orca terminal, and orchestration are unavailable for this session.\n\n{{guidance}}\n\nCause: {{cause}}",
+      "detail": "Andes will continue to work, but commands such as andes status, andes terminal, and orchestration are unavailable for this session.\n\n{{guidance}}\n\nCause: {{cause}}",
       "guidance": {
         "permissionDenied": "Andes couldn't write its runtime file. Check permissions on Andes's data folder, then restart.",
         "storageUnavailable": "Your disk may be full or read-only. Free up space, then restart Andes.",

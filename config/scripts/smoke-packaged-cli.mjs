@@ -13,7 +13,7 @@ function readAppDirArg(argv) {
     return explicit.slice('--app-dir='.length)
   }
   if (process.platform === 'darwin') {
-    return 'dist/mac-arm64/Orca.app'
+    return 'dist/mac-arm64/Andes.app'
   }
   if (process.platform === 'win32') {
     return 'dist/win-unpacked'
@@ -23,10 +23,10 @@ function readAppDirArg(argv) {
 
 function getPackagedCliPath(appDir) {
   if (process.platform === 'darwin' || appDir.endsWith('.app')) {
-    return join(appDir, 'Contents', 'Resources', 'bin', 'orca')
+    return join(appDir, 'Contents', 'Resources', 'bin', 'andes')
   }
   if (process.platform === 'win32') {
-    return join(appDir, 'resources', 'bin', 'orca.exe')
+    return join(appDir, 'resources', 'bin', 'andes.exe')
   }
   return join(appDir, 'resources', 'bin', 'orca-ide')
 }
@@ -51,8 +51,8 @@ try {
 
   await run(['--help'])
   const list = JSON.parse((await run(['skills', 'list', '--json'])).stdout)
-  assert(list.topics.some((topic) => topic.name === 'orca-cli'))
-  assert.match((await run(['skills', 'get', 'orca-cli'])).stdout, /name: orca-cli/)
+  assert(list.topics.some((topic) => topic.name === 'andes-cli'))
+  assert.match((await run(['skills', 'get', 'andes-cli'])).stdout, /name: andes-cli/)
   assert.match((await run(['skills', 'get', 'computer-use'])).stdout, /name: computer-use/)
   const install = JSON.parse(
     (
@@ -60,7 +60,7 @@ try {
         'skills',
         'install',
         '--skill',
-        'orca-cli',
+        'andes-cli',
         '--agent',
         'codex',
         '--dry-run',
@@ -69,7 +69,7 @@ try {
     ).stdout
   )
   const update = JSON.parse(
-    (await run(['skills', 'update', '--skill', 'orca-cli', '--dry-run', '--json'])).stdout
+    (await run(['skills', 'update', '--skill', 'andes-cli', '--dry-run', '--json'])).stdout
   )
   assert.equal(install.executed, false)
   assert.equal(update.executed, false)

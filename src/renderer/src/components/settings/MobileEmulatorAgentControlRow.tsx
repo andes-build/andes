@@ -161,7 +161,7 @@ export function MobileEmulatorAgentControlRow(): React.JSX.Element {
             installedCommand={cliSkillUpdateCommand}
             terminalTitle="Orca CLI skill setup"
             terminalAriaLabel="Orca CLI skill install terminal"
-            terminalWorktreeId="settings-mobile-emulator-orca-cli-skill-terminal"
+            terminalWorktreeId="settings-mobile-emulator-andes-cli-skill-terminal"
             terminalShellOverride={activeSkillRuntime.terminalShellOverride}
             installed={setup.cliSkillInstalled}
             loading={setup.cliSkillLoading}

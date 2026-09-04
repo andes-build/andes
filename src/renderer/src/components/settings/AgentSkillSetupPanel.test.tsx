@@ -7,8 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AgentSkillSetupPanel } from './AgentSkillSetupPanel'
 import { TooltipProvider } from '../ui/tooltip'
 
-const INSTALL_COMMAND = 'npx skills add https://github.com/stablyai/orca --skill orca-cli --global'
-const UPDATE_COMMAND = 'npx skills update orca-cli --global'
+const INSTALL_COMMAND = 'npx skills add https://github.com/stablyai/orca --skill andes-cli --global'
+const UPDATE_COMMAND = 'npx skills update andes-cli --global'
 
 const mocks = vi.hoisted(() => ({
   clipboardWrite: vi.fn(),
@@ -325,7 +325,7 @@ describe('AgentSkillSetupPanel', () => {
       finishRecheck = resolve
     })
     const onRecheck = vi.fn(() => recheck)
-    await renderInteractivePanel({ freshnessSkillName: 'orca-cli', onRecheck })
+    await renderInteractivePanel({ freshnessSkillName: 'andes-cli', onRecheck })
     await clickButton('Install')
 
     await act(async () => {
@@ -613,13 +613,13 @@ describe('AgentSkillSetupPanel', () => {
   })
 
   it('keeps the command failure authoritative over presence discovery', async () => {
-    await renderInteractivePanel({ freshnessSkillName: 'orca-cli' })
+    await renderInteractivePanel({ freshnessSkillName: 'andes-cli' })
     await clickButton('Install')
 
     await act(async () => {
       mocks.terminalProps.at(-1)?.onCommandFinished?.(1)
     })
-    await rerenderInteractivePanel({ installed: true, freshnessSkillName: 'orca-cli' })
+    await rerenderInteractivePanel({ installed: true, freshnessSkillName: 'andes-cli' })
 
     expect(container?.textContent).toContain('Setup failed')
     expect(container?.textContent).toContain('exited with code 1')
@@ -657,7 +657,7 @@ describe('AgentSkillSetupPanel', () => {
     const onRecheck = vi.fn(() => {
       calls.push('recheck')
     })
-    await renderInteractivePanel({ freshnessSkillName: 'orca-cli', onRecheck })
+    await renderInteractivePanel({ freshnessSkillName: 'andes-cli', onRecheck })
     await clickButton('Install')
     calls.length = 0
 
@@ -670,7 +670,7 @@ describe('AgentSkillSetupPanel', () => {
 
   it('rechecks once when command completion is followed by terminal exit', async () => {
     const onRecheck = vi.fn()
-    await renderInteractivePanel({ freshnessSkillName: 'orca-cli', onRecheck })
+    await renderInteractivePanel({ freshnessSkillName: 'andes-cli', onRecheck })
     await clickButton('Install')
 
     await act(async () => {

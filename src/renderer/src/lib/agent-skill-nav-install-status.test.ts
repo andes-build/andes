@@ -42,15 +42,15 @@ describe('getAgentSkillNavInstallStatus', () => {
   it('keeps loading and missing states ahead of freshness', () => {
     expect(
       getAgentSkillNavInstallStatus({
-        name: 'orca-cli',
+        name: 'andes-cli',
         installed: true,
         loading: true,
-        inventory: inventory([placement('orca-cli', 'current')])
+        inventory: inventory([placement('andes-cli', 'current')])
       })
     ).toBe('checking')
     expect(
       getAgentSkillNavInstallStatus({
-        name: 'orca-cli',
+        name: 'andes-cli',
         installed: false,
         loading: false,
         inventory: null

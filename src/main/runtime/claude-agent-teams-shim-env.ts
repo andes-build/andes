@@ -8,7 +8,7 @@ import {
   isDirectClaudeCommand,
   type ClaudeAgentTeamsMode
 } from '../../shared/claude-agent-teams-tmux-compat'
-import { getOrcaCliCommandNameForPlatform } from '../../shared/orca-cli-command-name'
+import { getAndesCliCommandNameForPlatform } from '../../shared/andes-cli-command-name'
 import { resolvePathEnvKey } from '../pty/windows-path-segment-merge'
 
 export type ClaudeAgentTeamsLaunchPlan = {
@@ -78,8 +78,8 @@ export function resolveClaudeAgentTeamsShimBin(
     return bundled
   }
   return (
-    findExecutableOnPath(process.platform === 'win32' ? 'orca-dev.cmd' : 'orca-dev', pathValue) ??
-    findExecutableOnPath(getOrcaCliCommandNameForPlatform(process.platform), pathValue)
+    findExecutableOnPath(process.platform === 'win32' ? 'andes-dev.cmd' : 'andes-dev', pathValue) ??
+    findExecutableOnPath(getAndesCliCommandNameForPlatform(process.platform), pathValue)
   )
 }
 
@@ -92,12 +92,13 @@ function bundledLauncherPath(): string | null {
     return null
   }
   if (process.platform === 'darwin') {
-    return join(process.resourcesPath, 'bin', 'orca')
+    return join(process.resourcesPath, 'bin', 'andes')
   }
   if (process.platform === 'linux') {
     return join(process.resourcesPath, 'bin', 'orca-ide')
   }
   if (process.platform === 'win32') {
+    // Why not 'andes.exe': the packaged Windows native launcher is out of scope for spec 007.
     return join(process.resourcesPath, 'bin', 'orca.exe')
   }
   return null

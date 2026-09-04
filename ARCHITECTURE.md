@@ -257,12 +257,14 @@ detrás del overlay.
 - **Catálogos de idiomas**: los cinco (`en, es, ja, ko, zh` en `src/renderer/src/i18n/locales/`) no
   dicen "Orca" salvo las excepciones técnicas de `config/scripts/orca-brand-exceptions.mjs` (único
   archivo, con motivo por entrada), verificado por `config/scripts/verify-no-orca-branding.mjs`
-  (`\bOrca\b` sobre valores, tras aplicar las excepciones). "Orca CLI" describe la herramienta sin
-  marca ("the command line tool" / "the command line" en inglés, equivalente en cada idioma) porque
-  el binario real sigue llamándose `orca` — ver `decisions.md`. "Orca Server" y "Orca Cloud" sí se
-  renombraron a Andes (son un servicio real de la app, no el binario). Los comandos literales entre
-  comillas invertidas (`` `orca worktree create` ``, `` `orca serve` ``) no cambiaron: son el
-  binario real. Las 33 claves huérfanas de "Orca Mobile"/"Orca Relay" (emparejamiento móvil borrado
+  (`\bOrca\b` sobre valores, tras aplicar las excepciones). En `en.json`, la spec 007 volvió a
+  nombrar el comando ahora que el binario real se llama `andes` en macOS: "the command line tool" /
+  "the command line" pasó a "the Andes CLI", y los comandos literales entre comillas invertidas que
+  decían `` `orca worktree create` `` ahora dicen `` `andes worktree create` `` — ver la sección
+  "El comando se llama andes" más abajo. Los otros cuatro catálogos (`es/ja/ko/zh.json`) quedaron sin
+  tocar, territorio de la spec 008 en paralelo (ver `decisions.md`). "Orca Server" y "Orca Cloud" sí se
+  renombraron a Andes (son un servicio real de la app, no el binario). Las 33 claves huérfanas de
+  "Orca Mobile"/"Orca Relay" (emparejamiento móvil borrado
   en la spec 001, sin referencia viva en el código) se borraron del catálogo en vez de traducirse;
   las pocas que sí siguen vivas (`menu.showMobileButton`, `orcaAccount.*`,
   `orca.profiles.signout.confirm.description`) se renombraron igual que el resto.
@@ -292,12 +294,71 @@ detrás del overlay.
   `terminal` ni `agent-session`: la conversación sigue.
 - **La app publicada ya se llama Andes ante el sistema operativo**: `productName: 'Andes'`
   (`config/electron-builder.config.cjs`) fija el `CFBundleName`/AppUserModelId real de cualquier
-  build empaquetado. Lo que queda diciendo "Orca"/"Orca Dev" es solo la instancia de *desarrollo*
-  (`BASE_APP_NAME`, `src/main/startup/dev-instance-identity.ts`), aplicado por `app.setName()` —
-  gateado a `isDev` (`shouldApplyPreReadyAppName`) y sin efecto en un paquete publicado. Ese
-  renombre cosmético de desarrollo pasa a la spec 007: `app.setName()` alimenta también el nombre
-  del ítem de Keychain que `safeStorage` resuelve antes de `ready`, así que cambiarlo sin cuidado
-  arriesga los secretos ya cifrados del perfil de desarrollo — ver "Decisiones".
+  build empaquetado. La instancia de *desarrollo* también se presenta como Andes desde la spec 007
+  (`BASE_APP_NAME`, `src/main/startup/dev-instance-identity.ts`) — ver esa sección más abajo.
+
+## El comando se llama andes (spec 007)
+
+- **macOS y modo desarrollo**: el comando instalado en el PATH pasa de `orca` a `andes` en macOS
+  (`DEFAULT_MAC_COMMAND_PATH = '/usr/local/bin/andes'`, con el mismo fallback a
+  `~/.local/bin/andes` en Apple Silicon que ya existía) y en modo desarrollo, en cualquier
+  plataforma (`DEV_COMMAND_NAME = 'andes-dev'`, script `config/scripts/andes-dev.mjs`, todo en
+  `src/main/cli/cli-install-constants.ts`). `getBundledLauncherPath('darwin', …)`
+  (`bundled-cli-launcher-path.ts`) devuelve `bin/andes`; el alias local que un dev PTY expone sin
+  el sufijo `-dev` (`cli-dev-launcher.ts`) pasa de `orca` a `andes`.
+- **El launcher nativo de Windows y el paquete de Linux no se tocan** — ver `decisions.md`: siguen
+  siendo `orca.exe`/`orca.cmd` (Windows) y `orca-ide` (Linux, ya distinto de `orca` desde antes por
+  el lector de pantalla GNOME). `cli-install-location.ts`'s `commandName` getter refleja las tres
+  ramas: `linux` → `orca-ide`, `win32` → `orca`, cualquier otra (macOS) → `andes`.
+- **Migración de una instalación previa**: `LEGACY_MAC_COMMAND_NAME = 'orca'` (nuevo, junto al
+  `LEGACY_LINUX_COMMAND_NAME` que ya existía) y `removeLegacyMacCommandIfManaged`
+  (`cli-command-installation.ts`) limpian un `orca` viejo en la misma carpeta que el nuevo
+  `andes`, reclamándolo solo si es un symlink administrado (`.app/Contents/Resources/bin/orca`),
+  nunca un binario de terceros. `isManagedSymlinkTarget` (`cli-command-inspection.ts`) ahora acepta
+  un `expectedName` explícito para poder preguntar por un nombre distinto del launcher actual.
+- **El skill del comando se llama `andes-cli`** (`skill-guides/andes-cli.md`,
+  `skill-stubs/andes-cli.md`, `skills/andes-cli/`), con su guía completamente reescrita a `andes`
+  — placeholder `ANDES` en vez de `ORCA`, comandos literales `andes ...`, salvo `orca-ide` (Linux) y
+  la mención real al lector de pantalla GNOME Orca, que siguen intactas. Las referencias cruzadas a
+  este skill desde `computer-use.md` y `orchestration.md` (otros skills, sin renombrar en esta spec)
+  se actualizaron a `andes-cli` porque nombran el id real del skill, no la marca del binario que esas
+  otras guías siguen enseñando.
+- **`OrchestrationCliCommand`, el wire RPC `compatibilityCliCommand` y todo el relay SSH quedan sin
+  renombrar** — viajan a un proceso ya lanzado (un participante remoto, o el shim que el relay
+  despliega en un host SSH), ver `decisions.md`. `getTuiAgentLaunchCommand`
+  (`src/shared/tui-agent-config.ts`) reflejó esto agregando `launchCmdByPlatform.darwin: 'andes
+  claude-teams'` como única rama renombrada; el `launchCmd`/`detectCmd` de nivel superior siguen en
+  `orca` porque ese es el valor que un host SSH-remoto usa (`isRemote && platform === 'linux'`
+  bypasea el override de plataforma a propósito).
+- **La instancia de desarrollo se presenta como "Andes Dev" ante macOS** (notificaciones, Dock,
+  menú): `BASE_APP_NAME` (`src/main/startup/dev-instance-identity.ts`) y
+  `DEV_BUNDLE_DISPLAY_NAME` (`config/scripts/dev-electron-bundle-identity.mjs`) pasan de
+  `'Orca'`/`'Orca Dev'` a `'Andes'`/`'Andes Dev'`. El ítem del llavero de macOS pasa de "Orca Dev
+  Safe Storage" a "Andes Dev Safe Storage" — quien tenga un perfil de desarrollo vivo pierde acceso
+  a sus secretos cifrados y tiene que volver a iniciar sesión una vez (decidido en Gate 1, ver
+  `decisions.md`). La carpeta de datos (`userData`, `<appData>/orca-dev`) no se mueve.
+- **Lo que no se tocó, a propósito**: `orca.yaml` (formato de configuración de proyecto);
+  `src/main/runtime/orca-runtime-tests/` (nombre de carpeta de tests); los valores `'orca'` guardados
+  en disco por sesiones ya existentes — ámbito de uso en `claude-usage-types.ts`,
+  `codex-usage-types.ts`, `opencode-usage-types.ts`, y proveedor en `agent-session-journal-types.ts`;
+  y las descripciones/ejemplos de "Orca" como marca fuera de `andes-cli` (por ejemplo, el resto de
+  `src/cli/specs/*.ts` sigue mencionando "Orca" en su prosa descriptiva — solo los comandos
+  literales `usage`/`examples` se corrigieron a `andes`, no la prosa).
+- **Cierre del criterio 5 (retomado el 2026-09-04, tras integrar `main` hasta `d97c8cc07c`)**: los
+  dos commits de avance ya dejaban `en.json` sin "Orca CLI" literal ni comando entre backticks
+  (eval en verde), pero quedaban comandos literales sin backticks apuntando al binario viejo:
+  `RuntimeHostAccessForm.tsx` ("orca serve --pairing-address"), `runtime-rpc-startup-failure.ts`
+  ("orca status, orca terminal"), `NativeChatOrchestrationPausedNotice.tsx` ("orca orchestration
+  check", que además no calzaba con el uso real ya renombrado en `src/cli/specs/orchestration.ts`),
+  `MobileEmulatorAgentSetupGuideSteps.tsx` (dos textos y el fallback "Orca CLI skill", nunca
+  renderizado porque la clave ya tenía una traducción — se corrigió igual) y las palabras clave de
+  búsqueda de Ajustes (`shortcuts-search.ts`, `mobile-emulator-search.ts`; `browser-use-search.ts`
+  quedó con `'orca'` como alias de búsqueda, a propósito, para quien todavía escriba el nombre
+  viejo). Se corrigieron el `.tsx`/`.ts` fuente y, donde `en.json` tenía una traducción propia para
+  esa clave (no el fallback en código), también el catálogo — `translate(key, fallback)` devuelve
+  el catálogo si existe, así que tocar solo el fallback no alcanza. `verify:localization-extraction`
+  bajó de 77 a 71 "inline defaults differ" con este cierre (ninguno de los 71 restantes menciona
+  Orca).
 
 ## Un solo idioma mientras la interfaz cambia (spec 008)
 

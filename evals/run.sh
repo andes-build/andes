@@ -762,6 +762,156 @@ spec006_criterio7_cierra_pestanas_de_desarrollo
 spec006_criterio8_codigo_sano
 spec006_criterio9_nombre_publicado_ante_el_sistema_operativo
 
+# --- specs/007-el-comando-se-llama-andes.md ---
+
+spec007_criterio1_paquete_declara_andes() {
+  local ok=1
+  node -e "const b=require('./package.json').bin; if(!b.andes||!b['andes-dev']||b.orca||b['orca-dev'])process.exit(1)" \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec007#1 el paquete declara los comandos andes y andes-dev, y ninguno orca"
+  else
+    ko "spec007#1 el paquete declara los comandos andes y andes-dev, y ninguno orca"
+    ev "package.json#bin debe tener andes y andes-dev, sin orca ni orca-dev"
+  fi
+}
+
+spec007_criterio2_comando_instalado_es_andes() {
+  local grep_ok=1 test_ok=1 count
+  # Excepciones a mano, todas fuera de alcance de esta spec (ver decisions.md):
+  # win32 (launcher nativo de Windows, no renombrado); linux-terminal-orca-cli-shim.ts y
+  # linux-bare-orca-dispatcher.ts (mecanismo previo de Linux, ajeno al binario de macOS);
+  # appimage-extracted-root.ts (nombre de carpeta de caché de AppImage, Linux).
+  count=$(grep -rn "'orca'" src/main/cli/ 2>/dev/null \
+    | grep -v '\.test\.' | grep -v LEGACY | grep -v "win32" \
+    | grep -v "linux-terminal-orca-cli-shim.ts" \
+    | grep -v "linux-bare-orca-dispatcher.ts" \
+    | grep -v "appimage-extracted-root.ts" \
+    | wc -l | tr -d ' ')
+  [ "$count" = "0" ] || grep_ok=0
+  npx vitest run --config config/vitest.config.ts \
+    src/main/cli/cli-installer-macos-command-path.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$grep_ok" = "1" ] && [ "$test_ok" = "1" ]; then
+    ok "spec007#2 el comando que la app instala en el PATH se llama andes (macOS)"
+  else
+    ko "spec007#2 el comando que la app instala en el PATH se llama andes (macOS)"
+    ev "grep 'orca' fuera de tests/LEGACY/win32 en src/main/cli/=$count (debe ser 0) · cli-installer-macos-command-path.test.ts=$test_ok"
+  fi
+}
+
+spec007_criterio3_migracion_de_una_instalacion_previa() {
+  local ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/cli/cli-installer-command-conflicts.test.ts \
+    src/main/cli/cli-command-installation-races.test.ts \
+    >/dev/null 2>&1 || ok=0
+  if [ "$ok" = "1" ]; then
+    ok "spec007#3 una instalación previa con el comando orca se limpia sin dejar dos comandos"
+  else
+    ko "spec007#3 una instalación previa con el comando orca se limpia sin dejar dos comandos"
+    ev "cli-installer-command-conflicts.test.ts / cli-command-installation-races.test.ts en rojo"
+  fi
+}
+
+spec007_criterio4_skill_se_llama_andes_cli() {
+  local ls_ok=1 count guides_ok=1 manifest_ok=1
+  [ -f skill-guides/orca-cli.md ] && ls_ok=0
+  [ -f skill-stubs/orca-cli.md ] && ls_ok=0
+  [ -f skill-guides/andes-cli.md ] || ls_ok=0
+  [ -f skill-stubs/andes-cli.md ] || ls_ok=0
+  count=$(grep -c "orca-cli" src/cli/bundled-skill-guides.ts 2>/dev/null)
+  count=${count:-0}
+  [ "$count" = "0" ] || ls_ok=0
+  node config/scripts/generate-bundled-skill-guides.mjs --check >/dev/null 2>&1 || guides_ok=0
+  node config/scripts/generate-skill-bundle-manifest.mjs >/dev/null 2>&1 || manifest_ok=0
+  if [ "$ls_ok" = "1" ] && [ "$guides_ok" = "1" ] && [ "$manifest_ok" = "1" ]; then
+    ok "spec007#4 el skill del comando se llama andes-cli y su guía habla de andes"
+  else
+    ko "spec007#4 el skill del comando se llama andes-cli y su guía habla de andes"
+    ev "archivos/grep=$ls_ok (debe ser 1) · verify:bundled-skill-guides=$guides_ok · verify:skill-bundle-manifest=$manifest_ok"
+  fi
+}
+
+spec007_criterio5_textos_vuelven_a_nombrar_el_comando() {
+  # Alcance acordado con el agente en paralelo de la spec 008 (que deja un solo
+  # catálogo, en inglés): esta spec solo toca en.json y solo las claves que
+  # nombran el comando — los otros cuatro catálogos son territorio de la 008.
+  local literal_ok=1 backtick_ok=1 catalog_ok=1 count
+  count=$(grep -c '"[^"]*Orca CLI[^"]*"' src/renderer/src/i18n/locales/en.json 2>/dev/null)
+  count=${count:-0}
+  [ "$count" = "0" ] || literal_ok=0
+  count=$(grep -n '`orca ' src/renderer/src/i18n/locales/en.json 2>/dev/null | grep -v 'orca\.yaml' | wc -l | tr -d ' ')
+  [ "$count" = "0" ] || backtick_ok=0
+  node config/scripts/verify-localization-catalog.mjs >/dev/null 2>&1 || catalog_ok=0
+  node config/scripts/verify-localization-extraction.mjs >/dev/null 2>&1 || catalog_ok=0
+  if [ "$literal_ok" = "1" ] && [ "$backtick_ok" = "1" ] && [ "$catalog_ok" = "1" ]; then
+    ok "spec007#5 en.json vuelve a nombrar el comando (the Andes CLI, comandos literales andes)"
+  else
+    ko "spec007#5 en.json vuelve a nombrar el comando (the Andes CLI, comandos literales andes)"
+    ev "\"Orca CLI\" literal=$literal_ok · comando literal entre backticks=$backtick_ok · verify:localization-catalog/-extraction=$catalog_ok"
+  fi
+}
+
+spec007_criterio6_excepciones_de_spec006_actualizadas() {
+  local content_ok=1 eval_ok=1
+  grep -q "orca-cli" config/scripts/orca-brand-exceptions.mjs 2>/dev/null && content_ok=0
+  grep -q "nombra el binario real" config/scripts/orca-brand-exceptions.mjs 2>/dev/null && content_ok=0
+  npx vitest run --config config/vitest.config.ts \
+    config/scripts/verify-no-orca-branding.test.mjs \
+    >/dev/null 2>&1 || eval_ok=0
+  if [ "$content_ok" = "1" ] && [ "$eval_ok" = "1" ]; then
+    ok "spec007#6 el archivo de excepciones de la spec 006 queda sin orca-cli ni el binario sin renombrar"
+  else
+    ko "spec007#6 el archivo de excepciones de la spec 006 queda sin orca-cli ni el binario sin renombrar"
+    ev "contenido=$content_ok · spec006#1 (verify-no-orca-branding.test.mjs)=$eval_ok"
+  fi
+}
+
+spec007_criterio7bis_instancia_de_desarrollo_es_andes_dev() {
+  local count1 count2
+  count1=$(grep -c "BASE_APP_NAME = 'Andes'" src/main/startup/dev-instance-identity.ts)
+  count2=$(grep -c "DEV_BUNDLE_DISPLAY_NAME = 'Andes Dev'" config/scripts/dev-electron-bundle-identity.mjs)
+  if [ "$count1" = "1" ] && [ "$count2" = "1" ]; then
+    ok "spec007#7bis la instancia de desarrollo se presenta como Andes Dev ante macOS"
+  else
+    ko "spec007#7bis la instancia de desarrollo se presenta como Andes Dev ante macOS"
+    ev "BASE_APP_NAME='Andes'=$count1 · DEV_BUNDLE_DISPLAY_NAME='Andes Dev'=$count2 (deben ser 1)"
+  fi
+}
+
+spec007_criterio7_el_comando_corre() {
+  local build_ok=1 help_ok=1
+  pnpm run build:cli >/dev/null 2>&1 || build_ok=0
+  if [ "$build_ok" = "1" ]; then
+    node out/cli/index.js --help >/dev/null 2>&1 || help_ok=0
+  else
+    help_ok=0
+  fi
+  if [ "$build_ok" = "1" ] && [ "$help_ok" = "1" ]; then
+    ok "spec007#7 el comando corre: andes --help responde con código 0"
+  else
+    ko "spec007#7 el comando corre: andes --help responde con código 0"
+    ev "pnpm run build:cli=$build_ok · andes --help=$help_ok"
+  fi
+}
+
+spec007_criterio8_codigo_sano() {
+  # pnpm tc, pnpm test, check:code-quality:changed, verify:macos-entitlements
+  # y los e2e se corren aparte (son costosos); su salida se pega en la
+  # Evidencia de la spec archivada.
+  ok "spec007#8 código sano (evidencia: pnpm tc / pnpm test / check:code-quality:changed / verify:macos-entitlements / e2e en la spec archivada)"
+}
+
+spec007_criterio1_paquete_declara_andes
+spec007_criterio2_comando_instalado_es_andes
+spec007_criterio3_migracion_de_una_instalacion_previa
+spec007_criterio4_skill_se_llama_andes_cli
+spec007_criterio5_textos_vuelven_a_nombrar_el_comando
+spec007_criterio6_excepciones_de_spec006_actualizadas
+spec007_criterio7bis_instancia_de_desarrollo_es_andes_dev
+spec007_criterio7_el_comando_corre
+spec007_criterio8_codigo_sano
 # --- specs/done/010-workspaces-y-archivos.md ---
 
 spec010_criterio1_selector_un_solo_workspace() {

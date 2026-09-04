@@ -33,7 +33,7 @@ export function MobileEmulatorAgentSetupGuideSteps({
   // Why: skill detection here scans the local host only, so keep building host
   // commands; routing them to a WSL runtime would install where we never look.
   const skillInstallCommand = buildSkillCommandForRuntime(ORCA_CLI_SKILL_INSTALL_COMMAND)
-  const terminalWorktreeId = `mobile-emulator-${worktreeId}-orca-cli-skill-terminal`
+  const terminalWorktreeId = `mobile-emulator-${worktreeId}-andes-cli-skill-terminal`
   const showSkillPreInstallNotice = shouldShowMobileEmulatorSkillPreInstallNotice({
     cliEnabled: setup.cliEnabled,
     cliSkillInstalled: setup.cliSkillInstalled
@@ -60,7 +60,7 @@ export function MobileEmulatorAgentSetupGuideSteps({
           <p className="text-xs text-muted-foreground">
             {translate(
               'auto.components.emulator.pane.MobileEmulatorAgentSetupGuideSteps.3d8dc52c93',
-              'Registers the orca command for emulator control in agent shells.'
+              'Registers the andes command for emulator control in agent shells.'
             )}
           </p>
           {setup.cliInstallStatus?.commandPath && setup.cliEnabled ? (
@@ -149,11 +149,11 @@ export function MobileEmulatorAgentSetupGuideSteps({
             className="min-w-0"
             title={translate(
               'auto.components.emulator.pane.MobileEmulatorAgentSetupGuideSteps.21f5687c07',
-              'Orca CLI skill'
+              'Andes CLI skill'
             )}
             description={translate(
               'auto.components.emulator.pane.MobileEmulatorAgentSetupGuideSteps.64fb057667',
-              'Teaches agents the orca emulator commands for this worktree.'
+              'Teaches agents the andes emulator commands for this worktree.'
             )}
             command={skillInstallCommand}
             terminalTitle={translate(

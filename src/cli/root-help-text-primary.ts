@@ -1,7 +1,7 @@
 export const ROOT_HELP_TEXT_PRIMARY = [
-  'orca',
+  'andes',
   '',
-  'Usage: orca <command> [options]',
+  'Usage: andes <command> [options]',
   '',
   'Startup:',
   '  open                      Launch Orca and wait for the runtime to be reachable',

@@ -137,6 +137,7 @@ export class CliInstaller extends CliPathRegistration {
     if (status.installMethod === 'symlink') {
       await this.installSymlink(status)
       await this.removeLegacyLinuxCommandIfManaged(status.launcherPath)
+      await this.removeLegacyMacCommandIfManaged(status.launcherPath)
     } else if (this.isWindowsPackagedBundledCommand(status.commandPath, status.launcherPath)) {
       // Why: packaged Windows already ships resources/bin/orca.exe; registration only owns the PATH entry.
     } else {
@@ -170,6 +171,7 @@ export class CliInstaller extends CliPathRegistration {
     }
     if (status.state === 'not_installed') {
       await this.removeLegacyLinuxCommandIfManaged(status.launcherPath)
+      await this.removeLegacyMacCommandIfManaged(status.launcherPath)
       if (this.platform === 'win32') {
         await this.removeWindowsPathEntry(dirname(status.commandPath))
         return this.getStatus()
@@ -192,6 +194,7 @@ export class CliInstaller extends CliPathRegistration {
     if (status.installMethod === 'symlink') {
       await this.removeSymlink(status.commandPath)
       await this.removeLegacyLinuxCommandIfManaged(status.launcherPath)
+      await this.removeLegacyMacCommandIfManaged(status.launcherPath)
     } else if (this.isWindowsPackagedBundledCommand(status.commandPath, status.launcherPath)) {
       await this.removeWindowsPathEntry(dirname(status.commandPath))
     } else {

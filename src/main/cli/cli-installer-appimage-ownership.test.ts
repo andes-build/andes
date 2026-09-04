@@ -36,7 +36,7 @@ afterEach(async () => {
 })
 
 async function makeFixture() {
-  const root = await mkdtemp(join(tmpdir(), 'orca-cli-appimage-ownership-'))
+  const root = await mkdtemp(join(tmpdir(), 'andes-cli-appimage-ownership-'))
   created.push(root)
   const appImagePath = join(root, 'Orca.AppImage')
   const cacheRootPath = join(root, 'cache')

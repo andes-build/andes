@@ -363,3 +363,17 @@ export function isAgentSessionLaunchArgs(value: unknown): value is AgentSessionL
     Buffer.byteLength(JSON.stringify(value), 'utf8') <= MAX_LAUNCH_ARGS_BYTES
   )
 }
+
+/**
+ * Providers the host has a structured lane for. A client that declares the structured capability
+ * can render a session tab for these and for nothing else, so this list is what the tab projection
+ * hides by — never a single hard-coded provider (spec 012).
+ */
+export const STRUCTURED_AGENT_SESSION_LANE_PROVIDERS: readonly ['codex', 'claude'] = [
+  'codex',
+  'claude'
+]
+
+export function hasStructuredAgentSessionLane(provider: string): boolean {
+  return (STRUCTURED_AGENT_SESSION_LANE_PROVIDERS as readonly string[]).includes(provider)
+}

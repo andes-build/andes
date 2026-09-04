@@ -17,10 +17,17 @@ import {
 } from '@/runtime/web-session-focus-intent'
 import { LOCAL_STRUCTURED_SESSION_OWNER } from '@/runtime/local-structured-session-tabs-sync'
 
+/** Providers with a lane on the structured wire. Adding one here is not enough on its own: the
+ *  host needs its adapter too (`structured-agent-session-adapter-router.ts`). */
+export type StructuredAgentSessionProvider = 'codex' | 'claude'
+
 type StructuredAgentSessionCreateParams = {
   envelope: AgentSessionMutationEnvelope
   worktree: string
-  agent: 'codex'
+  agent: StructuredAgentSessionProvider
+  /** Spec 012: the message the thread is born with. The host turns it into the first turn as part
+   *  of the create, so this call stays the only emitter on a session nobody has typed into yet. */
+  firstMessage?: string
 }
 
 export type StructuredAgentSessionLaunchIntent = {
@@ -31,11 +38,20 @@ export type StructuredAgentSessionLaunchIntent = {
 
 export class StructuredAgentSessionCreateRefusalError extends Error {}
 
-export function createStructuredCodexSessionLaunchIntent(
-  worktreeId: string
+export function createStructuredAgentSessionLaunchIntent(
+  worktreeId: string,
+  agent: StructuredAgentSessionProvider,
+  firstMessage?: string
 ): StructuredAgentSessionLaunchIntent {
-  const sessionId = `codex_${crypto.randomUUID().replaceAll('-', '_')}`
-  const fields = { worktree: toRuntimeWorktreeSelector(worktreeId), agent: 'codex' as const }
+  const sessionId = `${agent}_${crypto.randomUUID().replaceAll('-', '_')}`
+  const trimmedFirstMessage = firstMessage?.trim()
+  // Undefined is dropped by the canonicalizer on both peers, so a create with no first message
+  // hashes exactly as it did before spec 012.
+  const fields = {
+    worktree: toRuntimeWorktreeSelector(worktreeId),
+    agent,
+    ...(trimmedFirstMessage ? { firstMessage: trimmedFirstMessage } : {})
+  }
   const state = useAppStore.getState()
   recordWebSessionFocusIntent(
     { environmentId: LOCAL_STRUCTURED_SESSION_OWNER },
@@ -73,7 +89,7 @@ export function abandonStructuredAgentSessionLaunchIntent(
   )
 }
 
-export async function launchStructuredCodexSession(
+export async function launchStructuredAgentSession(
   intent: StructuredAgentSessionLaunchIntent
 ): Promise<string> {
   const result = await callStructuredAgentSession<

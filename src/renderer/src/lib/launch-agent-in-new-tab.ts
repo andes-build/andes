@@ -31,7 +31,8 @@ import { getConnectionIdFromState } from '@/lib/connection-context'
 import { resolveInitialNativeChatSessionOptions } from '@/components/native-chat/native-chat-launch-session-options'
 import { seedNativeChatAppliedSessionOptions } from '@/components/native-chat/native-chat-session-option-cache'
 import { canUseStructuredNativeChat } from '@/lib/structured-native-chat-availability'
-import { startStructuredCodexLaunch } from '@/lib/structured-agent-session-launch'
+import { startStructuredAgentLaunch } from '@/lib/structured-agent-session-launch'
+import type { StructuredAgentSessionProvider } from '@/lib/launch-structured-agent-session'
 
 export type LaunchAgentInNewTabArgs = {
   agent: TuiAgent
@@ -53,6 +54,10 @@ export type LaunchAgentInNewTabArgs = {
   launchPlatform?: NodeJS.Platform
   /** Called after the prompt is actually delivered to the agent input path. */
   onPromptDelivered?: () => void
+  /** Spec 012: this prompt is the message the thread is born with, not a prompt typed into an
+   *  agent that is already running. Only such a prompt may ride on `agentSession.create`; every
+   *  other prompted launch keeps the terminal path. Set by simple mode's new-thread flow. */
+  promptIsThreadFirstMessage?: boolean
   /** Spec 019: the scope this thread was born with, captured by the caller
    *  before this call — never re-read later. Stamped on the created tab so
    *  the thread screen can show it (see `ThreadHeader`). Omitted for
@@ -101,6 +106,7 @@ export function launchAgentInNewTab(args: LaunchAgentInNewTabArgs): LaunchAgentI
     quickCommandLabel,
     launchPlatform,
     onPromptDelivered,
+    promptIsThreadFirstMessage,
     threadScope
   } = args
   const store = useAppStore.getState()
@@ -193,13 +199,26 @@ export function launchAgentInNewTab(args: LaunchAgentInNewTabArgs): LaunchAgentI
     }
   }
 
+  // Why these two and no others: they are the providers the host has a lane for. Everything else
+  // still launches into a terminal — spec 012.
+  const structuredAgent =
+    agent === 'codex' || agent === 'claude' ? (agent as StructuredAgentSessionProvider) : null
+  // Spec 012: a prompt used to send every launch to a terminal, and simple mode always carries one
+  // — the thread's scope, mandatory since spec 019 — so simple mode could never reach the
+  // structured lane. A prompt the caller declares as the thread's birth message rides on
+  // `agentSession.create` instead. Every other prompted launch keeps the terminal path it had:
+  // a quick command's prompt is a prompt, not the message a thread is born with.
+  const structuredFirstMessage = hasPrompt && promptIsThreadFirstMessage ? trimmedPrompt : undefined
   const launchDirectStructuredChat =
-    agent === 'codex' &&
-    !hasPrompt &&
+    structuredAgent !== null &&
+    (!hasPrompt || structuredFirstMessage !== undefined) &&
     store.settings?.experimentalNativeChat === true &&
     canUseStructuredNativeChat(store, worktreeId)
-  if (launchDirectStructuredChat) {
-    startStructuredCodexLaunch(worktreeId)
+  if (launchDirectStructuredChat && structuredAgent) {
+    startStructuredAgentLaunch(worktreeId, structuredAgent, structuredFirstMessage)
+    if (structuredFirstMessage) {
+      onPromptDelivered?.()
+    }
     return {
       tabId: null,
       startupPlan,

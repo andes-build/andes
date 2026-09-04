@@ -176,10 +176,16 @@ export function NativeChatInteractiveCard({
   }
   return (
     <NativeChatApprovalCard
-      approval={card.approval}
-      onChoose={(raw) => {
+      approval={{
+        title: card.approval.title,
+        ...(card.approval.detail ? { detail: card.approval.detail } : {}),
+        // The bridge view still answers a terminal, so the option's id IS its keystroke here. The
+        // card never learns that: mapping it back stays at this call site.
+        options: card.approval.options.map((option) => ({ id: option.send, label: option.label }))
+      }}
+      onChoose={(optionId) => {
         setDismissedKey(cardKey)
-        sendRaw(raw)
+        sendRaw(optionId)
       }}
     />
   )

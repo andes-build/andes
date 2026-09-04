@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { NativeChatBlock } from '../../../../shared/native-chat-types'
-import { describeToolActivity } from './native-chat-activity-phrase'
+import { describePermissionRequest, describeToolActivity } from './native-chat-activity-phrase'
 
 const TOOL_NAMES = ['Bash', 'Read', 'Write', 'Grep', 'Task'] as const
 
@@ -103,5 +103,53 @@ describe('describeToolActivity (spec 013, criterion 7)', () => {
         isError: true
       })
     ).toBe('Ran into a problem')
+  })
+})
+
+/** Spec 012, criterion 4. Peter saw the real card say "Allow Bash?" over
+ *  `.os/core/lib/session-start.sh --brain . --root`: the provider's own title and description.
+ *  These lock the question to the same rubric as the activity line. */
+describe('describePermissionRequest', () => {
+  it('a command permission never shows the command', () => {
+    const phrase = describePermissionRequest({
+      name: 'Bash',
+      input: { command: '.os/core/lib/session-start.sh --brain . --root' }
+    })
+    expect(phrase).toBe('Run a command?')
+    expect(phrase).not.toContain('session-start')
+    expect(phrase).not.toContain('--brain')
+    expect(phrase).not.toContain('/')
+  })
+
+  it('a write permission names the file in person language, never its path', () => {
+    const phrase = describePermissionRequest({
+      name: 'Write',
+      input: { file_path: '/Users/pedro/andes/docs/payment-provider-decision.md' }
+    })
+    expect(phrase).toBe('Write the payment provider decision?')
+    expect(phrase).not.toContain('/Users')
+    expect(phrase).not.toContain('.md')
+  })
+
+  it('a read permission with no readable path degrades to the plain question', () => {
+    expect(describePermissionRequest({ name: 'Read', input: {} })).toBe('Read a file?')
+  })
+
+  it('a search permission never shows the pattern', () => {
+    const phrase = describePermissionRequest({
+      name: 'Grep',
+      input: { pattern: 'ANTHROPIC_API_KEY', path: '/Users/pedro/.env' }
+    })
+    expect(phrase).toBe('Search the files?')
+    expect(phrase).not.toContain('ANTHROPIC')
+  })
+
+  it('an unknown tool shows the generic question instead of leaking its input', () => {
+    const phrase = describePermissionRequest({
+      name: 'SomeFutureTool',
+      input: { command: 'rm -rf /Users/pedro' }
+    })
+    expect(phrase).toBe('Allow this action?')
+    expect(phrase).not.toContain('rm')
   })
 })

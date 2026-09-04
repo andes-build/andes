@@ -132,7 +132,12 @@ export type StructuredAgentSessionAdapter = {
   setOption(
     input: StructuredAgentSessionSetOptionInput
   ): Promise<void | Readonly<Record<string, string>>>
-  readOptions?(input: { sessionId: string; fence: number }): Promise<AgentSessionOptionsResult>
+  /** Null means the lane has no session options to report — not an error. A router in front of
+   *  several lanes has to be able to say that for the lane that owns this session. */
+  readOptions?(input: {
+    sessionId: string
+    fence: number
+  }): Promise<AgentSessionOptionsResult | null>
   /** Transcript path for journal recovery. Omit to let the existing session-file
    *  resolver discover it from the provider session id. */
   historyFilePath?(input: { identity: AgentSessionJournalIdentity }): Promise<string | null>

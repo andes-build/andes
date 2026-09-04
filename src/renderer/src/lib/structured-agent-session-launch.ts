@@ -1,10 +1,11 @@
 import { toast } from 'sonner'
 import {
-  createStructuredCodexSessionLaunchIntent,
-  launchStructuredCodexSession,
+  createStructuredAgentSessionLaunchIntent,
+  launchStructuredAgentSession,
   StructuredAgentSessionCreateRefusalError,
-  type StructuredAgentSessionLaunchIntent
-} from '@/lib/launch-structured-codex-session'
+  type StructuredAgentSessionLaunchIntent,
+  type StructuredAgentSessionProvider
+} from '@/lib/launch-structured-agent-session'
 import { refreshLocalStructuredSessionTabs } from '@/runtime/local-structured-session-tabs-sync'
 import { translate } from '@/i18n/i18n'
 
@@ -59,7 +60,7 @@ async function verifyPublishedSession(intent: StructuredAgentSessionLaunchIntent
 
 async function retrySameIntent(state: StructuredLaunchState, priorError: unknown): Promise<string> {
   try {
-    await launchStructuredCodexSession(state.intent)
+    await launchStructuredAgentSession(state.intent)
     return await verifyPublishedSession(state.intent)
   } catch (error) {
     if (error instanceof StructuredAgentSessionCreateRefusalError) {
@@ -76,7 +77,7 @@ async function retrySameIntent(state: StructuredLaunchState, priorError: unknown
 
 async function launchAndReconcile(state: StructuredLaunchState): Promise<string> {
   try {
-    await launchStructuredCodexSession(state.intent)
+    await launchStructuredAgentSession(state.intent)
   } catch (error) {
     if (error instanceof StructuredAgentSessionCreateRefusalError) {
       throw error
@@ -103,7 +104,11 @@ async function reconcileUnknownLaunch(state: StructuredLaunchState): Promise<str
   }
 }
 
-function launchStructuredCodexSessionOnce(worktreeId: string): Promise<string> {
+function launchStructuredAgentSessionOnce(
+  worktreeId: string,
+  agent: StructuredAgentSessionProvider,
+  firstMessage?: string
+): Promise<string> {
   const existing = pendingStructuredLaunchesByWorktree.get(worktreeId)
   if (existing) {
     if (existing.visibilityUnknown) {
@@ -113,7 +118,7 @@ function launchStructuredCodexSessionOnce(worktreeId: string): Promise<string> {
     return existing.promise
   }
   const state: StructuredLaunchState = {
-    intent: createStructuredCodexSessionLaunchIntent(worktreeId),
+    intent: createStructuredAgentSessionLaunchIntent(worktreeId, agent, firstMessage),
     promise: Promise.resolve(''),
     visibilityUnknown: false
   }
@@ -123,13 +128,14 @@ function launchStructuredCodexSessionOnce(worktreeId: string): Promise<string> {
   return state.promise
 }
 
-export function startStructuredCodexLaunch(worktreeId: string): void {
-  void launchStructuredCodexSessionOnce(worktreeId).catch((error) => {
+export function startStructuredAgentLaunch(
+  worktreeId: string,
+  agent: StructuredAgentSessionProvider,
+  firstMessage?: string
+): void {
+  void launchStructuredAgentSessionOnce(worktreeId, agent, firstMessage).catch((error) => {
     toast.error(
-      translate(
-        'components.native-chat.structuredSessionLaunchFailed',
-        'Could not open Codex chat'
-      ),
+      translate('components.native-chat.structuredSessionLaunchFailed', 'Could not open chat'),
       { description: error instanceof Error ? error.message : String(error) }
     )
   })

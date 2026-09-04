@@ -110,6 +110,12 @@ export function readStructuredAgentSessionOptions(
     if (!context.deps.adapter.readOptions) {
       throw new Error('structured_agent_session_options_unsupported')
     }
-    return context.deps.adapter.readOptions({ sessionId, fence: session.fence })
+    const reported = await context.deps.adapter.readOptions({ sessionId, fence: session.fence })
+    if (!reported) {
+      // The lane that owns this session reports no options. Saying so is the answer; inventing a
+      // model and an effort would put a choice on screen that nothing can apply.
+      throw new Error('structured_agent_session_options_unsupported')
+    }
+    return reported
   })
 }

@@ -510,13 +510,45 @@ Dos gates distintos decidían esto y a los dos había que enseñarles `interface
   `experimentalNativeChat === true || interfaceMode === 'simple'`. Sin este segundo gate, una
   pestaña podía nacer con `viewMode: 'chat'` y renderizarse igual como terminal cruda.
 
-**El permiso sigue por teclas, no por datos** (ver `specs/done/011-el-hilo.md`, criterio 0 y
-criterio 2b diferido): el único adaptador de sesión estructurada (canal de datos) que existe hoy es
-para Codex (`src/main/codex/codex-structured-session-adapter.ts`;
-`structured-agent-session-provider-support.ts:14` sólo habilita `agent === 'codex'`). Para Claude,
-`NativeChatBridgeView` sigue siendo el único camino, y `NativeChatInteractiveCard.tsx` sigue
-escribiendo la cadena literal de la opción a la PTY del agente. Construir el canal de datos para
-Claude queda como spec aparte.
+**El hilo de Claude corre por datos, de punta a punta** (spec 012).
+
+- **Los dos carriles**: `src/main/codex/` (Codex, sobre su app-server JSON-RPC) y `src/main/claude/`
+  (Claude, sobre `stream-json` y el canal de control del propio binario). Los dos cumplen
+  `StructuredAgentSessionAdapter`.
+- **El argumento que abre el canal de Claude** es `--permission-prompt-tool stdio`, con el saludo
+  `control_request` de subtipo `initialize`; el permiso llega como `can_use_tool` y se contesta con
+  un `control_response`. Solo cambian los argumentos del binario de la persona.
+- **Un solo host, dos carriles**:
+  `src/main/native-chat/agent-session-wire/structured-agent-session-adapter-router.ts` enruta por el
+  carril que adquirió cada sesión.
+- **La tarjeta de permiso ya no escribe teclas**:
+  `NativeChatApprovalCard.tsx` contesta con el id de la opción. El camino viejo
+  (`NativeChatInteractiveCard.tsx`, modo desarrollo) mapea ese id a su tecla en su propio llamador,
+  así que la terminal cruda no cambió.
+- **El primer mensaje viaja en la creación**: `agentSession.create` acepta `firstMessage` y el host
+  lo convierte en el primer turno. El modo simple manda siempre uno —el del alcance, spec 019— y así
+  la creación es el único emisor sobre una sesión en la que nadie escribió todavía. En la interfaz
+  solo lo toma un mensaje que quien llama declara como el de nacimiento del hilo
+  (`promptIsThreadFirstMessage`): el de un comando rápido sigue yendo a la terminal.
+- **Andes nombra la sesión**: `--session-id <uuid>`, porque el binario anuncia el suyo en
+  `system/init` recién con el primer turno. La prueba de adquisición es la respuesta a `initialize`,
+  y un id distinto termina la sesión en vez de renombrarla.
+- **Qué pestañas ve un cliente**: las de un proveedor con carril en el host
+  (`STRUCTURED_AGENT_SESSION_LANE_PROVIDERS`, `src/shared/agent-session-record.ts`). Escrito como un
+  solo proveedor, un hilo de Claude vivo no llegaba nunca a la pantalla.
+- **Qué cuenta como hilo abierto**: una pestaña de terminal con agente *o* una sesión estructurada
+  (`use-command-center-gate.ts`). Sin la segunda, el Command Center se quedaba con la pantalla sobre
+  una conversación abierta.
+- **La evidencia en la app real**: `docs/research/2026-09-04-chequeo-funcional-spec-012/`, con el
+  permiso permitido en un hilo y rechazado en otro.
+- **Lo que la tarjeta de permiso dice**: el ítem de permiso lleva la herramienta y su entrada
+  (`AgentJournalApprovalItem.tool`) y la pantalla arma la pregunta con `describePermissionRequest`,
+  el mismo redactor que la línea de actividad de la spec 013
+  (`src/renderer/src/components/native-chat/native-chat-activity-phrase.ts`). El título y la
+  descripción del proveedor no llegan a la pantalla: ahí venía el comando crudo. Un ítem sin `tool`
+  —el carril de Codex— sigue mostrando su título y su detalle.
+- **Lo que el carril de Claude declara en vez de simular**: subagentes, preguntas, opciones de
+  sesión y diffs — cabecera de `src/main/claude/claude-structured-session-adapter.ts`.
 
 Diferido de esta spec, sin implementar: la tarjeta de subagente, los estados incómodos (sin
 sesión, caída a mitad, respuesta vacía), la revisión de jerga, que el hilo nazca con el alcance del

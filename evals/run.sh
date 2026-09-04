@@ -1689,6 +1689,106 @@ spec009_criterio11_codigo_sano() {
   fi
 }
 
+# --- specs/012-el-permiso-de-claude-llega-como-dato.md ---
+
+spec012_criterio1_permiso_como_dato() {
+  local evidencia=docs/research/2026-09-04-permiso-de-claude-como-dato/README.md
+  local prueba=src/main/claude/claude-structured-permission-as-data.integration.test.ts
+  if [ -f "$evidencia" ] && [ -f "$prueba" ] && grep -q "permission-prompt-tool" "$evidencia"; then
+    ok "spec012#1 el permiso llega como dato y la respuesta vuelve (2/2 el 2026-09-04; se repite con ANDES_EVAL_CLAUDE_REAL=1)"
+  else
+    ko "spec012#1 el permiso llega como dato y la respuesta vuelve"
+    ev "evidencia=$evidencia · prueba=$prueba"
+  fi
+}
+
+spec012_criterio2_3_4_5_unit() {
+  local out
+  out=$(npx vitest run --config config/vitest.config.ts \
+    src/main/claude \
+    src/main/native-chat/agent-session-wire/structured-agent-session-adapter-router.test.ts \
+    src/main/runtime/rpc/methods/structured-agent-session.test.ts \
+    src/main/runtime/rpc/methods/session-tab-agent-status-projection.test.ts \
+    src/main/runtime/rpc/methods/session-tab-agent-capability-mutations.test.ts \
+    src/renderer/src/app-shell/use-command-center-gate.test.tsx \
+    src/renderer/src/lib/launch-agent-structured-chat-guard.test.ts \
+    src/renderer/src/lib/launch-structured-agent-session.test.ts \
+    src/renderer/src/components/native-chat/NativeChatApprovalCard.test.tsx \
+    src/renderer/src/components/native-chat/native-chat-activity-phrase.test.ts \
+    src/main/codex 2>&1)
+  if printf '%s' "$out" | grep -q "Test Files.*failed"; then
+    ko "spec012#2#3#4#5 el porton, la tarjeta, los campos del permiso y Codex intacto"
+    ev "$(printf '%s' "$out" | grep -E 'Test Files|Tests ' | tr '\n' ' ')"
+  else
+    ok "spec012#2#3#4#5 el porton, la tarjeta, los campos del permiso y Codex intacto"
+  fi
+}
+
+spec012_criterio3_sin_pty_en_la_tarjeta() {
+  local hits
+  hits=$(grep -c "PTY" src/renderer/src/components/native-chat/NativeChatApprovalCard.tsx)
+  if [ "$hits" = "0" ]; then
+    ok "spec012#3 la tarjeta de permiso no nombra la PTY"
+  else
+    ko "spec012#3 la tarjeta de permiso no nombra la PTY"
+    ev "menciones de PTY=$hits (debe ser 0)"
+  fi
+}
+
+spec012_criterio7_lo_que_falta_declarado() {
+  local declarado=1
+  for tema in subagents questions "session options" diffs; do
+    grep -qi "$tema" src/main/claude/claude-structured-session-adapter.ts || declarado=0
+  done
+  grep -q "criterion 7" src/main/claude/claude-structured-session-adapter.ts || declarado=0
+  if [ "$declarado" = "1" ]; then
+    ok "spec012#7 lo que el carril no puede dar esta declarado en el adaptador"
+  else
+    ko "spec012#7 lo que el carril no puede dar esta declarado en el adaptador"
+    ev "faltan temas declarados en src/main/claude/claude-structured-session-adapter.ts"
+  fi
+}
+
+spec012_criterio8_codigo_sano() {
+  local tc_ok=1 lint_ok=1
+  pnpm tc >/dev/null 2>&1 || tc_ok=0
+  npx oxlint src/main/claude src/main/native-chat/agent-session-wire \
+    src/renderer/src/components/native-chat >/dev/null 2>&1 || lint_ok=0
+  if [ "$tc_ok" = "1" ] && [ "$lint_ok" = "1" ]; then
+    ok "spec012#8 codigo sano"
+  else
+    ko "spec012#8 codigo sano"
+    ev "pnpm tc=$tc_ok · oxlint=$lint_ok (deben ser 1)"
+  fi
+}
+
+spec012_criterio6_terminal_cruda() {
+  local out
+  out=$(npx playwright test tests/e2e/spec-012-developer-mode-keeps-raw-terminal.spec.ts \
+    --config tests/playwright.config.ts --project=electron-headless --workers=1 2>&1)
+  if printf '%s' "$out" | grep -q "1 passed"; then
+    ok "spec012#6 en modo desarrollo la terminal cruda sigue viva"
+  else
+    ko "spec012#6 en modo desarrollo la terminal cruda sigue viva"
+    ev "$(printf '%s' "$out" | tail -3 | tr '\n' ' ')"
+  fi
+}
+
+spec012_criterio9_chequeo_funcional() {
+  local dir=docs/research/2026-09-04-chequeo-funcional-spec-012
+  local faltan=0
+  for captura in 01-app-abierta 02-carpeta-agregada 03-tarjeta-de-permiso \
+    04-permitido-archivo-escrito 05-segundo-hilo-tarjeta 06-rechazado-sin-archivo; do
+    [ -f "$dir/$captura.png" ] || faltan=1
+  done
+  if [ "$faltan" = "0" ] && grep -q "^# 2026-09-04 · Chequeo funcional de la spec 012 — PASA" "$dir/README.md"; then
+    ok "spec012#9 chequeo funcional en la app real (permitir y rechazar, 6 capturas, 2026-09-04)"
+  else
+    ko "spec012#9 chequeo funcional en la app real"
+    ev "faltan capturas o el README no declara PASA en $dir"
+  fi
+}
+
 spec014_criterio1_sin_archivos_de_marca_visual
 spec014_criterio2_selector_de_icono_sin_alternativas
 spec014_criterio3_bandeja_sin_orca
@@ -1853,6 +1953,13 @@ spec013_criterio10_codigo_sano() {
 spec021_criterio1_2_5_6_capa_de_render
 spec021_criterio3_4_prueba_de_interfaz
 spec021_criterio8_chequeo_funcional
+spec012_criterio1_permiso_como_dato
+spec012_criterio2_3_4_5_unit
+spec012_criterio3_sin_pty_en_la_tarjeta
+spec012_criterio7_lo_que_falta_declarado
+spec012_criterio6_terminal_cruda
+spec012_criterio8_codigo_sano
+spec012_criterio9_chequeo_funcional
 spec013_criterio1_barra_lateral_sin_pestanas
 spec013_criterio2_proyeccion_por_workspace
 spec013_criterio3_clic_abre_y_new_thread_selecciona

@@ -105,3 +105,48 @@ export function describeToolActivity(block: NativeChatBlock): string {
   }
   return translate('components.native-chat.status.working', 'Working…')
 }
+
+/** What a permission asks for, in the same person language as the activity line.
+ *
+ *  Spec 012, criterion 4: the card used to show the provider's own `title` and `description`,
+ *  which is where the raw command leaked onto the screen ("Allow Bash?" over
+ *  `.os/core/lib/session-start.sh --brain . --root`). This is the same redactor as the activity
+ *  line — same tool-name sets, same `humanizeFileSubject`, same over-filtering — read in the
+ *  request voice. A tool it does not recognize returns the generic question: showing less is the
+ *  rule, leaking the command is not an option.
+ */
+export function describePermissionRequest(tool: { name: string; input: unknown }): string {
+  const normalizedName = normalizedToolName(tool.name)
+  const subject =
+    READ_TOOL_NAMES.has(normalizedName) || WRITE_TOOL_NAMES.has(normalizedName)
+      ? (() => {
+          const path = toolFilePath(tool.input)
+          return path ? humanizeFileSubject(path) : null
+        })()
+      : null
+
+  if (READ_TOOL_NAMES.has(normalizedName)) {
+    return subject
+      ? translate('components.native-chat.permission.readSubject', 'Read the {{value0}}?', {
+          value0: subject
+        })
+      : translate('components.native-chat.permission.read', 'Read a file?')
+  }
+  if (WRITE_TOOL_NAMES.has(normalizedName)) {
+    return subject
+      ? translate('components.native-chat.permission.writeSubject', 'Write the {{value0}}?', {
+          value0: subject
+        })
+      : translate('components.native-chat.permission.write', 'Write a file?')
+  }
+  if (SEARCH_TOOL_NAMES.has(normalizedName)) {
+    return translate('components.native-chat.permission.search', 'Search the files?')
+  }
+  if (COMMAND_TOOL_NAMES.has(normalizedName)) {
+    return translate('components.native-chat.permission.runCommand', 'Run a command?')
+  }
+  if (DELEGATE_TOOL_NAMES.has(normalizedName)) {
+    return translate('components.native-chat.permission.delegate', 'Delegate a task?')
+  }
+  return translate('components.native-chat.permission.generic', 'Allow this action?')
+}

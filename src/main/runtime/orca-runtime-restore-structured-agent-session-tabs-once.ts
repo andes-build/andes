@@ -43,7 +43,9 @@ export class OrcaRuntimeWithRestoreStructuredAgentSessionTabsOnce extends OrcaRu
     }
     this.hydrateHeadlessMobileSessionTabsFromWorkspaceSession()
     for (const session of host?.listSessionTabs() ?? []) {
-      if (session.agent !== 'codex') {
+      // Spec 012: both lanes with a host adapter restore. Skipping Claude here would make its
+      // thread vanish on the next start while the session kept running.
+      if (session.agent !== 'codex' && session.agent !== 'claude') {
         continue
       }
       let sessionId = session.sessionId
@@ -52,7 +54,7 @@ export class OrcaRuntimeWithRestoreStructuredAgentSessionTabsOnce extends OrcaRu
       }
       await this.publishStructuredAgentSessionTab({
         ...session,
-        agent: 'codex',
+        agent: session.agent,
         sessionId,
         activate: false,
         notify: false
@@ -63,7 +65,7 @@ export class OrcaRuntimeWithRestoreStructuredAgentSessionTabsOnce extends OrcaRu
   async publishStructuredAgentSessionTab(input: {
     workspaceId: string
     sessionId: string
-    agent: 'codex'
+    agent: 'codex' | 'claude'
     activate: boolean
     notify?: boolean
   }): Promise<void> {
@@ -103,7 +105,7 @@ export class OrcaRuntimeWithRestoreStructuredAgentSessionTabsOnce extends OrcaRu
     const tab: RuntimeMobileSessionAgentTab = {
       type: 'agent-session',
       id,
-      title: 'Codex Chat',
+      title: input.agent === 'claude' ? 'Claude Chat' : 'Codex Chat',
       sessionId: input.sessionId,
       agent: input.agent,
       isActive: input.activate

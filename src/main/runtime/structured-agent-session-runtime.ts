@@ -11,11 +11,14 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import type { AgentSessionOwnerProbe } from '../../shared/agent-session-lease-adjudication'
 import type { AgentSessionRecord } from '../../shared/agent-session-record'
+import { createClaudeStructuredLaunchResolver } from '../claude/claude-structured-launch-resolution'
+import { ClaudeStructuredSessionAdapter } from '../claude/claude-structured-session-adapter'
 import { createCodexStructuredLaunchResolver } from '../codex/codex-structured-launch-resolution'
 import {
   CodexStructuredSessionAdapter,
   type CodexStructuredSessionAdapterDeps
 } from '../codex/codex-structured-session-adapter'
+import { StructuredAgentSessionAdapterRouter } from '../native-chat/agent-session-wire/structured-agent-session-adapter-router'
 import { StructuredAgentSessionHost } from '../native-chat/agent-session-wire/structured-agent-session-host'
 import type { StructuredAgentSessionHandoffTransport } from '../native-chat/agent-session-wire/structured-agent-session-handoff-types'
 import { setStructuredAgentSessionHost } from '../native-chat/agent-session-wire/structured-agent-session-registry'
@@ -55,6 +58,7 @@ export type StructuredAgentSessionRuntimeDeps = {
   claimKeyId: string
   resolveWorkspacePath: (workspaceId: string) => Promise<string>
   resolveCodexCommand?: (options?: { pathEnv?: string | null; homePath?: string }) => string
+  resolveClaudeCommand?: (options?: { pathEnv?: string | null; homePath?: string }) => string
   /** Provider transports are overridden only to drive the runtime against scripted children. */
   openCodexConnection?: CodexStructuredSessionAdapterDeps['openConnection']
   /** Scripted app-servers carry fake pids the real start-time read cannot answer for. */
@@ -71,7 +75,7 @@ export type StructuredAgentSessionRuntimeDeps = {
 
 type InstalledRuntime = {
   host: StructuredAgentSessionHost
-  adapter: CodexStructuredSessionAdapter
+  adapter: StructuredAgentSessionAdapterRouter
   /** Resolves after every adapter-exit recovery callback has settled. */
   waitForRecovery: () => Promise<void>
 }
@@ -172,7 +176,32 @@ async function install(deps: StructuredAgentSessionRuntimeDeps): Promise<Install
         })
       }
     })
-    const adapter = codex
+    const claude = new ClaudeStructuredSessionAdapter({
+      resolveLaunch: createClaudeStructuredLaunchResolver({
+        store,
+        resolveWorkspacePath: deps.resolveWorkspacePath,
+        resolveEnvironment,
+        ...(deps.resolveClaudeCommand ? { resolveCommand: deps.resolveClaudeCommand } : {})
+      }),
+      onEvent: (event) => {
+        if (event.cause !== 'unexpected-exit') {
+          return
+        }
+        recoveryChain = recoveryChain.then(async () => {
+          try {
+            await host?.handleAdapterEvent(event)
+          } catch (error) {
+            deps.onError?.({ scope: `structured-agent-session-exit:${event.sessionId}`, error })
+          }
+        })
+      }
+    })
+    // Why a router and not a second host: the lease, the journal and the fence belong to the host,
+    // not to a provider. Spec 012.
+    const adapter = new StructuredAgentSessionAdapterRouter([
+      { provider: 'codex', adapter: codex },
+      { provider: 'claude', adapter: claude }
+    ])
     host = new StructuredAgentSessionHost({
       store,
       adapter,

@@ -9,7 +9,10 @@ import { structuredAgentSessionPaneKey } from '../../../../shared/structured-age
 import type { NativeChatLiveSession } from './use-native-chat-live-session'
 import type { RuntimeClientTarget } from '@/runtime/runtime-rpc-client'
 import { Button } from '@/components/ui/button'
-import { NativeChatApprovalCard } from './NativeChatApprovalCard'
+import {
+  NativeChatApprovalCard,
+  approvalCardPromptFromJournal
+} from './NativeChatApprovalCard'
 import { NativeChatComposer, type NativeChatComposerHandle } from './NativeChatComposer'
 import { NativeChatEmptyState } from './NativeChatEmptyState'
 import { NativeChatMessageList } from './NativeChatMessageList'
@@ -150,14 +153,7 @@ export function NativeChatStructuredSession(props: {
       </div>
       {prompt?.body.kind === 'approval' ? (
         <NativeChatApprovalCard
-          approval={{
-            title: prompt.body.title,
-            ...(prompt.body.detail ? { detail: prompt.body.detail } : {}),
-            options: prompt.body.options.map((option) => ({
-              label: option.label,
-              send: option.id
-            }))
-          }}
+          approval={approvalCardPromptFromJournal(prompt.body)}
           onChoose={(optionId) => void controller.respond(prompt, optionId)}
         />
       ) : null}

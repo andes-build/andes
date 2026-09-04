@@ -94,11 +94,22 @@ export const AttachParams = z
   })
   .strict()
 
+/** Spec 012: a thread is born with its scope, so the first message rides on the create instead of
+ *  arriving as a separate turn. Two emitters over one session is a race with whatever the person
+ *  types next; one call is not. */
 export const CreateIntentParams = z
   .object({
     envelope: MutationEnvelope,
     worktree: Identifier('Invalid worktree selector'),
-    agent: z.literal('codex')
+    agent: z.enum(['codex', 'claude']),
+    firstMessage: z
+      .string()
+      .min(1, 'Invalid first message')
+      .refine(
+        (value) => Buffer.byteLength(value, 'utf8') <= MAX_PROMPT_BYTES,
+        'Message is too large'
+      )
+      .optional()
   })
   .strict()
 
@@ -107,7 +118,7 @@ export const CreateParams = z.union([AttachParams, CreateIntentParams])
 export const CreateSupportParams = z
   .object({
     worktree: Identifier('Invalid worktree selector'),
-    agent: z.literal('codex')
+    agent: z.enum(['codex', 'claude'])
   })
   .strict()
 

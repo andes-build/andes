@@ -1424,6 +1424,168 @@ parecían contradecirse son uno solo: la tira de pestañas vacía y el panel en 
 caras de la misma hoja de layout muerta.
 **La invalidaría**: un caso de panel en blanco donde el store no tenga la pestaña.
 
+## 2026-09-04 · [spec 012] El canal de datos de Claude se abre con `--permission-prompt-tool stdio`
+
+**Qué se decide**: Andes lanza el binario propio de la persona con
+`--output-format stream-json --verbose --input-format stream-json --permission-prompt-tool stdio`,
+manda un `control_request` de subtipo `initialize` como saludo, y a partir de ahí el permiso llega
+como `control_request` de subtipo `can_use_tool` y se contesta con un `control_response`.
+**Por qué**: `--permission-mode manual` por sí solo no entrega nada — el CLI contesta su propio
+pedido y emite `system/permission_denied` (probado el 2026-09-04,
+`docs/research/2026-09-04-permiso-de-claude-como-dato/`). El argumento que decide es
+`--permission-prompt-tool stdio`, que es el que el SDK oficial pasa cuando el anfitrión trae su
+propio `canUseTool`. Se descartó depender del paquete `@anthropic-ai/claude-agent-sdk`, que fue con
+lo que se probó el camino en `tsk-182`: trae su propia copia del CLI, y usarla sería empaquetar el
+binario en vez de correr el de la persona.
+**La invalidaría**: que una versión de Claude Code deje de aceptar `stdio` como destino del pedido
+de permiso, o que entregue el permiso sin ese argumento.
+
+## 2026-09-04 · [spec 012] La tarjeta de permiso se dibuja con los campos del pedido
+
+**Qué se decide**: el título de la tarjeta sale de `title`, y si no viene, de `display_name`, y si
+no, de `tool_name`. El detalle sale de `description` y es nulo cuando el pedido no lo trae. Ninguna
+función del camino lee el transcripto de la terminal.
+**Por qué**: el pedido ya trae los campos escritos para mostrarse
+(`src/main/claude/claude-structured-stream-protocol.ts`), y
+la tarjeta vieja los reconstruía leyendo la pantalla porque no tenía otra fuente. Leer la pantalla
+es lo que hacía que la tarjeta fuera una imitación.
+**La invalidaría**: un pedido de permiso cuyo texto para la persona no viaje en el propio pedido.
+
+## 2026-09-04 · [spec 012] El carril de Claude convive con el de Codex detrás de un router
+
+**Qué se decide**: el host sigue teniendo un solo lugar para el adaptador. El segundo proveedor
+entra como `StructuredAgentSessionAdapterRouter`
+(`src/main/native-chat/agent-session-wire/structured-agent-session-adapter-router.ts`), que enruta
+por el carril que adquirió cada sesión y nunca por el prefijo de su id.
+**Por qué**: el arriendo, el journal y la cerca son del host, no de un proveedor; un segundo host
+duplicaría las tres cosas. Adivinar el carril por el prefijo del id pondría la respuesta de un
+carril en el hijo del otro. El router pregunta a cada carril por `adapterSupportsCreate` y no por
+`supportsCreate` directo, porque el adaptador de Codex nunca declaró ese método y contesta por su
+respaldo.
+**La invalidaría**: un tercer proveedor cuyo ciclo de vida no entre en el contrato
+`StructuredAgentSessionAdapter`.
+
+## 2026-09-04 · [spec 012] Lo que el carril de Claude no puede dar, lo declara
+
+**Qué se decide**: cuatro cosas que Codex tiene y Claude no, y que el adaptador rechaza en vez de
+simular: los subagentes (los cuadros con `parent_tool_use_id` entran como ítems comunes y la tarjeta
+sigue diferida, `tsk-172`), las preguntas (`answerPrompt` rechaza `kind: 'question'`), las opciones
+de sesión (`setOption` rechaza) y los diffs (una edición de Claude es una llamada a herramienta y se
+queda así).
+**Por qué**: cada una de las cuatro tiene en Codex un canal propio del app-server que en el cable de
+Claude no existe. Contestar cualquiera de ellas con algo inventado le devolvería al agente una
+respuesta que la persona nunca dio.
+**La invalidaría**: que el cable de Claude abra un canal para alguna de las cuatro.
+
+## 2026-09-04 · [spec 012] ~~El criterio 9 no pasa~~ — superada por la decisión del primer mensaje
+
+> Esta decisión quedó atrás el mismo día: la pregunta que dejaba abierta se contestó con "el primer
+> mensaje viaja en `agentSession.create`", más abajo en este archivo. Se deja escrita porque es el
+> estado desde el que se decidió.
+
+### 2026-09-04 · El criterio 9 no pasa: el hilo del modo simple no llega al carril nuevo
+
+**Qué se decide**: se reporta, no se arregla por cuenta propia. El "New thread" del modo simple no
+puede tomar el camino estructurado porque el portón de `launch-agent-in-new-tab.ts` exige que no
+haya primer mensaje, y el modo simple siempre manda uno —el del alcance del hilo, obligatorio desde
+la spec 019—. `agentSession.create` no tiene ranura para ese mensaje.
+**Por qué**: darle una ranura, o mandarlo como primer turno después de crear la sesión, cambia el
+comportamiento del modo simple y agrega un segundo emisor sobre la misma sesión; las dos son
+decisiones de producto que la spec 012 no tomó. El chequeo funcional quedó registrado como
+incompleto en `docs/research/2026-09-04-chequeo-funcional-spec-012/`.
+**La invalidaría**: una decisión sobre cómo el carril estructurado recibe el primer mensaje de un
+hilo.
+
+## 2026-09-04 · [spec 012] El primer mensaje del hilo viaja en `agentSession.create`
+
+**Qué se decide**: `agentSession.create` acepta un campo `firstMessage` opcional. El host, después
+de que el `attach` sale bien, lo convierte en el primer turno de la sesión con un `send` propio, con
+la valla que devolvió el `attach` y un id de operación derivado del de la creación. La huella del
+sobre cubre el mensaje; una creación sin mensaje hace exactamente la misma huella que antes, porque
+el canonicalizador descarta las claves ausentes. Del lado de la interfaz, solo un mensaje que quien
+llama declara como el de nacimiento del hilo (`promptIsThreadFirstMessage`) toma el carril nuevo:
+el mensaje de un comando rápido sigue yendo a la terminal como siempre.
+**Por qué**: el modo simple siempre manda un primer mensaje —el del alcance, obligatorio desde la
+spec 019— y el portón estructurado exigía que no hubiera ninguno, así que el modo simple nunca podía
+llegar al carril nuevo. Mandarlo como un turno posterior a la creación pondría dos emisores sobre la
+misma sesión y nada garantizaría el orden contra lo que la persona escriba enseguida; acá la
+creación es el único emisor y recién termina cuando el turno quedó admitido. Y es lo que dice el
+dominio: desde la spec 019 un hilo nace con su alcance, así que el alcance viaja en el nacimiento.
+Se descartó dejar el modo simple en la terminal y usar el carril nuevo solo en modo desarrollo:
+dejaría la tarjeta de permiso imitada exactamente donde la persona la ve, que es lo único que esta
+spec existe para arreglar.
+**La invalidaría**: un carril cuyo `attach` no devuelva una valla utilizable para el primer turno.
+
+## 2026-09-04 · [spec 012] El portón de la creación deja pasar a Claude, y la pestaña se publica
+
+**Qué se decide**: `CreateIntentParams` y `CreateSupportParams` pasan de `agent: 'codex'` a
+`agent: 'codex' | 'claude'`; la publicación de la pestaña después de crear deja de estar condicionada
+a Codex; y la restauración de pestañas al arrancar deja de saltear las sesiones de Claude. Un
+proveedor sin carril en el host —`aider`, por ejemplo— sigue rechazado en el sobre.
+**Por qué**: la rama traía el adaptador de Claude y el enrutador, pero el borde RPC seguía escrito
+para un solo proveedor. Con esas tres puertas cerradas, una sesión de Claude o no se creaba, o se
+creaba sin pestaña que la mostrara, o desaparecía al reiniciar. Es la misma forma que el defecto de
+la spec 021 —un carril apuntando a algo muerto, sin error en consola— con otra cara.
+**La invalidaría**: un proveedor con adaptador en el host que no deba aparecer como pestaña.
+
+## 2026-09-04 · [spec 012] El hilo estructurado no lleva todavía la insignia de alcance
+
+**Qué se decide**: se declara, no se construye. La insignia de alcance de la spec 019
+(`ThreadScopeBadge`) se dibuja con el campo `threadScope` de una pestaña de terminal, y una sesión
+estructurada es otro tipo de pestaña, publicada por el host y no por la interfaz. El alcance sí
+llega al agente, porque va escrito adentro del primer mensaje.
+**Por qué**: llevar el alcance hasta la pestaña estructurada es trabajo de la superficie de la spec
+019 sobre un carril que no existía cuando se escribió, y esta spec no lo tomó. Simularlo del lado de
+la interfaz sería una segunda fuente para el mismo dato.
+**La invalidaría**: que la persona no pueda saber el alcance de un hilo estructurado por ningún otro
+camino.
+
+## 2026-09-04 · [spec 012] La sesión de Claude la nombra Andes, no se espera a que la anuncie
+
+**Qué se decide**: el carril lanza `claude --session-id <uuid>` en una sesión nueva y toma como
+prueba de adquisición la respuesta al `control_request` de `initialize`. El id anunciado por
+cualquier cuadro posterior tiene que coincidir; si no coincide, la sesión termina en vez de
+renombrarse.
+**Por qué**: medido contra el binario real el 2026-09-04, con `--input-format stream-json` el CLI
+emite `system/init` recién con el primer turno. Una sesión que nadie escribió todavía no tiene id
+que anunciar, así que esperarlo colgaba la creación 60 segundos y la mataba. Solo cambian los
+argumentos del binario, que es lo que el Gate 1 aprobó. Se descartó mandarle un turno inventado para
+forzar el `system/init`: escribiría en la conversación un mensaje que la persona nunca mandó.
+**La invalidaría**: una versión de Claude Code que deje de aceptar `--session-id` o que anuncie su
+id antes del primer turno.
+
+## 2026-09-04 · [spec 012] Las pestañas se esconden por carril, no por nombre de proveedor
+
+**Qué se decide**: la proyección de pestañas hacia un cliente esconde las sesiones cuyo proveedor no
+tiene carril en el host (`STRUCTURED_AGENT_SESSION_LANE_PROVIDERS`, en
+`src/shared/agent-session-record.ts`), y no las que no son Codex. Lo mismo vale para las mutaciones
+de pestaña, que se apoyan en esa visibilidad. Y el portón del Command Center cuenta como hilo
+también a una sesión estructurada, que no es una pestaña de terminal.
+**Por qué**: con la regla escrita como un solo proveedor, un hilo de Claude vivo y contestando no
+llegaba nunca a la pantalla: sin pestaña, sin error en consola y sin nada en el journal que lo
+delatara. Es la misma forma que el defecto de la spec 021.
+**La invalidaría**: un proveedor con carril en el host que no deba llegar a ningún cliente.
+
+## 2026-09-04 · [spec 012] El permiso pendiente se guarda con el id del ítem del journal
+
+**Qué se decide**: el traductor guarda el permiso pendiente con la clave del ítem del journal
+(`agentJournalItemKey`), no con el id del pedido de Claude.
+**Por qué**: la tarjeta contesta con el id del ítem, así que con la clave vieja toda respuesta real
+llegaba como "claude is no longer waiting on permission" y el permiso se perdía. El test unitario
+del criterio 3 estaba en verde porque contestaba con el id equivocado, igual que el adaptador: dos
+copias del mismo error se confirmaban entre sí. Por eso el criterio 9 —la app real— es el único que
+lo encontró.
+**La invalidaría**: que la tarjeta pase a contestar con el id del pedido del proveedor.
+
+## 2026-09-04 · [spec 012] El chequeo del criterio 1 no fija qué herramienta elige el modelo
+
+**Qué se decide**: la prueba contra el binario real exige que llegue un permiso con su texto y que
+permitir y rechazar den resultados distintos en el disco; no exige que la herramienta se llame
+`Write`.
+**Por qué**: el modelo elige `Write` en una corrida y `Bash` en la siguiente para el mismo pedido.
+Fijar el nombre convierte una prueba de contrato en una prueba del humor del modelo.
+**La invalidaría**: un pedido para el que una sola herramienta sea posible por construcción.
+
 ## 2026-09-04 · [spec 013] La barra de pestañas real de modo simple no es `TerminalTitlebarTabs`
 
 **Qué se decide**: gatear el strip de pestañas de `TabGroupPanel.tsx` por `interfaceMode`, no solo
@@ -1460,3 +1622,19 @@ extender a Codex sin haber leído su formato real habría sido adivinar. Degrada
 el comportamiento correcto del criterio 6, no un hueco a tapar con urgencia.
 **La invalidaría**: alguien lee el formato de título de Codex (u otro agente) y lo cablea igual que
 Claude.
+
+## 2026-09-04 · [spec 012] La tarjeta de permiso redacta la pregunta con el redactor de la spec 013
+
+**Qué se decide**: el ítem de permiso lleva la herramienta y su entrada (`tool`), y la pantalla
+arma el título con `describePermissionRequest`, el mismo redactor de la línea de actividad
+(`native-chat-activity-phrase.ts`). El título y la descripción propios del proveedor no llegan a la
+tarjeta, y la línea de detalle desaparece con ellos. Un pedido que el redactor no reconoce muestra
+"Allow this action?".
+**Por qué**: en la app real la tarjeta decía "Allow Bash?" y debajo
+`.os/core/lib/session-start.sh --brain . --root` — el criterio 4 pide lo contrario, y la interfaz no
+muestra comandos ni rutas. Se descartó escribir un segundo redactor para la tarjeta: dos rúbricas
+para la misma regla se separan a la primera herramienta nueva. Se descartó también dejar la línea de
+detalle con la descripción del proveedor, que es de donde salía el comando. Un ítem sin `tool` —el
+carril de Codex— conserva el título y el detalle que siempre tuvo, así que el criterio 5 no se toca.
+**La invalidaría**: que la persona necesite ver el comando exacto para decidir, y que eso se resuelva
+con un modo explícito en vez de con el texto de la tarjeta.

@@ -11,6 +11,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { containsPermissionBypassArgs } from '../../../../../shared/tui-agent-permissions'
+import { quoteStartupArg } from '../../../../../shared/tui-agent-startup-shell'
+import { buildThreadScopeStartupMessage } from '@/lib/thread-scope-startup-message'
 
 const mockCreateTab = vi.fn()
 const mockQueueTabStartupCommand = vi.fn()
@@ -33,7 +35,8 @@ const store = {
     activeRuntimeEnvironmentId: null as string | null,
     interfaceMode: 'simple' as string,
     defaultTuiAgent: undefined as string | undefined,
-    disabledTuiAgents: undefined as string[] | undefined
+    disabledTuiAgents: undefined as string[] | undefined,
+    experimentalNativeChat: undefined as boolean | undefined
   },
   projects: [{ id: 'repo-1', localWindowsRuntimePreference: { kind: 'inherit-global' as const } }],
   repos: [{ id: 'repo-1', connectionId: null as string | null, path: '/repo' }],
@@ -111,7 +114,8 @@ describe('openNewThread (spec 015)', () => {
       activeRuntimeEnvironmentId: null,
       interfaceMode: 'simple',
       defaultTuiAgent: undefined,
-      disabledTuiAgents: undefined
+      disabledTuiAgents: undefined,
+      experimentalNativeChat: undefined
     }
     store.tabsByWorktree = { 'wt-1': [{ id: 'tab-1' }] }
     store.tabBarOrderByWorktree = {}
@@ -189,7 +193,8 @@ describe('openNewThread — el agente correcto y sin omisión de permisos (spec 
       activeRuntimeEnvironmentId: null,
       interfaceMode: 'simple',
       defaultTuiAgent: undefined,
-      disabledTuiAgents: undefined
+      disabledTuiAgents: undefined,
+      experimentalNativeChat: undefined
     }
     store.tabsByWorktree = { 'wt-1': [{ id: 'tab-1' }] }
     store.tabBarOrderByWorktree = {}
@@ -225,7 +230,13 @@ describe('openNewThread — el agente correcto y sin omisión de permisos (spec 
     expect(String(startup.command)).toContain("'--model' 'opus'")
     // Y el modo que hace aparecer la tarjeta: sin él, Claude Code corre en su modo `auto`.
     expect(String(startup.command)).toContain("'--permission-mode' 'manual'")
-    expect(startup.agentArgsOverride).toBe('--model opus --permission-mode manual')
+    // Spec 023: el alcance (root, en este describe) viaja pegado atrás como
+    // --append-system-prompt — no reemplaza nada de lo de arriba.
+    const scopeFlag = `--append-system-prompt ${quoteStartupArg(
+      buildThreadScopeStartupMessage({ kind: 'root' }),
+      'posix'
+    )}`
+    expect(startup.agentArgsOverride).toBe(`--model opus --permission-mode manual ${scopeFlag}`)
   })
 
   it('spec016#3 opens no terminal when the only agent installed has no conversation', async () => {
@@ -269,7 +280,8 @@ describe('openNewThread — el hilo nace con el alcance del selector (spec 019)'
       activeRuntimeEnvironmentId: null,
       interfaceMode: 'simple',
       defaultTuiAgent: undefined,
-      disabledTuiAgents: undefined
+      disabledTuiAgents: undefined,
+      experimentalNativeChat: undefined
     }
     store.tabsByWorktree = { 'wt-1': [{ id: 'tab-1' }] }
     store.tabBarOrderByWorktree = {}
@@ -333,5 +345,102 @@ describe('openNewThread — el hilo nace con el alcance del selector (spec 019)'
       threadScope: { kind: 'root' },
       viewMode: 'chat'
     })
+  })
+})
+
+describe('openNewThread — el alcance deja de ser el primer turno de la persona (spec 023)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    store.activeWorktreeId = 'wt-1'
+    store.detectedAgentIds = ['claude']
+    store.settings = {
+      agentCmdOverrides: {},
+      agentDefaultArgs: {},
+      agentDefaultEnv: {},
+      activeRuntimeEnvironmentId: null,
+      interfaceMode: 'simple',
+      defaultTuiAgent: undefined,
+      disabledTuiAgents: undefined,
+      experimentalNativeChat: undefined
+    }
+    store.tabsByWorktree = { 'wt-1': [{ id: 'tab-1' }] }
+    store.tabBarOrderByWorktree = {}
+    store.activeWorkspaceScopeSlug = null
+    store.workspaceScopeOptions = []
+    mockCreateTab.mockReturnValue({ id: 'tab-1' })
+    mockEnsureDetectedAgents.mockResolvedValue(['claude'])
+  })
+
+  it('spec023#2 the scope message travels as --append-system-prompt, never as the auto-submitted prompt argument', async () => {
+    const { openNewThread } = await import('./open-new-thread')
+
+    await openNewThread()
+
+    const [, startup] = mockQueueTabStartupCommand.mock.calls[0]
+    const command = String(startup.command)
+    // Still reaches the agent — criterio 3 — but as system context, not a turn.
+    expect(command).toContain('--append-system-prompt')
+    expect(command).toContain('the root')
+    // The scope text appears exactly once — inside the flag. With no seed
+    // message there is no positional prompt argument at all (empty-prompt
+    // launch), so a second, unflagged copy would mean the old first-turn
+    // behaviour survived alongside the new flag.
+    expect(command.split('This thread').length - 1).toBe(1)
+  })
+
+  it('spec023#2b a Command Center seed message still rides as the visible first turn — that IS the person asking something', async () => {
+    const { openNewThread } = await import('./open-new-thread')
+
+    await openNewThread({ seedMessage: 'Fix the failing checkout test' })
+
+    const [, startup] = mockQueueTabStartupCommand.mock.calls[0]
+    const command = String(startup.command)
+    expect(command).toContain('--append-system-prompt')
+    expect(command).toContain('Fix the failing checkout test')
+    // Before spec 023 the scope and the seed message were one string, joined
+    // by a blank line (`buildThreadFirstMessage`) and pasted whole into the
+    // prompt argv. That join is gone: the seed rides as its own argument.
+    expect(command).not.toContain('Do not ask which scope to use.\n\nFix the failing checkout test')
+  })
+
+  it('spec023 known gap: with experimentalNativeChat on, the scope keeps riding in the visible prompt (the structured lane never reads agentArgs)', async () => {
+    store.settings.experimentalNativeChat = true
+    const { openNewThread } = await import('./open-new-thread')
+
+    await openNewThread()
+
+    const [, startup] = mockQueueTabStartupCommand.mock.calls[0]
+    expect(String(startup.command)).not.toContain('--append-system-prompt')
+    expect(String(startup.command)).toContain('the root')
+  })
+
+  it('spec023 only claude carries the flag — every other native-chat agent keeps its prior args untouched', async () => {
+    store.settings.defaultTuiAgent = 'codex'
+    store.detectedAgentIds = ['codex']
+    mockEnsureDetectedAgents.mockResolvedValue(['codex'])
+    const { openNewThread } = await import('./open-new-thread')
+
+    await openNewThread()
+
+    const [, startup] = mockQueueTabStartupCommand.mock.calls[0]
+    expect(String(startup.command)).not.toContain('--append-system-prompt')
+    expect(String(startup.command)).toContain('the root')
+  })
+
+  it('spec023 a workspace scope rides the same way — no root-specific branch', async () => {
+    store.activeWorkspaceScopeSlug = 'tandem-pay'
+    store.workspaceScopeOptions = [
+      { slug: 'tandem-pay', name: 'Tandem Pay', path: '/repo/workspaces/tandem-pay' }
+    ]
+    const { openNewThread } = await import('./open-new-thread')
+
+    await openNewThread()
+
+    const [, startup] = mockQueueTabStartupCommand.mock.calls[0]
+    const command = String(startup.command)
+    expect(command).toContain('--append-system-prompt')
+    expect(command).toContain('Tandem Pay')
+    expect(command).toContain('--workspace tandem-pay')
+    expect(command.split('This thread').length - 1).toBe(1)
   })
 })

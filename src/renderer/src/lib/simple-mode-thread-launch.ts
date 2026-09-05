@@ -8,6 +8,7 @@ import {
   stripPermissionBypassArgs
 } from '../../../shared/tui-agent-permissions'
 import { resolveTuiAgentLaunchArgs } from '../../../shared/tui-agent-launch-defaults'
+import { quoteStartupArg } from '../../../shared/tui-agent-startup-shell'
 import type { GlobalSettings } from '../../../shared/global-settings-types'
 import type { TuiAgent } from '../../../shared/tui-agent'
 
@@ -56,17 +57,38 @@ export function resolveSimpleModeThreadAgent(args: {
 /**
  * The configured launch arguments minus every permission-bypass argument, plus
  * the agent's ask-for-permission argument when it has one.
+ *
+ * Spec 023: `appendSystemPrompt`, when given, rides along as
+ * `--append-system-prompt <text>` — system-level context the CLI never draws
+ * in the conversation and never titles the session from. Applied only to
+ * `claude`: it's the only agent this was verified against
+ * (`docs/research/2026-09-04-de-donde-sale-el-titulo-del-hilo/`). Every other
+ * agent ignores the argument and keeps its prior args untouched.
  */
 export function resolveSimpleModeThreadAgentArgs(
   agent: TuiAgent,
-  settings: Pick<GlobalSettings, 'agentDefaultArgs'> | null | undefined
+  settings: Pick<GlobalSettings, 'agentDefaultArgs'> | null | undefined,
+  appendSystemPrompt?: string | null
 ): string {
   const stripped = stripPermissionBypassArgs(
     resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs)
   )
   const askArgs = ASK_PERMISSION_TUI_AGENT_ARGS[agent]
-  if (!askArgs || stripped.includes('--permission-mode')) {
-    return stripped
+  const withAskArgs =
+    !askArgs || stripped.includes('--permission-mode')
+      ? stripped
+      : stripped
+        ? `${stripped} ${askArgs}`
+        : askArgs
+  if (agent !== 'claude' || !appendSystemPrompt) {
+    return withAskArgs
   }
-  return stripped ? `${stripped} ${askArgs}` : askArgs
+  // Why 'posix' here regardless of the eventual launch shell: this string is
+  // the same "settings-field" input every other agentArgs string is — it gets
+  // tokenized once as portable-Unix text and re-quoted for the real shell at
+  // launch time (`tokenizeStartupCommand`/`quoteStartupArg` in
+  // `tui-agent-startup-shell.ts`), the same as every other value that flows
+  // through this function.
+  const flag = `--append-system-prompt ${quoteStartupArg(appendSystemPrompt, 'posix')}`
+  return withAskArgs ? `${withAskArgs} ${flag}` : flag
 }

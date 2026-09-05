@@ -8,7 +8,10 @@ import {
   resolveSimpleModeThreadAgent,
   resolveSimpleModeThreadAgentArgs
 } from '@/lib/simple-mode-thread-launch'
-import { buildThreadFirstMessage } from '@/lib/thread-scope-startup-message'
+import {
+  buildThreadFirstMessage,
+  buildThreadScopeStartupMessage
+} from '@/lib/thread-scope-startup-message'
 import { resolveActiveWorkspaceScope } from '@/store/slices/workspace-scope'
 
 /**
@@ -41,6 +44,16 @@ import { resolveActiveWorkspaceScope } from '@/store/slices/workspace-scope'
  * It is appended to the scope message so one thread starts already scoped
  * *and* already knowing what it is about; nothing below is duplicated on the
  * Command Center's side, and no launch path but this one opens a thread.
+ *
+ * Spec 023: for `claude`, the scope stops riding as the person's first turn.
+ * It travels instead as `--append-system-prompt` (`simple-mode-thread-launch`)
+ * — system context the CLI never draws in the conversation and never titles
+ * the session from — so the thread's title (and the first visible turn) come
+ * from `seedMessage` alone, or from whatever the person types once the thread
+ * is open. This only holds for the terminal launch: with
+ * `experimentalNativeChat` on, the structured lane never reads `agentArgs`
+ * (see `launch-agent-in-new-tab.ts`), so the scope keeps riding in `prompt`
+ * as before rather than being silently dropped — known gap, see spec 023.
  */
 export type OpenNewThreadOptions = {
   /** Extra text appended after the scope message as part of this thread's
@@ -108,13 +121,25 @@ export async function openNewThread(options: OpenNewThreadOptions = {}): Promise
   // Spec 009: opening a thread leaves the Command Center home screen.
   store.leaveCommandCenter()
   store.setActiveView('terminal')
+  // Spec 023: only the terminal launch honours `--append-system-prompt`; the
+  // structured lane (experimentalNativeChat) still needs the scope in the
+  // visible first turn or it never reaches the agent at all.
+  const scopeRidesAsSystemPrompt =
+    agent === 'claude' && store.settings?.experimentalNativeChat !== true
+  const seedMessage = options.seedMessage?.trim() || undefined
   const launched = launchAgentInNewTab({
     agent,
     worktreeId,
     launchSource: 'sidebar',
-    agentArgs: resolveSimpleModeThreadAgentArgs(agent, store.settings),
+    agentArgs: resolveSimpleModeThreadAgentArgs(
+      agent,
+      store.settings,
+      scopeRidesAsSystemPrompt ? buildThreadScopeStartupMessage(threadScope) : undefined
+    ),
     threadScope,
-    prompt: buildThreadFirstMessage(threadScope, options.seedMessage),
+    prompt: scopeRidesAsSystemPrompt
+      ? seedMessage
+      : buildThreadFirstMessage(threadScope, options.seedMessage),
     promptDelivery: 'auto-submit',
     // Spec 012: this prompt is the thread's birth message, so the structured lane may carry it on
     // `agentSession.create` instead of pasting it into a terminal.

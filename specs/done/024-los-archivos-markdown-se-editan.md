@@ -117,6 +117,10 @@ PASS spec024#10 chequeo funcional en la app real: abrir, escribir, salir y volve
 168 pasan · 0 fallan
 ```
 
+Corrido tres veces. La segunda corrida dio 167/1 porque se solapó con el archivado de esta misma
+spec —el archivo se movió a `specs/done/` mientras la suite lo leía—; la tercera, sobre el árbol
+ya quieto, volvió a dar 168/0 sin ningún FAIL.
+
 ### Criterio 1 · se abre y se edita
 
 e2e `tests/e2e/simple-mode-files-editing.spec.ts`, prueba "a document opens for writing and what is

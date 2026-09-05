@@ -72,3 +72,49 @@ Ninguno propio. Las pruebas con Claude real consumen la cuota de Peter.
 ## Fuera de alcance, con condición de reactivación
 
 - El historial de hilos cerrados: se reactiva cuando alguien pida recuperar uno.
+
+## Evidencia
+
+### Criterio 1 — verificado, el diagnóstico es correcto
+
+`docs/research/2026-09-04-de-donde-sale-el-titulo-del-hilo/`
+
+El CLI titula la sesión con el primer turno del usuario. Con el mensaje de alcance primero escribe
+`"Startup scan and read with root"`; con la pregunta de la persona primero escribe
+`"Capital of France"`. Los hilos reales de Andes que llegaron a tener título nombran los cuatro el
+alcance y ninguno la pregunta.
+
+Hallazgo que la spec no preveía: sobre `--input-format stream-json` —el canal de datos de la spec
+012, que se prende con `experimentalNativeChat`— el CLI **no escribe ningún `ai-title`**, cualquiera
+sea el primer turno. El ajuste sirve para el camino de terminal, que es el que corre hoy
+(`experimentalNativeChat` es `false` por defecto y también en el perfil de Peter).
+
+### El arreglo, medido y sin aplicar
+
+`--append-system-prompt "<mensaje de alcance>"` en el lanzamiento del hilo deja el alcance como
+contexto de sistema: no se dibuja en la conversación, no ocupa el turno de la persona, y el título
+pasa a salir de la pregunta. El alcance sigue llegando —preguntado por él, el agente contesta
+*"This thread is scoped to the Tandem Pay workspace"*—.
+
+### Criterios 2 a 8 — no ejecutados
+
+## Condición de parada alcanzada
+
+**"Si sacar el mensaje de alcance del turno de la persona obliga a tocar la capa de lanzamiento del
+binario, para y pregunta."**
+
+No hay otro camino. Sobre la terminal, el único canal de contexto de sesión que no se dibuja en la
+conversación es un argumento del binario. La ranura `firstMessage` de la spec 012 no alcanza: el
+host la manda como turno `role: user` (`src/main/runtime/rpc/methods/structured-agent-session.ts`),
+o sea sigue siendo el primer turno de la persona, y además vive en el canal de datos, que no titula.
+
+Lo que hay que decidir, para Gate 1:
+
+1. **Aplicar `--append-system-prompt` en `resolveSimpleModeThreadAgentArgs`**
+   (`src/renderer/src/lib/simple-mode-thread-launch.ts`), donde la spec 016 ya arma los argumentos
+   por hilo. Es un argumento más en una cadena que ya se arma ahí, no un cambio en cómo se prende el
+   proceso. El título del hilo pasa a salir de la pregunta.
+2. **Dejarlo como está** y aceptar que todos los hilos se titulan por el alcance.
+
+Queda abierto, en cualquiera de los dos casos: con `experimentalNativeChat` prendido el hilo se
+sigue llamando "New thread" porque el CLI no titula en ese canal. Eso es otra spec.

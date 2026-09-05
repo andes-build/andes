@@ -699,3 +699,25 @@ punto abajo dice cómo se lo respetó).
 
 Diferido, sin implementar: historial de hilos cerrados ("View history"), archivos de un hilo, la
 tarjeta de subagente (spec 012 la desbloquea).
+
+## El modo claro no es blanco y negro (spec 025)
+
+Los tokens de color viven en `src/renderer/src/assets/main.css` (`:root` para claro, `.dark` para
+oscuro), heredados de Orca. La barra lateral oscura (`--sidebar`/`--worktree-sidebar`, `#141413`)
+ya se mostraba en ambos temas contra un `--background` blanco puro (`#fff`) en claro, lo que
+partía la pantalla en dos.
+
+- **`--background` en claro pasa de `#fff` a `#ececea`** (gris muy claro, cálido). Es el único
+  token que cambia; `--card`, `--popover`, `--secondary`, `--muted`, `--accent` e `--input` quedan
+  igual, así que las superficies elevadas (tarjetas, popovers, menús, campos) siguen siendo
+  distinguibles del fondo nuevo — antes lo eran solo por borde/sombra, ahora también por color.
+  `.dark` no se tocó.
+- **Contraste verificado en `src/renderer/src/assets/light-mode-canvas-tokens.test.ts`**: lee los
+  tokens directo de `main.css` (no los duplica) y calcula contraste WCAG — `--foreground` ≥4.5:1 y
+  `--muted-foreground` ≥3:1 contra el `--background` nuevo, ninguna superficie elevada igual al
+  fondo, y una foto fija de los tokens de `.dark` para que un cambio futuro de este bloque no pase
+  desapercibido.
+- **Gris elegido con las capturas de las specs 012/013 a la vista**: `#ececea` se despega del
+  blanco de las tarjetas lo suficiente para que la barra lateral no corte la pantalla, y queda entre
+  `--muted`/`--secondary` (`#f5f5f5`) y `--card` (`#fff`) — la escalera de elevación pasa a tener
+  tres pasos (fondo gris → superficie muted, más clara → tarjeta blanca) en vez de dos.

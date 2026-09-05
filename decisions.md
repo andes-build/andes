@@ -1701,3 +1701,24 @@ descartó validar en el renderer (la interfaz no es un límite de seguridad) y p
 archivo si falta (convierte un error de ruta en un archivo suelto en la carpeta de la persona).
 **La invalidaría**: que se reactive crear archivos desde la pantalla, que es una spec propia y
 tiene que traer su propia regla de dónde puede crearlos.
+
+## 2026-09-04 · [spec 023] El alcance viaja como `--append-system-prompt`, solo para `claude` y solo en terminal
+
+**Qué se decide**: `resolveSimpleModeThreadAgentArgs` agrega `--append-system-prompt <mensaje de
+alcance>` a los argumentos de lanzamiento — solo cuando `agent === 'claude'`, y solo en el camino de
+terminal. `openNewThread` deja de mandar el alcance dentro del prompt que se auto-envía; ese prompt
+pasa a ser el `seedMessage` de Command Center, o nada. Con `experimentalNativeChat` prendido, el
+alcance sigue viajando en el prompt de siempre, porque el carril estructurado
+(`startStructuredAgentLaunch`) no lee `agentArgs`.
+
+**Por qué**: es el único CLI que la spec verificó (`docs/research/2026-09-04-de-donde-sale-el-titulo-del-hilo/`);
+extender el flag a `codex`/`openclaude`/`grok`/`omp` sin haber confirmado que lo soportan sería
+adivinar, igual que Codex se dejó sin `explicitTitle` en la spec 013. Aplicarlo también al carril
+estructurado habría perdido el alcance en ese canal (el criterio 3 lo prohíbe expresamente) para
+arreglar un título que ahí ya no sale por otra razón — el CLI no escribe `ai-title` sobre
+`--input-format stream-json`, con cualquier primer turno (criterio 1). Gate 1 de la spec 012
+(Peter, 2026-09-04) ya había cerrado que cambiarle argumentos al binario no viola `def-007`; esta
+decisión es solo dónde se traza la línea de qué agentes y qué carril reciben el argumento nuevo.
+
+**La invalidaría**: alguien verifica que otro CLI de `NATIVE_CHAT_SUPPORTED_AGENT_LIST` soporta un
+flag equivalente, o que el carril estructurado gana su propia vía de contexto de sistema.

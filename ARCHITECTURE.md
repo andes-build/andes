@@ -760,3 +760,39 @@ línea ni pestañas de editor, y el texto va en una columna de lectura.
 
 No hay vigilancia del archivo en disco: un cambio hecho afuera se detecta al guardar, no en vivo.
 Un documento sin tocar se vuelve a leer del disco cada vez que se abre.
+
+## El título del hilo sale de la pregunta de la persona, no del alcance (spec 023)
+
+El diagnóstico (`docs/research/2026-09-04-de-donde-sale-el-titulo-del-hilo/`): Claude Code titula la
+sesión (`ai-title`, spec 013) con el primer turno del usuario. La spec 019 hizo obligatorio que ese
+primer turno fuera el mensaje de alcance (`buildThreadScopeStartupMessage`), así que todo hilo se
+titulaba por el alcance ("Startup scan and read with root") y nunca por lo que la persona preguntó.
+
+- **El alcance deja de viajar como turno; viaja como `--append-system-prompt`.**
+  `resolveSimpleModeThreadAgentArgs` (`src/renderer/src/lib/simple-mode-thread-launch.ts`) suma un
+  tercer parámetro, `appendSystemPrompt?: string | null` — cuando `agent === 'claude'` y viene con
+  contenido, agrega `--append-system-prompt <texto>` a la cadena de argumentos, quoteado con
+  `quoteStartupArg(text, 'posix')` (la misma convención de "campo de settings" que ya usa el resto
+  de esta función: se tokeniza y re-quotea para el shell real recién al armar el comando de
+  lanzamiento, `tui-agent-launch-command.ts`). `open-new-thread.ts` pasa ahí el mensaje de alcance, y
+  el `prompt` que de verdad se auto-envía pasa a ser solo el `seedMessage` de Command Center (spec
+  009) — o nada, si el hilo no trae uno, en cuyo caso el hilo abre esperando la primera pregunta real
+  de la persona sin haber enviado ningún turno todavía.
+  - **Solo `claude`**: es el único CLI que la spec verificó contra el binario real. El resto de
+    `NATIVE_CHAT_SUPPORTED_AGENT_LIST` (codex, openclaude, grok, omp) sigue recibiendo el alcance
+    como primer turno, sin cambios — mismo criterio que dejó a Codex sin `explicitTitle` en la spec
+    013: no adivinar un formato no verificado.
+  - **Solo el lanzamiento de terminal**: con `experimentalNativeChat` prendido, el carril
+    estructurado (`startStructuredAgentLaunch`, en `launch-agent-in-new-tab.ts`) nunca lee
+    `agentArgs`, así que ahí el alcance sigue viajando en el `prompt` de siempre — perderlo para
+    arreglar un título que en ese canal ya no sale por otra razón (ver el punto siguiente) violaría
+    el criterio 3 de la spec (el alcance nunca se pierde).
+- **Límite del CLI, no de esta spec**: sobre `--input-format stream-json` (el canal de datos de la
+  spec 012, `experimentalNativeChat`) Claude Code no escribe ningún `ai-title`, sea cual sea el
+  primer turno. El hilo se sigue llamando "New thread" en ese canal — hoy no molesta porque
+  `experimentalNativeChat` es `false` por defecto y también en el perfil de Peter, así que el único
+  camino que corre es el de terminal, el que este arreglo sí cubre.
+- Gate 1 (Peter, 2026-09-04, ver `decisions.md` spec 012): cambiarle argumentos al binario de Claude
+  Code no viola `def-007` — la regla protege que el binario corra sin modificar, con la suscripción
+  de la persona; el argumento nuevo no lo modifica. Sigue prohibido empaquetarlo, parcharlo,
+  envolverlo o reemplazarlo, y la capa de inicio de sesión no se toca — ninguno de los dos pasa acá.

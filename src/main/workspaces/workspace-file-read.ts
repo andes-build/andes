@@ -1,25 +1,25 @@
-import { readFileSync } from 'node:fs'
-import { relative, resolve } from 'node:path'
+import { readFileSync, statSync } from 'node:fs'
+import { isInsideRoot, WorkspaceFileOutsideRootError } from './workspace-file-scope'
 
-export class WorkspaceFileOutsideRootError extends Error {
-  constructor(filePath: string) {
-    super(`Refused to read a path outside the workspace scope: ${filePath}`)
-    this.name = 'WorkspaceFileOutsideRootError'
-  }
-}
+export { WorkspaceFileOutsideRootError }
 
-/** True when `filePath` resolves inside `rootPath` (or is `rootPath` itself). */
-function isInsideRoot(rootPath: string, filePath: string): boolean {
-  const relativePath = relative(resolve(rootPath), resolve(filePath))
-  return relativePath === '' || (!relativePath.startsWith('..') && !relativePath.startsWith('/'))
+export type WorkspaceFileReadValue = {
+  content: string
+  /** Last-modified time of the file when it was read, in milliseconds. The
+   *  editor sends it back on save so the main process can tell whether the
+   *  file changed somewhere else in between (spec 024, criterion 7). */
+  modifiedAtMs: number
 }
 
 /** Reads a file's text content for the Files screen (spec 010, criterion 9).
  *  Refuses any path outside `rootPath` — the active scope's directory — so a
  *  crafted relative path from the renderer can't read outside it. */
-export function readWorkspaceFile(rootPath: string, filePath: string): string {
+export function readWorkspaceFile(rootPath: string, filePath: string): WorkspaceFileReadValue {
   if (!isInsideRoot(rootPath, filePath)) {
-    throw new WorkspaceFileOutsideRootError(filePath)
+    throw new WorkspaceFileOutsideRootError(filePath, 'read')
   }
-  return readFileSync(filePath, 'utf8')
+  return {
+    content: readFileSync(filePath, 'utf8'),
+    modifiedAtMs: statSync(filePath).mtimeMs
+  }
 }

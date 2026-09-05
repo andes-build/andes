@@ -30,6 +30,18 @@ export type WorkspaceFileTreeResult = {
 
 export type WorkspaceFileReadResult = {
   content: string
+  /** Last-modified time when the file was read, in milliseconds. The editor
+   *  hands it back on save so a change made somewhere else in between can be
+   *  detected (spec 024, criterion 7). */
+  modifiedAtMs: number
+}
+
+export type WorkspaceFileWriteResult = {
+  /** `saved`: nothing else had touched the file. `changed-elsewhere`: it had
+   *  been modified since the editor read it, and what the person wrote is
+   *  what was kept (spec 024, criterion 7). */
+  outcome: 'saved' | 'changed-elsewhere'
+  modifiedAtMs: number
 }
 
 /** The scope a thread launched with (spec 019): captured once, at launch

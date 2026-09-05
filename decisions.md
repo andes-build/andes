@@ -1653,3 +1653,51 @@ superficie muted, más clara → tarjeta blanca) en vez de perder el que ya ten�
 sobran los pisos de accesibilidad del criterio 3 (4.5:1 y 3:1).
 **La invalidaría**: que la identidad visual propia de Andes (fuera de alcance de esta spec) redefina
 la paleta completa, no solo este token.
+
+## 2026-09-04 · [spec 024] Los documentos se guardan solos: 800 ms después de la última tecla, más un guardado al salir
+
+**Qué se decide**: la pantalla de archivos escribe el documento en disco 800 ms después de la
+última tecla, y además fuerza la escritura pendiente cuando se cambia de archivo o se desmonta la
+pantalla. La constante vive en `WORKSPACE_FILE_AUTOSAVE_DELAY_MS`
+(`src/renderer/src/components/files/use-workspace-file-autosave.ts`) y no se repite en ningún lado.
+**Por qué**: la spec delegó la frecuencia con dos criterios —que nadie pierda lo escrito y que no
+se escriba el disco en cada tecla— y una pausa de 800 ms es la que satisface los dos: una frase
+entera es una escritura en vez de cuarenta, y el único agujero que deja una espera (irse antes de
+que venza) lo cierra el guardado al salir, que no depende del reloj. Se descartó guardar en cada
+tecla (escribe el disco decenas de veces por oración y hace ruidosa cualquier carpeta versionada),
+guardar solo al salir del documento (un cierre inesperado de la aplicación se lleva todo lo
+escrito) y un intervalo fijo cada N segundos (guarda cuando no hay nada que guardar y no guarda
+justo cuando hace falta).
+**La invalidaría**: que la carpeta abierta esté en un disco remoto donde una escritura tarde más
+que la pausa, y las escrituras empiecen a encimarse.
+
+## 2026-09-04 · [spec 024] Si el archivo cambió afuera, gana lo que escribió la persona y la pantalla lo dice
+
+**Qué se decide**: al abrir un documento se guarda su hora de modificación; al guardarlo, el
+proceso principal compara esa hora con la del disco. Si no coinciden, se escribe igual lo que la
+persona escribió y la pantalla pasa a decir "Saved. This file had also changed somewhere else, and
+what you wrote is what was kept." (`workspaceScope:writeFile` devuelve `outcome:
+'changed-elsewhere'`).
+**Por qué**: el criterio de la spec protege una sola cosa —que nunca se pierda sin aviso lo que la
+persona escribió— y la única regla que la protege siempre es que gane su texto. Se descartó que
+gane el disco (pierde exactamente lo que el criterio protege), fusionar los dos automáticamente
+(una fusión invisible es peor que un conflicto visible: nadie puede revisar lo que no ve), abrir un
+diálogo de conflicto con dos botones (es vocabulario de programador, contra el criterio de diseño
+de la spec, que es Obsidian y no un IDE) y dejar una copia de respaldo del disco al lado (crear
+archivos está explícitamente fuera del alcance de esta spec).
+**La invalidaría**: que dos personas editen a la vez el mismo documento —el multijugador— donde
+perder en silencio el texto del otro sí es un daño, y hace falta una regla de fusión de verdad.
+
+## 2026-09-04 · [spec 024] Solo se editan documentos markdown que ya existen, y solo dentro del alcance
+
+**Qué se decide**: `writeWorkspaceFile` (`src/main/workspaces/workspace-file-write.ts`) rechaza,
+en este orden, una ruta fuera del alcance activo, un archivo que no termina en `.md`/`.markdown`, y
+un archivo que no existe. Nunca crea un archivo.
+**Por qué**: es el único camino de escritura que la aplicación abre sobre la carpeta de la
+persona, así que la contención va en el proceso principal y no en la interfaz, que es lo único que
+un renderer comprometido no puede saltear. Los tres rechazos son los tres límites que la spec fijó:
+el alcance de la spec 010, la edición solo de documentos, y crear archivos fuera de alcance. Se
+descartó validar en el renderer (la interfaz no es un límite de seguridad) y permitir crear el
+archivo si falta (convierte un error de ruta en un archivo suelto en la carpeta de la persona).
+**La invalidaría**: que se reactive crear archivos desde la pantalla, que es una spec propia y
+tiene que traer su propia regla de dónde puede crearlos.

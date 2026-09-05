@@ -430,7 +430,9 @@ toca `src/main/runtime/` ni la capa que lanza el binario del agente.
   `readdir` que `listMarkdownDocuments` (`src/main/ipc/markdown-documents.ts`), nunca la carpeta
   entera.
 - **Lectura de archivo** (`src/main/workspaces/workspace-file-read.ts`, IPC
-  `workspaceScope:readFile`): de solo lectura, rechaza cualquier ruta fuera del alcance pedido.
+  `workspaceScope:readFile`): rechaza cualquier ruta fuera del alcance pedido y devuelve, junto al
+  texto, la hora de modificación del archivo (spec 024). El chequeo de alcance vive una sola vez,
+  en `workspace-file-scope.ts`, y lo usan la lectura y la escritura.
 - **Estado de alcance** (`src/renderer/src/store/slices/workspace-scope.ts`): `WorkspaceScopeSlice`
   con `activeWorkspaceScopeSlug` (`null` = raíz, "My work") y `workspaceScopeOptions`;
   `resolveActiveWorkspaceScope` cae a raíz si el slug elegido ya no existe. Todo lo que necesite
@@ -445,8 +447,9 @@ toca `src/main/runtime/` ni la capa que lanza el binario del agente.
   miembro de `TopLevelView`): árbol del alcance elegido con nombres de nodo traducidos
   (`workspace-node-name.ts`: README.md/context.md → "What this is", decisions.md → "Decisions",
   learnings.md → "Learnings", backlog.md → "Backlog", initiatives → "Initiatives", research →
-  "Research"; un nombre no reconocido se muestra tal cual) y un visor de markdown con formato
-  (reusa `MarkdownPreviewBody` del editor) con el botón "Open a thread about this file".
+  "Research"; un nombre no reconocido se muestra tal cual) y, a la derecha, el documento con
+  formato: editable si es markdown (spec 024) y de solo lectura con `MarkdownPreviewBody` si no lo
+  es. En los dos casos, el botón "Open a thread about this file".
 - **New thread**: `open-new-thread.ts` espera la detección de agentes (`ensureDetectedAgents`),
   elige el agente y los argumentos con `@/lib/simple-mode-thread-launch` y lanza con
   `launchAgentInNewTab` sobre la carpeta activa — nunca toca `native-chat/`. Es
@@ -721,3 +724,39 @@ partía la pantalla en dos.
   blanco de las tarjetas lo suficiente para que la barra lateral no corte la pantalla, y queda entre
   `--muted`/`--secondary` (`#f5f5f5`) y `--card` (`#fff`) — la escalera de elevación pasa a tener
   tres pasos (fondo gris → superficie muted, más clara → tarjeta blanca) en vez de dos.
+
+## Los documentos markdown se editan (spec 024)
+
+La mitad derecha de Files es un documento sobre el que se escribe, con la experiencia de Obsidian:
+se escribe sobre el texto formateado, no hay botón de guardar, no hay panel de código ni números de
+línea ni pestañas de editor, y el texto va en una columna de lectura.
+
+- **El editor** (`src/renderer/src/components/files/WorkspaceMarkdownEditor.tsx`): es Tiptap con el
+  conjunto de extensiones markdown heredado de Orca —`createRichMarkdownExtensions`,
+  `encodeRawMarkdownHtmlForRichEditor` y `createRichMarkdownEditorCodec` de
+  `components/editor/`—, montado como lo monta `LinearIssueMarkdownDescriptionEditor` y **sin
+  ninguno de los componentes de chrome de Orca**: no monta `RichMarkdownToolbar`, ni el riel de
+  revisión, ni el panel de índice, ni `RichMarkdownEditorSurface`. El chrome de Orca son
+  componentes, no extensiones; no montarlos es todo lo que hace falta para que no aparezca. Los
+  estilos son los de `assets/rich-markdown-editor.css`, que ya entra por `main.css`, activados por
+  la clase `rich-markdown-editor` del atributo del editor.
+- **El conjunto de extensiones** (`files/workspace-markdown-extensions.ts`): las de Orca más el
+  texto de documento vacío. Está separado del componente para que la prueba de escritura real
+  (teclear `## ` y ver un encabezado) corra contra exactamente el mismo conjunto que monta la
+  pantalla.
+- **La columna de lectura**: `max-w-[46rem] mx-auto` alrededor de `EditorContent`, nunca el ancho
+  entero de la ventana.
+- **El guardado solo** (`files/use-workspace-file-autosave.ts`): escribe 800 ms después de la
+  última tecla y fuerza lo pendiente al cambiar de archivo o desmontar. Sin botón: el estado se
+  cuenta en `WorkspaceFileSaveStatus.tsx` ("Saves as you write" / "Saving…" / "Saved" / el aviso de
+  cambio afuera / el error). Las dos decisiones —cada cuánto, y qué gana en un conflicto— están en
+  `decisions.md`, 2026-09-04.
+- **La escritura** (`src/main/workspaces/workspace-file-write.ts`, IPC `workspaceScope:writeFile`):
+  el único camino de la aplicación que escribe en la carpeta de la persona. Rechaza una ruta fuera
+  del alcance, un archivo que no es `.md`/`.markdown` (`src/shared/workspace-markdown-file.ts`, que
+  también decide en la interfaz qué archivo se ofrece editar) y un archivo que no existe — esta
+  spec no crea archivos. Compara la hora de modificación que trae el editor con la del disco y
+  devuelve `outcome: 'saved'` o `'changed-elsewhere'`.
+
+No hay vigilancia del archivo en disco: un cambio hecho afuera se detecta al guardar, no en vivo.
+Un documento sin tocar se vuelve a leer del disco cada vez que se abre.

@@ -2,7 +2,8 @@ import { ipcRenderer } from 'electron'
 import type {
   WorkspaceScopeListResult,
   WorkspaceFileTreeResult,
-  WorkspaceFileReadResult
+  WorkspaceFileReadResult,
+  WorkspaceFileWriteResult
 } from '../../shared/workspace-scope-types'
 import type { PreloadApi } from '../api-types'
 
@@ -12,5 +13,11 @@ export const workspaceScopeApi = {
   fileTree: (args: { rootPath: string }): Promise<WorkspaceFileTreeResult> =>
     ipcRenderer.invoke('workspaceScope:fileTree', args),
   readFile: (args: { rootPath: string; filePath: string }): Promise<WorkspaceFileReadResult> =>
-    ipcRenderer.invoke('workspaceScope:readFile', args)
+    ipcRenderer.invoke('workspaceScope:readFile', args),
+  writeFile: (args: {
+    rootPath: string
+    filePath: string
+    content: string
+    expectedModifiedAtMs: number | null
+  }): Promise<WorkspaceFileWriteResult> => ipcRenderer.invoke('workspaceScope:writeFile', args)
 } satisfies PreloadApi['workspaceScope']

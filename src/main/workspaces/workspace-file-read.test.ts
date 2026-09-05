@@ -17,7 +17,9 @@ describe('readWorkspaceFile', () => {
 
   it('reads a file inside the root', () => {
     writeFileSync(join(root, 'backlog.md'), 'one line')
-    expect(readWorkspaceFile(root, join(root, 'backlog.md'))).toBe('one line')
+    const result = readWorkspaceFile(root, join(root, 'backlog.md'))
+    expect(result.content).toBe('one line')
+    expect(result.modifiedAtMs).toBeGreaterThan(0)
   })
 
   it('refuses a path outside the root', () => {

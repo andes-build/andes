@@ -14,7 +14,8 @@ function setApi(overrides: {
   fileTree?: ReturnType<typeof vi.fn>
   readFile?: ReturnType<typeof vi.fn>
 }): void {
-  ;(window as unknown as { api: { workspaceScope: Record<string, unknown> } }).api = {
+  ;(window as unknown as { api: Record<string, unknown> }).api = {
+    ui: { setMarkdownEditorFocused: vi.fn() },
     workspaceScope: {
       fileTree:
         overrides.fileTree ??
@@ -28,7 +29,9 @@ function setApi(overrides: {
             }
           ]
         }),
-      readFile: overrides.readFile ?? vi.fn().mockResolvedValue({ content: '# Hello' }),
+      readFile:
+        overrides.readFile ?? vi.fn().mockResolvedValue({ content: '# Hello', modifiedAtMs: 1 }),
+      writeFile: vi.fn().mockResolvedValue({ outcome: 'saved', modifiedAtMs: 2 }),
       list: vi.fn().mockResolvedValue({ workspaces: [] })
     }
   }

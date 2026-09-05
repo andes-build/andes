@@ -3,11 +3,13 @@ import { useEffect, useState } from 'react'
 export type WorkspaceFileContentState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'loaded'; content: string }
+  | { status: 'loaded'; content: string; modifiedAtMs: number }
   | { status: 'error'; message: string }
 
-/** Loads a file's text content for the Files screen viewer, reloading
- *  whenever `filePath` changes; `null` renders the "select a file" state. */
+/** Loads a file's text content for the Files screen, reloading whenever
+ *  `filePath` changes; `null` renders the "select a file" state. The
+ *  modification time travels with the content so the editor can hand it back
+ *  on save (spec 024, criterion 7). */
 export function useWorkspaceFileContent(
   rootPath: string | null,
   filePath: string | null
@@ -25,7 +27,11 @@ export function useWorkspaceFileContent(
       .readFile({ rootPath, filePath })
       .then((result) => {
         if (!cancelled) {
-          setState({ status: 'loaded', content: result.content })
+          setState({
+            status: 'loaded',
+            content: result.content,
+            modifiedAtMs: result.modifiedAtMs
+          })
         }
       })
       .catch((error: unknown) => {

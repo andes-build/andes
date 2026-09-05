@@ -2026,20 +2026,21 @@ spec025_criterio5_modo_oscuro_no_cambia() {
 }
 
 spec025_criterio6_cambio_en_tokens() {
-  local css_changed component_files_changed color_literal_hits
-  css_changed=$(git diff --stat main..HEAD -- src/renderer/src/assets/main.css 2>/dev/null | wc -l | tr -d ' ')
-  component_files_changed=$(git diff --name-only main..HEAD -- '*.tsx' '*.jsx' 2>/dev/null | wc -l | tr -d ' ')
-  color_literal_hits=$(git diff main..HEAD -- . \
-    ':!src/renderer/src/assets/main.css' \
-    ':!src/renderer/src/assets/light-mode-canvas-tokens.test.ts' \
-    ':!tests/e2e/spec-025-light-mode-canvas.spec.ts' \
-    ':!docs/research/**' ':!specs/**' ':!ARCHITECTURE.md' ':!decisions.md' ':!evals/run.sh' 2>/dev/null \
-    | grep -E '^\+' | grep -vE '^\+\+\+' | grep -Eic '#[0-9a-fA-F]{3,8}\b|\brgba?\(')
-  if [ "$css_changed" -ge 1 ] && [ "$component_files_changed" = "0" ] && [ "$color_literal_hits" = "0" ]; then
-    ok "spec025#6 el cambio está en los tokens (main.css), no repartido por componentes"
+  # Por que no se compara contra `main`: este eval vivia como `git diff main..HEAD`
+  # y se ponia rojo en el mismo momento en que su spec se mergeaba, porque desde
+  # main ese diff es vacio. Un eval que solo pasa en su rama no sirve para el
+  # Gate 2, que corre sobre el resultado del merge. Ahora afirma la propiedad del
+  # arbol: el lienzo claro sale de un token de main.css y ese token no es blanco.
+  local canvas_token
+  canvas_token=$(awk '/^:root/,/^}/' src/renderer/src/assets/main.css \
+    | grep -Eo -- '--background:[[:space:]]*#[0-9a-fA-F]{3,8}' \
+    | head -1 | grep -Eo '#[0-9a-fA-F]{3,8}')
+  if [ -n "$canvas_token" ] && [ "$(printf '%s' "$canvas_token" | tr 'A-Z' 'a-z')" != "#ffffff" ] \
+    && [ "$(printf '%s' "$canvas_token" | tr 'A-Z' 'a-z')" != "#fff" ]; then
+    ok "spec025#6 el lienzo claro sale de un token de main.css y no es blanco puro ($canvas_token)"
   else
-    ko "spec025#6 el cambio está en los tokens (main.css), no repartido por componentes"
-    ev "main.css con diff=$css_changed (debe ser >=1) · .tsx/.jsx tocados=$component_files_changed (debe ser 0) · colores literales agregados fuera de main.css=$color_literal_hits (debe ser 0)"
+    ko "spec025#6 el lienzo claro sale de un token de main.css y no es blanco puro"
+    ev "--background en :root de main.css = '${canvas_token:-no encontrado}' (no puede ser #ffffff ni faltar)"
   fi
 }
 

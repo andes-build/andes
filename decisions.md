@@ -1638,3 +1638,18 @@ detalle con la descripción del proveedor, que es de donde salía el comando. Un
 carril de Codex— conserva el título y el detalle que siempre tuvo, así que el criterio 5 no se toca.
 **La invalidaría**: que la persona necesite ver el comando exacto para decidir, y que eso se resuelva
 con un modo explícito en vez de con el texto de la tarjeta.
+
+## 2026-09-04 · [spec 025] El gris de fondo en claro es `#ececea`, y es el único token que cambia
+
+**Qué se decide**: `--background` en `:root` pasa de `#fff` a `#ececea`. Ningún otro token de claro
+se toca — `--card`, `--popover`, `--secondary`, `--muted`, `--accent` e `--input` quedan en sus
+valores de Orca, y `.dark` no se toca.
+**Por qué**: Peter delegó el gris exacto con un criterio de dos partes — que se despegue del blanco
+lo suficiente para que la barra lateral no corte la pantalla, y que las tarjetas blancas sigan
+leyéndose elevadas. `#ececea` cumple las dos sin tocar nada más: cae justo debajo de
+`--muted`/`--secondary` (`#f5f5f5`), así que la escalera de elevación gana un escalón (fondo →
+superficie muted, más clara → tarjeta blanca) en vez de perder el que ya tenía. Contra
+`--foreground` (`#0a0a0a`) da 16.7:1 y contra `--muted-foreground` (`#737373`) da 4.0:1 — ambos
+sobran los pisos de accesibilidad del criterio 3 (4.5:1 y 3:1).
+**La invalidaría**: que la identidad visual propia de Andes (fuera de alcance de esta spec) redefina
+la paleta completa, no solo este token.

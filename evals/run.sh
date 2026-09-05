@@ -1971,5 +1971,116 @@ spec013_criterio8_sin_panel_derecho_en_modo_simple
 spec013_criterio9_modo_desarrollo_intacto
 spec013_criterio10_codigo_sano
 
+# --- specs/done/025-el-modo-claro-no-es-blanco-y-negro.md ---
+
+spec025_vitest() {
+  npx vitest run --config config/vitest.config.ts -t "$1" \
+    src/renderer/src/assets/light-mode-canvas-tokens.test.ts >/dev/null 2>&1
+}
+
+spec025_criterio1_fondo_no_blanco_puro() {
+  if spec025_vitest "criterio 1"; then
+    ok "spec025#1 en modo claro el área de contenido es un gris muy claro, no blanco puro"
+  else
+    ko "spec025#1 en modo claro el área de contenido es un gris muy claro, no blanco puro"
+    ev "vitest src/renderer/src/assets/light-mode-canvas-tokens.test.ts -t 'criterio 1' (debe pasar)"
+  fi
+}
+
+spec025_criterio2_barra_lateral_oscura() {
+  local shots
+  shots=$(find docs/research -type d -name '*chequeo-funcional-spec-025' -exec find {} -name '*.png' \; 2>/dev/null | wc -l | tr -d ' ')
+  if spec025_vitest "criterio 2" && [ "$shots" -ge 6 ]; then
+    ok "spec025#2 la barra lateral sigue oscura y se lee como una pieza aparte"
+  else
+    ko "spec025#2 la barra lateral sigue oscura y se lee como una pieza aparte"
+    ev "vitest -t 'criterio 2'=$? · capturas en docs/research/*chequeo-funcional-spec-025/=$shots (deben ser 6 o más)"
+  fi
+}
+
+spec025_criterio3_contraste() {
+  if spec025_vitest "criterio 3"; then
+    ok "spec025#3 el texto (primario, secundario/deshabilitado) cumple contraste contra el fondo nuevo"
+  else
+    ko "spec025#3 el texto (primario, secundario/deshabilitado) cumple contraste contra el fondo nuevo"
+    ev "vitest -t 'criterio 3' (debe pasar: foreground >=4.5:1, muted-foreground >=3:1)"
+  fi
+}
+
+spec025_criterio4_superficies_se_distinguen() {
+  if spec025_vitest "criterio 4"; then
+    ok "spec025#4 las superficies que se apoyan sobre el fondo (tarjetas, campos, menús) siguen distinguiéndose"
+  else
+    ko "spec025#4 las superficies que se apoyan sobre el fondo (tarjetas, campos, menús) siguen distinguiéndose"
+    ev "vitest -t 'criterio 4' (debe pasar)"
+  fi
+}
+
+spec025_criterio5_modo_oscuro_no_cambia() {
+  if spec025_vitest "criterio 5"; then
+    ok "spec025#5 el modo oscuro no cambia"
+  else
+    ko "spec025#5 el modo oscuro no cambia"
+    ev "vitest -t 'criterio 5' (debe pasar contra los valores de .dark pinneados antes de esta spec)"
+  fi
+}
+
+spec025_criterio6_cambio_en_tokens() {
+  local css_changed component_files_changed color_literal_hits
+  css_changed=$(git diff --stat main..HEAD -- src/renderer/src/assets/main.css 2>/dev/null | wc -l | tr -d ' ')
+  component_files_changed=$(git diff --name-only main..HEAD -- '*.tsx' '*.jsx' 2>/dev/null | wc -l | tr -d ' ')
+  color_literal_hits=$(git diff main..HEAD -- . \
+    ':!src/renderer/src/assets/main.css' \
+    ':!src/renderer/src/assets/light-mode-canvas-tokens.test.ts' \
+    ':!tests/e2e/spec-025-light-mode-canvas.spec.ts' \
+    ':!docs/research/**' ':!specs/**' ':!ARCHITECTURE.md' ':!decisions.md' ':!evals/run.sh' 2>/dev/null \
+    | grep -E '^\+' | grep -vE '^\+\+\+' | grep -Eic '#[0-9a-fA-F]{3,8}\b|\brgba?\(')
+  if [ "$css_changed" -ge 1 ] && [ "$component_files_changed" = "0" ] && [ "$color_literal_hits" = "0" ]; then
+    ok "spec025#6 el cambio está en los tokens (main.css), no repartido por componentes"
+  else
+    ko "spec025#6 el cambio está en los tokens (main.css), no repartido por componentes"
+    ev "main.css con diff=$css_changed (debe ser >=1) · .tsx/.jsx tocados=$component_files_changed (debe ser 0) · colores literales agregados fuera de main.css=$color_literal_hits (debe ser 0)"
+  fi
+}
+
+spec025_criterio7_codigo_sano() {
+  local tc_ok=1 cq_ok=1
+  pnpm tc >/dev/null 2>&1 || tc_ok=0
+  # Why "main" and not the default origin/main: este repo tiene commits locales en
+  # main sin pushear (ver decisions.md de otras specs); origin/main desactualizado
+  # hace que el script arrastre hallazgos preexistentes ajenos a esta rama.
+  node config/scripts/check-changed-code-quality.mjs main >/dev/null 2>&1 || cq_ok=0
+  if [ "$tc_ok" = "1" ] && [ "$cq_ok" = "1" ]; then
+    ok "spec025#7 código sano (pnpm tc · check:code-quality:changed en verde)"
+  else
+    ko "spec025#7 código sano (pnpm tc · check:code-quality:changed en verde)"
+    ev "pnpm tc=$tc_ok · check-changed-code-quality (base=main)=$cq_ok (deben ser 1)"
+  fi
+}
+
+spec025_criterio8_chequeo_funcional() {
+  local dir=docs/research/2026-09-04-chequeo-funcional-spec-025
+  local faltan=0
+  for captura in 01-conversacion-claro 02-command-center-claro 03-archivos-claro \
+    04-archivos-oscuro 05-command-center-oscuro 06-conversacion-oscuro; do
+    [ -f "$dir/$captura.png" ] || faltan=1
+  done
+  if [ "$faltan" = "0" ] && grep -q "^# 2026-09-04 · Chequeo funcional de la spec 025 — PASA" "$dir/README.md" 2>/dev/null; then
+    ok "spec025#8 chequeo funcional en la app real (conversación, Command Center y archivos, claro y oscuro)"
+  else
+    ko "spec025#8 chequeo funcional en la app real"
+    ev "faltan capturas o el README no declara PASA en $dir"
+  fi
+}
+
+spec025_criterio1_fondo_no_blanco_puro
+spec025_criterio2_barra_lateral_oscura
+spec025_criterio3_contraste
+spec025_criterio4_superficies_se_distinguen
+spec025_criterio5_modo_oscuro_no_cambia
+spec025_criterio6_cambio_en_tokens
+spec025_criterio7_codigo_sano
+spec025_criterio8_chequeo_funcional
+
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

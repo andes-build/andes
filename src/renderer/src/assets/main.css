@@ -161,7 +161,10 @@
   --orca-security-border: #e5e5e5;
   --orca-security-input: #e5e5e5;
   --orca-security-ring: #a1a1a1;
-  --background: #fff;
+  /* Why: a pure-white canvas against the dark sidebar split the screen in two;
+     a light gray canvas lets white cards/popovers still read as elevated
+     above it (Peter, 2026-09-04, spec 025). */
+  --background: #ececea;
   --editor-surface: #ffffff;
   --foreground: #0a0a0a;
   --card: #fff;

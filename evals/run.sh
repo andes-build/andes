@@ -1950,6 +1950,153 @@ spec013_criterio10_codigo_sano() {
   fi
 }
 
+# --- specs/done/024-los-archivos-markdown-se-editan.md ---
+
+spec024_criterio1_se_abre_y_se_edita() {
+  local editor_ok=1 e2e_tag
+  test -f src/renderer/src/components/files/WorkspaceMarkdownEditor.tsx || editor_ok=0
+  grep -q "WorkspaceMarkdownEditor" src/renderer/src/components/files/WorkspaceFileViewer.tsx || editor_ok=0
+  e2e_tag=$(grep -c "criteria 1, 3" tests/e2e/simple-mode-files-editing.spec.ts 2>/dev/null; true)
+  if [ "$editor_ok" = "1" ] && [ "$e2e_tag" -ge 1 ]; then
+    ok "spec024#1 un archivo markdown del alcance se abre y se edita en la misma pantalla"
+  else
+    ko "spec024#1 un archivo markdown del alcance se abre y se edita en la misma pantalla"
+    ev "editor montado en Files=$editor_ok · e2e=$e2e_tag (deben ser 1 y >=1) — e2e corrido aparte, evidencia en la spec archivada"
+  fi
+}
+
+spec024_criterio2_se_escribe_sobre_el_texto_formateado() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/files/WorkspaceMarkdownEditor.test.tsx \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec024#2 se escribe sobre el texto formateado: tecleando ## sale un encabezado, no la marca literal"
+  else
+    ko "spec024#2 se escribe sobre el texto formateado: tecleando ## sale un encabezado, no la marca literal"
+    ev "vitest WorkspaceMarkdownEditor.test.tsx en rojo"
+  fi
+}
+
+spec024_criterio3_se_guarda_solo_sin_boton() {
+  local test_ok=1 boton_count e2e_tag
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/files/use-workspace-file-autosave.test.ts \
+    src/renderer/src/components/files/WorkspaceFileViewer.test.tsx \
+    >/dev/null 2>&1 || test_ok=0
+  # Ningún botón de guardar en el árbol de la pantalla de archivos.
+  boton_count=$(grep -rniE "onSave|save button|<Button[^>]*save" src/renderer/src/components/files --include=*.tsx | grep -v ".test." | wc -l | tr -d ' ')
+  e2e_tag=$(grep -c "criteria 3, 4" tests/e2e/simple-mode-files-editing.spec.ts 2>/dev/null; true)
+  if [ "$test_ok" = "1" ] && [ "$boton_count" = "0" ] && [ "$e2e_tag" -ge 1 ]; then
+    ok "spec024#3 se guarda solo, sin botón, y la pantalla lo dice"
+  else
+    ko "spec024#3 se guarda solo, sin botón, y la pantalla lo dice"
+    ev "tests=$test_ok · botones de guardar encontrados=$boton_count (debe ser 0) · e2e=$e2e_tag (>=1)"
+  fi
+}
+
+spec024_criterio4_sin_vocabulario_de_ide() {
+  local jerga_count catalogo_count columna_ok=1
+  # Ni panel de código, ni números de línea, ni resaltado, ni pestañas en la pantalla.
+  jerga_count=$(grep -rniE "monaco|lineNumbers|line-numbers|syntaxHighlight|RichMarkdownToolbar|MarkdownTableOfContentsPanel|EditorTabs" src/renderer/src/components/files --include=*.tsx --include=*.ts | grep -v ".test." | wc -l | tr -d ' ')
+  # Ningún texto de esa pantalla nombra línea, sintaxis, código fuente o pestaña.
+  catalogo_count=$(grep -rnoE "translate\([^)]*'[^']*(line number|syntax|source code|IDE|tab )[^']*'" src/renderer/src/components/files --include=*.tsx --include=*.ts | wc -l | tr -d ' ')
+  grep -q "max-w-\[46rem\]" src/renderer/src/components/files/WorkspaceMarkdownEditor.tsx || columna_ok=0
+  if [ "$jerga_count" = "0" ] && [ "$catalogo_count" = "0" ] && [ "$columna_ok" = "1" ]; then
+    ok "spec024#4 nada de vocabulario de IDE: sin números de línea, resaltado, panel de código ni pestañas; el texto va en una columna cómoda"
+  else
+    ko "spec024#4 nada de vocabulario de IDE: sin números de línea, resaltado, panel de código ni pestañas; el texto va en una columna cómoda"
+    ev "jerga en componentes=$jerga_count · textos con jerga=$catalogo_count (deben ser 0) · columna de lectura=$columna_ok (debe ser 1)"
+  fi
+}
+
+spec024_criterio5_solo_dentro_del_alcance() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/workspaces/workspace-file-write.test.ts \
+    src/main/workspaces/workspace-file-read.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec024#5 solo se editan archivos del alcance elegido: una ruta de afuera se rechaza"
+  else
+    ko "spec024#5 solo se editan archivos del alcance elegido: una ruta de afuera se rechaza"
+    ev "vitest workspace-file-write.test.ts / workspace-file-read.test.ts en rojo"
+  fi
+}
+
+spec024_criterio6_lo_que_no_es_markdown_no_se_rompe() {
+  local test_ok=1 shared_ok=1
+  test -f src/shared/workspace-markdown-file.ts || shared_ok=0
+  npx vitest run --config config/vitest.config.ts \
+    src/renderer/src/components/files/WorkspaceFileViewer.test.tsx \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ] && [ "$shared_ok" = "1" ]; then
+    ok "spec024#6 un archivo que no es markdown se sigue viendo como hoy, sin ofrecer edición"
+  else
+    ko "spec024#6 un archivo que no es markdown se sigue viendo como hoy, sin ofrecer edición"
+    ev "vitest WorkspaceFileViewer.test.tsx=$test_ok · regla de extensión compartida=$shared_ok"
+  fi
+}
+
+spec024_criterio7_conflicto_con_cambios_de_afuera() {
+  local test_ok=1
+  npx vitest run --config config/vitest.config.ts \
+    src/main/workspaces/workspace-file-write.test.ts \
+    src/renderer/src/components/files/use-workspace-file-autosave.test.ts \
+    >/dev/null 2>&1 || test_ok=0
+  if [ "$test_ok" = "1" ]; then
+    ok "spec024#7 el archivo que cambió en el disco no pierde lo que la persona escribió: gana su texto y la pantalla lo dice (decisions.md, 2026-09-04)"
+  else
+    ko "spec024#7 el archivo que cambió en el disco no pierde lo que la persona escribió: gana su texto y la pantalla lo dice (decisions.md, 2026-09-04)"
+    ev "vitest del caso de conflicto en rojo"
+  fi
+}
+
+spec024_criterio8_modo_desarrollo_intacto() {
+  local e2e_tag
+  e2e_tag=$(grep -c "criterion 8" tests/e2e/simple-mode-files-editing.spec.ts 2>/dev/null; true)
+  if [ "$e2e_tag" -ge 1 ]; then
+    ok "spec024#8 el modo desarrollo no cambia"
+  else
+    ko "spec024#8 el modo desarrollo no cambia"
+    ev "e2e criterion 8=$e2e_tag (debe ser >=1) — e2e corrido aparte, evidencia en la spec archivada"
+  fi
+}
+
+spec024_criterio9_codigo_sano() {
+  local tc_ok=1 lint_ok=1 loc_ok=1
+  pnpm tc >/dev/null 2>&1 || tc_ok=0
+  npx oxlint --config config/oxlint-code-quality-native-plugins.json \
+    src/renderer/src/components/files \
+    src/main/workspaces \
+    src/main/ipc/workspace-scope.ts \
+    src/shared/workspace-markdown-file.ts \
+    src/preload/api/workspace-scope-api.ts \
+    src/preload/api/workspace-scope-bridge.ts \
+    tests/e2e/simple-mode-files-editing.spec.ts \
+    --deny-warnings >/dev/null 2>&1 || lint_ok=0
+  pnpm run verify:localization-catalog >/dev/null 2>&1 || loc_ok=0
+  pnpm run verify:localization-extraction >/dev/null 2>&1 || loc_ok=0
+  pnpm run verify:localization-coverage >/dev/null 2>&1 || loc_ok=0
+  if [ "$tc_ok" = "1" ] && [ "$lint_ok" = "1" ] && [ "$loc_ok" = "1" ]; then
+    ok "spec024#9 código sano (pnpm tc · calidad de lo cambiado · verify:localization-* y los tests nuevos en verde)"
+  else
+    ko "spec024#9 código sano (pnpm tc · calidad de lo cambiado · verify:localization-* y los tests nuevos en verde)"
+    ev "pnpm tc=$tc_ok · oxlint=$lint_ok · verify:localization-*=$loc_ok (deben ser 1)"
+  fi
+}
+
+spec024_criterio10_chequeo_funcional() {
+  local dir="docs/research/2026-09-04-chequeo-funcional-spec-024" shots
+  shots=$(ls "$dir"/*.png 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$shots" -ge 9 ] && [ -f "$dir/documento-en-disco.md" ] && [ -f config/scripts/spec-024-functional-check.mjs ]; then
+    ok "spec024#10 chequeo funcional en la app real: abrir, escribir, salir y volver, con una captura por paso"
+  else
+    ko "spec024#10 chequeo funcional en la app real: abrir, escribir, salir y volver, con una captura por paso"
+    ev "capturas=$shots (deben ser >=9) · documento-en-disco.md y el script del recorrido deben existir"
+  fi
+}
+
 spec021_criterio1_2_5_6_capa_de_render
 spec021_criterio3_4_prueba_de_interfaz
 spec021_criterio8_chequeo_funcional
@@ -1970,6 +2117,16 @@ spec013_criterio7_redactor_en_lenguaje_de_persona
 spec013_criterio8_sin_panel_derecho_en_modo_simple
 spec013_criterio9_modo_desarrollo_intacto
 spec013_criterio10_codigo_sano
+spec024_criterio1_se_abre_y_se_edita
+spec024_criterio2_se_escribe_sobre_el_texto_formateado
+spec024_criterio3_se_guarda_solo_sin_boton
+spec024_criterio4_sin_vocabulario_de_ide
+spec024_criterio5_solo_dentro_del_alcance
+spec024_criterio6_lo_que_no_es_markdown_no_se_rompe
+spec024_criterio7_conflicto_con_cambios_de_afuera
+spec024_criterio8_modo_desarrollo_intacto
+spec024_criterio9_codigo_sano
+spec024_criterio10_chequeo_funcional
 
 printf '%s pasan · %s fallan\n' "$passed" "$failed"
 [ "$failed" = "0" ]

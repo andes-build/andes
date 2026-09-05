@@ -16502,6 +16502,16 @@
           "selectFilePrompt": "Select a file to read it.",
           "openThreadButton": "Open a thread about this file",
           "loadError": "Could not read this file."
+        },
+        "WorkspaceFileSaveStatus": {
+          "idle": "Saves as you write",
+          "saving": "Saving…",
+          "saved": "Saved",
+          "savedOverOutsideChange": "Saved. This file had also changed somewhere else, and what you wrote is what was kept.",
+          "error": "Could not save this file."
+        },
+        "WorkspaceMarkdownEditor": {
+          "placeholder": "This document is empty. Start writing."
         }
       },
       "workspaceScope": {
